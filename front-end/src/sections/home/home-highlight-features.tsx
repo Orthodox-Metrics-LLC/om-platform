@@ -90,33 +90,30 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 
 // ----------------------------------------------------------------------
 
+/**
+ * All seven language screenshots are normalized to a 3:2 aspect ratio
+ * (padded, never cropped, in the source export) so they line up at the
+ * same height and width across the row regardless of each dashboard's
+ * original crop.
+ */
 const ITEMS = [
-  {
-    title: 'Multiple Languages Supported',
-    icon: 'solar:flag-bold',
-    images: [{ src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English' }],
-  },
-  {
-    title: 'Translate records to multiple languages',
-    icon: 'solar:global-bold-duotone',
-    images: [
-      { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
-    ],
-  },
   {
     title: 'Multilingual interface',
     subtitle:
-      'The whole dashboard in Greek, Russian, Georgian, Arabic, and English — including full right-to-left layout.',
+      'The whole dashboard in Greek, English, Russian, Romanian, Georgian, Arabic, and Chinese — including full right-to-left layout.',
     icon: 'solar:global-bold-duotone',
     images: [
-      { src: 'dashboard-greek.webp', ratio: 1.3339, alt: 'The dashboard in Greek' },
-      { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The dashboard in Russian' },
-      { src: 'dashboard-georgian.webp', ratio: 1.5, alt: 'The dashboard in Georgian' },
+      { src: 'dashboard-greek.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
+      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English' },
+      { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Russian' },
+      { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
+      { src: 'dashboard-georgian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Georgian' },
       {
         src: 'dashboard-arabic.webp',
-        ratio: 1.3333,
-        alt: 'The dashboard in Arabic, laid out right-to-left',
+        ratio: 1.5,
+        alt: 'The Orthodox Metrics dashboard in Arabic, laid out right-to-left',
       },
+      { src: 'dashboard-chinese.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Chinese' },
     ],
   },
 ] as const;
