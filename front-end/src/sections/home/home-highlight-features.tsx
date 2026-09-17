@@ -92,11 +92,11 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 
 const ITEMS = [
   {
-    title: 'Dark mode',
-    subtitle: 'A quieter interface for long sessions in the archive.',
-    icon: 'solar:cloudy-moon-bold-duotone',
+    title: 'Romanian language support',
+    subtitle: 'Records, forms, and the full dashboard translated for Romanian-speaking parishes.',
+    icon: 'solar:flag-bold',
     images: [
-      { src: 'dashboard-dark.webp', ratio: 1.3333, alt: 'The Orthodox Metrics dashboard in Romanian' },
+      { src: 'dashboard-romanian.webp', ratio: 1.3333, alt: 'The Orthodox Metrics dashboard in Romanian' },
     ],
   },
   {
