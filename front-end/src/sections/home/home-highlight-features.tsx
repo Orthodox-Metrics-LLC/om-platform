@@ -92,20 +92,15 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 
 const ITEMS = [
   {
-    title: 'Romanian language support',
-    subtitle: 'Records, forms, and the full dashboard translated for Romanian-speaking parishes.',
+    title: 'Multiple Languages Supported',
     icon: 'solar:flag-bold',
-    images: [
-      { src: 'dashboard-romanian.webp', ratio: 1.3333, alt: 'The Orthodox Metrics dashboard in Romanian' },
-    ],
+    images: [{ src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English' }],
   },
   {
-    title: 'Theme presets',
-    subtitle: 'Each parish picks the palette that suits its own character.',
-    icon: 'solar:pallete-2-bold-duotone',
+    title: 'Translate records to multiple languages',
+    icon: 'solar:global-bold-duotone',
     images: [
-      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The dashboard in a blue theme' },
-      { src: 'dashboard-presets.webp', ratio: 1.3333, alt: 'The dashboard in Arabic, laid out right-to-left' },
+      { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
     ],
   },
   {
@@ -237,7 +232,9 @@ function Item({ item, sx, ...other }: ItemProps) {
         <Iconify width={28} icon={item.icon} sx={{ mt: '10px' }} />
         <Stack spacing={2}>
           <Typography variant="h3">{item.title}</Typography>
-          <Typography sx={{ color: 'text.secondary' }}>{item.subtitle}</Typography>
+          {'subtitle' in item && (
+            <Typography sx={{ color: 'text.secondary' }}>{item.subtitle}</Typography>
+          )}
         </Stack>
       </Box>
 
