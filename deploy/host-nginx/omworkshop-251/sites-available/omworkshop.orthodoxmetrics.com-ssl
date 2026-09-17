@@ -1,0 +1,18 @@
+# Additive TLS vhost for omworkshop.orthodoxmetrics.com on the product host.
+# Figma MCP/preview stay isolated; remaining paths serve the Workshop UI.
+
+server {
+    listen 443 ssl http2;
+    server_name omworkshop.orthodoxmetrics.com;
+
+    ssl_certificate     /etc/nginx/ssl/omworkshop.orthodoxmetrics.com/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/omworkshop.orthodoxmetrics.com/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    access_log /var/log/nginx/omworkshop.orthodoxmetrics.access.log;
+    error_log  /var/log/nginx/omworkshop.orthodoxmetrics.error.log;
+
+    include /etc/nginx/snippets/omworkshop-figma-dev-connector-isolated-5279.conf;
+    include /etc/nginx/snippets/om-workshop-ui-locations.conf;
+}
