@@ -95,7 +95,9 @@ const ITEMS = [
     title: 'Dark mode',
     subtitle: 'A quieter interface for long sessions in the archive.',
     icon: 'solar:cloudy-moon-bold-duotone',
-    images: [{ src: 'dashboard-dark.webp', ratio: 1.0, alt: 'The Orthodox Metrics dashboard in dark mode' }],
+    images: [
+      { src: 'dashboard-dark.webp', ratio: 1.3333, alt: 'The Orthodox Metrics dashboard in Romanian' },
+    ],
   },
   {
     title: 'Theme presets',
@@ -103,7 +105,7 @@ const ITEMS = [
     icon: 'solar:pallete-2-bold-duotone',
     images: [
       { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The dashboard in a blue theme' },
-      { src: 'dashboard-presets.webp', ratio: 1.0, alt: 'The dashboard in a gold theme' },
+      { src: 'dashboard-presets.webp', ratio: 1.3333, alt: 'The dashboard in Arabic, laid out right-to-left' },
     ],
   },
   {
