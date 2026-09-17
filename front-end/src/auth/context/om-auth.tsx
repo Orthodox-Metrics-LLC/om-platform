@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 
 import { useMemo, useState, useEffect, useContext, useCallback, createContext } from 'react';
 
+import { AuthContext } from './auth-context';
+
 // ----------------------------------------------------------------------
 
 /**
@@ -139,5 +141,43 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
     [user, loading, signIn, signOut, checkSession]
   );
 
-  return <OmAuthContext.Provider value={value}>{children}</OmAuthContext.Provider>;
+  /**
+   * The template's own `AuthContext` is fed from the same OM session.
+   *
+   * `AuthGuard`, `GuestGuard`, the account menu and the dashboard layout all read
+   * `useAuthContext()`, not `useOmAuth()`. Without this they would consult the
+   * template's demo JWT provider, which knows nothing about an OM login — so a real
+   * superadmin session would be treated as unauthenticated and bounced straight back
+   * out of /dashboard.
+   *
+   * Populating both means the template's components work unmodified against the real
+   * backend, and the demo providers can be deleted rather than adapted.
+   */
+  const templateValue = useMemo(
+    () => ({
+      user: user
+        ? {
+            ...user,
+            // The template's UI reads these names off the user object.
+            displayName:
+              (user.display_name ?? [user.first_name, user.last_name].filter(Boolean).join(' ')) ||
+              user.username ||
+              user.email,
+            photoURL: null,
+            role: user.role,
+          }
+        : null,
+      loading,
+      authenticated: !!user,
+      unauthenticated: !loading && !user,
+      checkUserSession: checkSession,
+    }),
+    [user, loading, checkSession]
+  );
+
+  return (
+    <OmAuthContext.Provider value={value}>
+      <AuthContext.Provider value={templateValue}>{children}</AuthContext.Provider>
+    </OmAuthContext.Provider>
+  );
 }

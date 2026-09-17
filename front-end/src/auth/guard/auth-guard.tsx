@@ -44,7 +44,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     if (!authenticated) {
       const { method } = CONFIG.auth;
 
-      const signInPath = signInPaths[method];
+      // OM's real sign-in, not the template's per-provider demo pages.
+      const signInPath = paths.signIn ?? signInPaths[method];
       const redirectPath = createRedirectPath(signInPath);
 
       router.replace(redirectPath);

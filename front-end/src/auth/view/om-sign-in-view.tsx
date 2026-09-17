@@ -63,7 +63,12 @@ export function OmSignInView() {
         );
         return;
       }
-      router.push('/');
+      /**
+       * Hand off to the dashboard, honouring ?returnTo= so a guarded deep link
+       * returns the user where they were headed. AuthGuard sets that param.
+       */
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      router.push(returnTo && returnTo.startsWith('/') ? returnTo : paths.dashboard.root);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Sign in failed.');
     }
@@ -193,7 +198,9 @@ function SignedInPanel() {
   const { user, signOut } = useOmAuth();
 
   const name =
-    user?.display_name || [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.email;
+    user?.display_name ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
+    user?.email;
 
   return (
     <Stack spacing={3}>
