@@ -48,7 +48,7 @@ its cruft.
 **Authoritative documentation lives outside this repo:**
 
 ```
-/var/www/workspaces/prod-current-to-om-platform/start-here/devin/README.md
+/var/www/workspaces/prod-current-to-om-platform/start-here/docs-shared/devin/README.md
 ```
 
 `docs/` here contains pointers, not copies, so the two cannot drift. The one exception is
