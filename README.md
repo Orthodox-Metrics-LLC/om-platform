@@ -43,6 +43,18 @@ demos and four unused auth providers. As each OM feature lands, the demo it repl
 deleted **in the same commit** — deferring that cleanup is how `prod/front-end` accumulated
 its cruft.
 
+## Documentation
+
+**Authoritative documentation lives outside this repo:**
+
+```
+/var/www/workspaces/prod-current-to-om-platform/start-here/devin/README.md
+```
+
+`docs/` here contains pointers, not copies, so the two cannot drift. The one exception is
+`front-end/TEMPLATE-DEBT.md`, which stays in the repo because it is edited in the same
+commit as the code change that clears a line.
+
 ## .gitignore
 
 Written deliberately, not inherited. `prod` bans media by extension repo-wide (`*.png`,
