@@ -8,9 +8,9 @@ import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import LinearProgress from '@mui/material/LinearProgress';
 
-import { fPercent } from 'src/utils/format-number';
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
@@ -40,8 +40,8 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
             <Grid size={6}>
               <m.div variants={varFade('inUp')}>
                 <Image
-                  alt="Our office small"
-                  src={`${CONFIG.assetsDir}/assets/images/about/what-small.webp`}
+                  alt="The Orthodox Metrics dashboard"
+                  src={`${CONFIG.assetsDir}/assets/images/contact/om-hero-dashboard.webp`}
                   ratio="1/1"
                   sx={(theme) => ({
                     borderRadius: 3,
@@ -57,8 +57,8 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
             <Grid size={6}>
               <m.div variants={varFade('inUp')}>
                 <Image
-                  alt="Our office large"
-                  src={`${CONFIG.assetsDir}/assets/images/about/what-large.webp`}
+                  alt="A parish interior"
+                  src={`${CONFIG.assetsDir}/assets/images/contact/om-hero-church.webp`}
                   ratio="3/4"
                   sx={(theme) => ({
                     borderRadius: 3,
@@ -74,7 +74,7 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
 
           <Grid size={{ xs: 12, md: 6, lg: 5 }}>
             <Typography component={m.h2} variants={varFade('inRight')} variant="h2" sx={{ mb: 3 }}>
-              What is Minimal?
+              What is Orthodox Metrics?
             </Typography>
 
             <Typography
@@ -89,10 +89,11 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
                 }),
               ]}
             >
-              Our theme is the most advanced and user-friendly theme you will find on the market, we
-              have documentation and video to help set your site really easily, pre-installed demos
-              you can import in one click and everything from the theme options to page content can
-              be edited from the front-end. This is the theme you are looking for.
+              Orthodox Metrics is a records platform built specifically for Orthodox parishes. It
+              keeps baptism, chrismation, marriage, and funeral registers in one place — digitizing
+              the handwritten books a parish already has, then making them searchable without
+              discarding the original page. Parishes keep their own data; dioceses get a view across
+              the ones they oversee.
             </Typography>
 
             <Box
@@ -103,41 +104,34 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
                 flexDirection: 'column',
               }}
             >
-              {SKILLS.map((progress, index) => (
-                <m.div key={progress.label} variants={varFade('inRight')}>
-                  <Box
-                    sx={{
-                      mb: 1,
-                      display: 'flex',
-                      typography: 'body2',
-                      alignItems: 'center',
-                      color: 'text.secondary',
-                    }}
-                  >
-                    <Typography variant="subtitle2" sx={{ flexGrow: 1, color: 'text.primary' }}>
-                      {progress.label}
-                    </Typography>
-                    {fPercent(progress.value)}
+              {PRINCIPLES.map((principle) => (
+                <m.div key={principle.title} variants={varFade('inRight')}>
+                  <Box sx={{ gap: 2, display: 'flex', textAlign: 'left' }}>
+                    <Iconify
+                      width={24}
+                      icon="eva:checkmark-fill"
+                      sx={{ flexShrink: 0, mt: 0.25, color: 'primary.main' }}
+                    />
+                    <Box>
+                      <Typography variant="subtitle1">{principle.title}</Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {principle.description}
+                      </Typography>
+                    </Box>
                   </Box>
-
-                  <LinearProgress
-                    color={(index === 0 && 'primary') || (index === 1 && 'warning') || 'error'}
-                    variant="determinate"
-                    value={progress.value}
-                  />
                 </m.div>
               ))}
             </Box>
 
             <Button
-              component={m.button}
-              variants={varFade('inRight')}
+              component={RouterLink}
+              href={paths.ocr}
               variant="outlined"
               color="inherit"
               size="large"
               endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
             >
-              Our work
+              See how it works
             </Button>
           </Grid>
         </Grid>
@@ -148,7 +142,20 @@ export function AboutWhat({ sx, ...other }: BoxProps) {
 
 // ----------------------------------------------------------------------
 
-const SKILLS = Array.from({ length: 3 }, (_, index) => ({
-  value: [20, 40, 60][index],
-  label: ['Development', 'Design', 'Marketing'][index],
-}));
+const PRINCIPLES = [
+  {
+    title: 'The original page is never discarded',
+    description:
+      'Every structured record stays linked to the scan it came from, so provenance survives digitization.',
+  },
+  {
+    title: 'Built around Orthodox practice',
+    description:
+      'Canonical field sets, jurisdiction-aware workflows, and both the Julian and Revised Julian calendars.',
+  },
+  {
+    title: 'The parish owns its records',
+    description:
+      'Each parish gets an isolated database with encrypted backups and role-scoped access.',
+  },
+];

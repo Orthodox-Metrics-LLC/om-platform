@@ -33,9 +33,8 @@ export function HomeMinimal({ sx, ...other }: BoxProps) {
   const renderDescription = () => (
     <>
       <SectionTitle
-        caption="Visualizing Success"
-        title="What's in"
-        txtGradient="Minimal?"
+        caption="Purpose-built platform"
+        title="What is Orthodox Metrics?"
         sx={{ mb: { xs: 5, md: 8 }, textAlign: { xs: 'center', md: 'left' } }}
       />
 
@@ -132,8 +131,9 @@ export function HomeMinimal({ sx, ...other }: BoxProps) {
 
 const ITEMS = [
   {
-    title: 'Branding',
-    description: 'Consistent design makes it easy to brand your own.',
+    title: 'Church Records',
+    description:
+      'Complete baptism, marriage, and funeral recordkeeping with fields designed around Orthodox canonical requirements.',
     icon: (
       <svg
         width="48"
@@ -163,8 +163,9 @@ const ITEMS = [
     ),
   },
   {
-    title: 'UI & UX design',
-    description: 'The kit is built on the principles of the atomic design system.',
+    title: 'Multilingual Support',
+    description:
+      'Enter and display records in English, Greek, Russian, Romanian, and Georgian with proper character support.',
     icon: (
       <svg
         width="48"
@@ -194,8 +195,9 @@ const ITEMS = [
     ),
   },
   {
-    title: 'Development',
-    description: 'Easy to customize and extend, saving you time and money.',
+    title: 'Mission-Driven Growth',
+    description:
+      'Platform reach is tied entirely to parish usefulness — continuously evolving to serve more Orthodox clergy and administrators across the globe.',
     icon: (
       <svg
         width="48"

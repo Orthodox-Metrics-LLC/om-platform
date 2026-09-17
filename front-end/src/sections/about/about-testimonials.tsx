@@ -1,5 +1,4 @@
 import type { BoxProps } from '@mui/material/Box';
-import type { IDateValue } from 'src/types/common';
 
 import { m } from 'framer-motion';
 import { varAlpha } from 'minimal-shared/utils';
@@ -14,9 +13,9 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
-import { fDate } from 'src/utils/format-time';
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
-import { _testimonials } from 'src/_mock';
 import { CONFIG } from 'src/global-config';
 
 import { Iconify } from 'src/components/iconify';
@@ -26,8 +25,13 @@ import { varFade, MotionViewport } from 'src/components/animate';
 
 export function AboutTestimonials({ sx, ...other }: BoxProps) {
   const renderLink = () => (
-    <Button color="primary" endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}>
-      Read more
+    <Button
+      component={RouterLink}
+      href={paths.contact}
+      color="primary"
+      endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+    >
+      Talk to us
     </Button>
   );
 
@@ -41,16 +45,16 @@ export function AboutTestimonials({ sx, ...other }: BoxProps) {
 
       <m.div variants={varFade('inUp')}>
         <Typography variant="h2" sx={{ my: 3, color: 'common.white' }}>
-          Who love <br />
-          my work
+          What parishes <br />
+          tell us
         </Typography>
       </m.div>
 
       <m.div variants={varFade('inUp')}>
         <Typography sx={{ color: 'common.white' }}>
-          Our goal is to create a product and service that you’re satisfied with and use it every
-          day. This is why we’re constantly working on our services to make it better every day and
-          really listen to what our users has to say.
+          Orthodox Metrics is shaped by the clergy and parish staff who use it. The features that
+          matter most — dual calendars, multilingual entry, certificate generation — exist because
+          parishes asked for them.
         </Typography>
       </m.div>
 
@@ -76,7 +80,7 @@ export function AboutTestimonials({ sx, ...other }: BoxProps) {
       ]}
     >
       <Masonry spacing={3} columns={{ xs: 1, md: 2 }} sx={{ ml: 0 }}>
-        {_testimonials.map((testimonial) => (
+        {TESTIMONIALS.map((testimonial) => (
           <m.div key={testimonial.name} variants={varFade('inUp')}>
             <TestimonialItem testimonial={testimonial} />
           </m.div>
@@ -93,7 +97,7 @@ export function AboutTestimonials({ sx, ...other }: BoxProps) {
           ...theme.mixins.bgGradient({
             images: [
               `linear-gradient(0deg, ${varAlpha(theme.vars.palette.grey['900Channel'], 0.9)}, ${varAlpha(theme.vars.palette.grey['900Channel'], 0.9)})`,
-              `url(${CONFIG.assetsDir}/assets/images/about/testimonials.webp)`,
+              `url(${CONFIG.assetsDir}/assets/images/contact/om-hero-church.webp)`,
             ],
           }),
           overflow: 'hidden',
@@ -138,10 +142,9 @@ export function AboutTestimonials({ sx, ...other }: BoxProps) {
 type TestimonialItemProps = BoxProps & {
   testimonial: {
     name: string;
+    role: string;
     content: string;
-    avatarUrl: string;
     ratingNumber: number;
-    postedDate: IDateValue;
   };
 };
 
@@ -169,11 +172,13 @@ function TestimonialItem({ testimonial, sx, ...other }: TestimonialItemProps) {
       <Rating value={testimonial.ratingNumber} readOnly size="small" />
 
       <Box sx={{ gap: 2, display: 'flex' }}>
-        <Avatar alt={testimonial.name} src={testimonial.avatarUrl} />
+        <Avatar alt={testimonial.name} sx={{ bgcolor: 'primary.main' }}>
+          {testimonial.name.charAt(0)}
+        </Avatar>
 
         <ListItemText
           primary={testimonial.name}
-          secondary={fDate(testimonial.postedDate)}
+          secondary={testimonial.role}
           slotProps={{
             secondary: {
               sx: {
@@ -189,3 +194,50 @@ function TestimonialItem({ testimonial, sx, ...other }: TestimonialItemProps) {
     </Box>
   );
 }
+
+// ----------------------------------------------------------------------
+
+const TESTIMONIALS = [
+  {
+    name: 'Fr. Michael D.',
+    role: 'Parish Priest',
+    ratingNumber: 5,
+    content:
+      'Orthodox Metrics transformed how we manage our 90-year archive. Records that took hours to find are now searchable in seconds.',
+  },
+  {
+    name: 'Nicholas K.',
+    role: 'Parish Secretary',
+    ratingNumber: 5,
+    content:
+      'The certificate generation alone saves me an entire day each month. Everything is accurate and beautifully formatted.',
+  },
+  {
+    name: 'Dn. Peter S.',
+    role: 'Deacon',
+    ratingNumber: 5,
+    content:
+      'Finally, a system that understands Orthodox parish needs — dual calendars, multilingual support, the whole thing.',
+  },
+  {
+    name: 'Andrei R.',
+    role: 'Diocesan Administrator',
+    ratingNumber: 5,
+    content:
+      'Rolling up data across twelve parishes used to be a nightmare. Now I have a single dashboard for everything.',
+  },
+  {
+    name: 'Fr. George T.',
+    role: 'Cathedral Dean',
+    ratingNumber: 5,
+    content:
+      'We digitized over 4,000 pages of historical registers. The OCR quality exceeded our expectations.',
+  },
+  {
+    name: 'Stefan M.',
+    role: 'Office Manager',
+    ratingNumber: 5,
+    content:
+      'The multilingual support is incredible. We serve a mixed Greek and English congregation and everything works seamlessly.',
+  },
+];

@@ -1,371 +1,310 @@
 import type { BoxProps } from '@mui/material/Box';
-import type { Breakpoint } from '@mui/material/styles';
-import type { MotionProps, MotionValue, SpringOptions } from 'framer-motion';
 
-import { useRef, useState } from 'react';
-import { m, useScroll, useSpring, useTransform, useMotionValueEvent } from 'framer-motion';
+import { useRef } from 'react';
+import { varAlpha } from 'minimal-shared/utils';
+import { m, useSpring, useMotionValue, useReducedMotion } from 'framer-motion';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import AvatarGroup from '@mui/material/AvatarGroup';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import Avatar, { avatarClasses } from '@mui/material/Avatar';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
-import { _mock } from 'src/_mock';
 import { CONFIG } from 'src/global-config';
 
 import { Iconify } from 'src/components/iconify';
 import { varFade, MotionContainer } from 'src/components/animate';
 
-import { HeroBackground } from './components/hero-background';
-
 // ----------------------------------------------------------------------
 
-const smKey: Breakpoint = 'sm';
-const mdKey: Breakpoint = 'md';
-const lgKey: Breakpoint = 'lg';
+const ARTWORK_RATIO = 924 / 876;
 
-const motionProps: MotionProps = {
-  variants: varFade('inUp', { distance: 24 }),
-};
+/** Pointer-parallax travel, in pixels. */
+const PARALLAX = 14;
+
+/**
+ * The artwork is a crop of a larger composition, so every edge except the top is
+ * a hard line. Softening them lets it sit on the page without visible seams.
+ */
+const HERO_EDGE_MASK = [
+  'linear-gradient(to right, transparent, black 9%)',
+  'linear-gradient(to left, transparent, black 6%)',
+  'linear-gradient(to top, transparent, black 11%)',
+].join(', ');
 
 export function HomeHero({ sx, ...other }: BoxProps) {
-  const scrollProgress = useScrollPercent();
+  const reduceMotion = useReducedMotion();
 
-  const mdUp = useMediaQuery((theme) => theme.breakpoints.up(mdKey));
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  const distance = mdUp ? scrollProgress.percent : 0;
+  const physics = { damping: 22, mass: 0.3, stiffness: 90 };
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
+  const artworkX = useSpring(pointerX, physics);
+  const artworkY = useSpring(pointerY, physics);
 
-  const y1 = useTransformY(scrollProgress.scrollY, distance * -7);
-  const y2 = useTransformY(scrollProgress.scrollY, distance * -6);
-  const y3 = useTransformY(scrollProgress.scrollY, distance * -5);
-  const y4 = useTransformY(scrollProgress.scrollY, distance * -4);
-  const y5 = useTransformY(scrollProgress.scrollY, distance * -3);
+  /**
+   * Nudges the artwork toward the pointer. Skipped entirely when the visitor has
+   * asked for reduced motion.
+   */
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (reduceMotion || !sectionRef.current) return;
 
-  const opacity: MotionValue<number> = useTransform(
-    scrollProgress.scrollY,
-    [0, 1],
-    [1, mdUp ? Number((1 - scrollProgress.percent / 100).toFixed(1)) : 1]
+    const rect = sectionRef.current.getBoundingClientRect();
+    const fromCenterX = (event.clientX - rect.left) / rect.width - 0.5;
+    const fromCenterY = (event.clientY - rect.top) / rect.height - 0.5;
+
+    pointerX.set(fromCenterX * PARALLAX * 2);
+    pointerY.set(fromCenterY * PARALLAX);
+  };
+
+  const handlePointerLeave = () => {
+    pointerX.set(0);
+    pointerY.set(0);
+  };
+
+  const renderEyebrow = () => (
+    <Box
+      component={m.div}
+      variants={varFade('inUp', { distance: 24 })}
+      sx={{ gap: 2, display: 'flex', alignItems: 'center' }}
+    >
+      <Box sx={{ width: 40, height: 3, borderRadius: 1, bgcolor: 'primary.main' }} />
+      <Typography
+        variant="overline"
+        sx={{ color: 'text.secondary', letterSpacing: 1.4, fontWeight: 'fontWeightSemiBold' }}
+      >
+        Orthodox record stewardship
+      </Typography>
+    </Box>
   );
 
   const renderHeading = () => (
-    <m.div {...motionProps}>
+    <m.div variants={varFade('inUp', { distance: 24 })}>
       <Box
         component="h1"
         sx={[
           (theme) => ({
-            my: 0,
-            mx: 'auto',
-            maxWidth: 680,
-            display: 'flex',
-            flexWrap: 'wrap',
+            m: 0,
             typography: 'h2',
-            justifyContent: 'center',
             fontFamily: theme.typography.fontSecondaryFamily,
-            [theme.breakpoints.up(lgKey)]: {
-              fontSize: theme.typography.pxToRem(72),
-              lineHeight: '90px',
+            [theme.breakpoints.up('lg')]: {
+              fontSize: theme.typography.pxToRem(52),
+              lineHeight: 1.18,
             },
           }),
         ]}
       >
-        <Box component="span" sx={{ width: 1, opacity: 0.24 }}>
-          Boost your building
-        </Box>
-        process with
-        <Box
-          component={m.span}
-          animate={{ backgroundPosition: '200% center' }}
-          transition={{
-            duration: 20,
-            ease: 'linear',
-            repeat: Infinity,
-            repeatType: 'reverse',
-          }}
-          sx={[
-            (theme) => ({
-              ...theme.mixins.textGradient(
-                `300deg, ${theme.vars.palette.primary.main} 0%, ${theme.vars.palette.warning.main} 25%, ${theme.vars.palette.primary.main} 50%, ${theme.vars.palette.warning.main} 75%, ${theme.vars.palette.primary.main} 100%`
-              ),
-              backgroundSize: '400%',
-              ml: { xs: 0.75, md: 1, xl: 1.5 },
-            }),
-          ]}
-        >
-          Minimal
+        Preserve your parish history with
+        {/* Own line, as in the artwork. */}
+        <Box component="span" sx={{ display: 'block', color: 'primary.main' }}>
+          Orthodox Metrics
         </Box>
       </Box>
     </m.div>
   );
 
   const renderText = () => (
-    <m.div {...motionProps}>
-      <Typography
-        variant="body2"
-        sx={[
-          (theme) => ({
-            mx: 'auto',
-            [theme.breakpoints.up(smKey)]: { whiteSpace: 'pre' },
-            [theme.breakpoints.up(lgKey)]: { fontSize: 20, lineHeight: '36px' },
-          }),
-        ]}
-      >
-        {`The starting point for your next project is based on MUI. \nEasy customization helps you build apps faster and better.`}
+    <m.div variants={varFade('inUp', { distance: 24 })}>
+      <Typography sx={{ color: 'text.secondary', fontSize: { md: 18 }, maxWidth: 460 }}>
+        OM helps Orthodox parishes digitize, search, preserve, and manage baptism, marriage, and
+        funeral records in one place.
       </Typography>
-    </m.div>
-  );
-
-  const renderRatings = () => (
-    <m.div {...motionProps}>
-      <Box
-        sx={{
-          gap: 1.5,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          typography: 'subtitle2',
-          justifyContent: 'center',
-        }}
-      >
-        <AvatarGroup
-          sx={{
-            [`& .${avatarClasses.root}`]: {
-              width: 32,
-              height: 32,
-            },
-          }}
-        >
-          {Array.from({ length: 3 }, (_, index) => (
-            <Avatar
-              key={_mock.fullName(index + 1)}
-              alt={_mock.fullName(index + 1)}
-              src={_mock.image.avatar(index + 1)}
-            />
-          ))}
-        </AvatarGroup>
-        160+ Happy customers
-      </Box>
     </m.div>
   );
 
   const renderButtons = () => (
     <Box
+      component={m.div}
+      variants={varFade('inUp', { distance: 24 })}
       sx={{
+        gap: 2,
         display: 'flex',
         flexWrap: 'wrap',
-        justifyContent: 'center',
-        gap: { xs: 1.5, sm: 2 },
+        justifyContent: { xs: 'center', md: 'flex-start' },
       }}
     >
-      <m.div {...motionProps}>
-        <Stack spacing={2.5} sx={{ alignItems: 'center' }}>
-          <Button
-            component={RouterLink}
-            href={paths.dashboard.root}
-            color="inherit"
-            size="large"
-            variant="contained"
-            startIcon={<Iconify width={24} icon="custom:flash-outline" />}
-            sx={{ height: 52 }}
-          >
-            <span>
-              Live preview
-              <Box
-                component="small"
-                sx={[
-                  (theme) => ({
-                    mt: '-4px',
-                    opacity: 0.64,
-                    display: 'flex',
-                    lineHeight: '18px',
-                    fontSize: theme.typography.pxToRem(10),
-                    fontWeight: theme.typography.fontWeightMedium,
-                  }),
-                ]}
-              >
-                v{CONFIG.appVersion}
-              </Box>
-            </span>
-          </Button>
+      <Button
+        component={RouterLink}
+        href={paths.enroll}
+        size="large"
+        color="inherit"
+        variant="contained"
+        endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+        sx={{
+          height: 52,
+          px: 3,
+          // Nudge the arrow along on hover.
+          '& .MuiButton-endIcon': {
+            transition: (theme) => theme.transitions.create(['transform']),
+          },
+          '&:hover .MuiButton-endIcon': { transform: 'translateX(4px)' },
+        }}
+      >
+        Get Started
+      </Button>
 
-          <Link
-            color="inherit"
-            variant="body2"
-            target="_blank"
-            rel="noopener noreferrer"
-            href={paths.freeUI}
-            underline="always"
-            sx={{ gap: 0.75, alignItems: 'center', display: 'inline-flex' }}
-          >
-            <Iconify width={16} icon="eva:external-link-fill" />
-            Try free version
-          </Link>
-        </Stack>
-      </m.div>
-
-      <m.div {...motionProps}>
-        <Button
-          color="inherit"
-          size="large"
-          variant="outlined"
-          target="_blank"
-          rel="noopener noreferrer"
-          href={paths.figmaUrl}
-          startIcon={<Iconify width={24} icon="solar:figma-outline" />}
-          sx={{ height: 52, borderColor: 'currentColor' }}
-        >
-          Figma preview
-        </Button>
-      </m.div>
+      <Button
+        component={RouterLink}
+        href={paths.ocr}
+        size="large"
+        color="inherit"
+        variant="outlined"
+        startIcon={<Iconify width={24} icon="solar:play-circle-bold" />}
+        sx={{ height: 52, px: 3, borderColor: 'currentColor' }}
+      >
+        See how it works
+      </Button>
     </Box>
   );
 
-  const renderIcons = () => (
-    <Stack spacing={3} sx={{ textAlign: 'center' }}>
-      <m.div {...motionProps}>
-        <Typography variant="overline" sx={{ opacity: 0.4 }}>
-          Available For
-        </Typography>
-      </m.div>
-
-      <Box sx={{ gap: 2.5, display: 'flex' }}>
-        {['js', 'ts', 'nextjs', 'vite', 'figma'].map((platform) => (
-          <m.div {...motionProps} key={platform}>
-            <Box
-              component="img"
-              alt={platform}
-              src={`${CONFIG.assetsDir}/assets/icons/platforms/ic-${platform}.svg`}
-              sx={[
-                (theme) => ({
-                  width: 24,
-                  height: 24,
-                  ...theme.applyStyles('dark', {
-                    ...(platform === 'nextjs' && { filter: 'invert(1)' }),
-                  }),
-                }),
-              ]}
+  const renderFeatures = () => (
+    <Box
+      component={m.div}
+      variants={varFade('inUp', { distance: 24 })}
+      sx={{
+        pt: 1,
+        gap: { xs: 2.5, sm: 0 },
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'stretch',
+        justifyContent: { xs: 'center', md: 'flex-start' },
+      }}
+    >
+      {FEATURES.map((feature, index) => (
+        <Box key={feature.label} sx={{ display: 'flex', alignItems: 'center' }}>
+          {index > 0 && (
+            <Divider
+              flexItem
+              orientation="vertical"
+              sx={{ mx: { xs: 2.5, sm: 1.5 }, display: { xs: 'none', sm: 'block' } }}
             />
-          </m.div>
-        ))}
-      </Box>
-    </Stack>
+          )}
+
+          <Box
+            sx={{
+              gap: 1,
+              display: 'flex',
+              alignItems: 'center',
+              transition: (theme) => theme.transitions.create(['transform']),
+              '&:hover': { transform: 'translateY(-3px)' },
+              '&:hover .om-feature-icon': {
+                color: 'primary.contrastText',
+                bgcolor: 'primary.main',
+              },
+            }}
+          >
+            <Box
+              className="om-feature-icon"
+              sx={(theme) => ({
+                width: 34,
+                height: 34,
+                flexShrink: 0,
+                display: 'flex',
+                borderRadius: 1.5,
+                alignItems: 'center',
+                color: 'primary.main',
+                justifyContent: 'center',
+                bgcolor: varAlpha(theme.vars.palette.primary.mainChannel, 0.12),
+                transition: theme.transitions.create(['background-color', 'color']),
+              })}
+            >
+              <Iconify width={20} icon={feature.icon} />
+            </Box>
+
+            <Typography variant="body2" sx={{ fontWeight: 'fontWeightMedium', maxWidth: 132 }}>
+              {feature.label}
+            </Typography>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+
+  const renderArtwork = () => (
+    <Box
+      component={m.div}
+      variants={varFade('inUp', { distance: 32 })}
+      style={reduceMotion ? undefined : { x: artworkX, y: artworkY }}
+      sx={{ position: 'relative' }}
+    >
+      <Box
+        component={m.img}
+        alt="The Orthodox Metrics dashboard beside a 1912 Greek baptism register, a parish church, and a censer"
+        src={`${CONFIG.assetsDir}/assets/images/home/hero-artwork.webp`}
+        animate={reduceMotion ? undefined : { y: [0, -12, 0] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+        sx={{
+          width: 1,
+          display: 'block',
+          aspectRatio: ARTWORK_RATIO,
+          maskImage: HERO_EDGE_MASK,
+          maskComposite: 'intersect',
+          WebkitMaskImage: HERO_EDGE_MASK,
+          WebkitMaskComposite: 'source-in',
+        }}
+      />
+    </Box>
   );
 
   return (
     <Box
-      ref={scrollProgress.elementRef}
+      ref={sectionRef}
       component="section"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
       sx={[
         (theme) => ({
           overflow: 'hidden',
           position: 'relative',
-          [theme.breakpoints.up(mdKey)]: {
-            minHeight: 760,
-            height: '100vh',
-            maxHeight: 1440,
-            display: 'block',
-            willChange: 'opacity',
-            mt: 'calc(var(--layout-header-desktop-height) * -1)',
-          },
+          pt: { xs: 6, md: 4 },
+          pb: { xs: 8, md: 6 },
+          // Recreates the soft glow behind the artwork.
+          ...theme.mixins.bgGradient({
+            images: [
+              `radial-gradient(70% 80% at 72% 40%, ${varAlpha(theme.vars.palette.primary.mainChannel, 0.06)}, transparent 70%)`,
+            ],
+          }),
         }),
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
       {...other}
     >
-      <Box
-        component={m.div}
-        style={{ opacity }}
-        sx={[
-          (theme) => ({
-            width: 1,
-            display: 'flex',
-            position: 'relative',
-            flexDirection: 'column',
-            transition: theme.transitions.create(['opacity']),
-            [theme.breakpoints.up(mdKey)]: {
-              height: 1,
-              position: 'fixed',
-              maxHeight: 'inherit',
-            },
-          }),
-        ]}
-      >
-        <Container
-          component={MotionContainer}
-          sx={[
-            (theme) => ({
-              py: 3,
-              gap: 5,
-              zIndex: 9,
-              display: 'flex',
-              alignItems: 'center',
-              flexDirection: 'column',
-              [theme.breakpoints.up(mdKey)]: {
-                flex: '1 1 auto',
-                justifyContent: 'center',
-                py: 'var(--layout-header-desktop-height)',
-              },
-            }),
-          ]}
+      <Container component={MotionContainer}>
+        <Grid
+          container
+          spacing={{ xs: 5, md: 4 }}
+          sx={{ alignItems: 'center', textAlign: { xs: 'center', md: 'left' } }}
         >
-          <Stack spacing={3} sx={{ textAlign: 'center' }}>
-            <m.div style={{ y: y1 }}>{renderHeading()}</m.div>
-            <m.div style={{ y: y2 }}>{renderText()}</m.div>
-          </Stack>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Stack
+              spacing={3}
+              sx={{ alignItems: { xs: 'center', md: 'flex-start' } }}
+            >
+              {renderEyebrow()}
+              {renderHeading()}
+              {renderText()}
+              {renderButtons()}
+              {renderFeatures()}
+            </Stack>
+          </Grid>
 
-          <m.div style={{ y: y3 }}>{renderRatings()}</m.div>
-          <m.div style={{ y: y4 }}>{renderButtons()}</m.div>
-          <m.div style={{ y: y5 }}>{renderIcons()}</m.div>
-        </Container>
-
-        <HeroBackground />
-      </Box>
+          <Grid size={{ xs: 12, md: 6 }}>{renderArtwork()}</Grid>
+        </Grid>
+      </Container>
     </Box>
   );
 }
 
 // ----------------------------------------------------------------------
 
-function useTransformY(value: MotionValue<number>, distance: number) {
-  const physics: SpringOptions = {
-    mass: 0.1,
-    damping: 20,
-    stiffness: 300,
-    restDelta: 0.001,
-  };
-
-  return useSpring(useTransform(value, [0, 1], [0, distance]), physics);
-}
-
-function useScrollPercent() {
-  const elementRef = useRef<HTMLDivElement>(null);
-
-  const { scrollY } = useScroll();
-
-  const [percent, setPercent] = useState(0);
-
-  useMotionValueEvent(scrollY, 'change', (scrollHeight) => {
-    let heroHeight = 0;
-
-    if (elementRef.current) {
-      heroHeight = elementRef.current.offsetHeight;
-    }
-
-    const scrollPercent = Math.floor((scrollHeight / heroHeight) * 100);
-
-    if (scrollPercent >= 100) {
-      setPercent(100);
-    } else {
-      setPercent(Math.floor(scrollPercent));
-    }
-  });
-
-  return { elementRef, percent, scrollY };
-}
+const FEATURES = [
+  { label: 'Digitize records', icon: 'solar:file-text-bold' },
+  { label: 'Search sacramental history', icon: 'eva:search-fill' },
+  { label: 'Preserve provenance', icon: 'solar:shield-check-bold' },
+] as const;

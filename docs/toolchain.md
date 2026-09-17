@@ -64,3 +64,37 @@ thing to hand the next person.
 - `npx vite build` — 5,661 modules, 24.22s
 - All four production services still `active` and the backend health endpoint returning 200
   after installing Node 22, confirming `/usr/bin/node` was untouched
+
+## Live serving (2026-09-16)
+
+`orthodoxmetrics.com` now serves its public marketing routes from **this repo's**
+`front-end/dist`, staged to `/var/www/orthodoxmetrics/prod/front-end/dist-platform/`.
+
+Routes served by om-platform:
+`/` `/product` `/products` `/records` `/capabilities` `/ocr` `/analytics` `/about`
+`/contact` `/faq` `/pricing` `/enroll` `/latest-news` `/terms` `/privacy` `/security`
+plus redirects from `/about-us`, `/contact-us`, `/faqs`.
+
+Everything else — the whole authenticated application, `/auth/login`, `/api/*`, sockets,
+the embeds — still serves from the legacy `front-end/dist` and is untouched.
+
+Assets are namespaced under `/om-platform/` (see `vite.config.ts`) because the legacy SPA
+also builds bundles to `/assets/index-*.js` and ships images under `/assets/images/`.
+
+nginx snippet backup taken before the change:
+`/etc/nginx/snippets/orthodoxmetrics-common.conf.bak-2026-09-16-213408`
+
+### Deploying a change
+
+```bash
+cd /var/www/om-platform/front-end
+export PATH=/opt/nodejs/current/bin:$PATH
+npx vite build
+sudo rsync -a --delete dist/ /var/www/orthodoxmetrics/prod/front-end/dist-platform/
+sudo chown -R next:next /var/www/orthodoxmetrics/prod/front-end/dist-platform
+```
+
+No nginx reload needed for a content change — only if the route list changes.
+
+**Still no pipeline.** `om-deploy.sh` does not build this repo, so the public site goes
+stale unless the above is run. Adding it to the deploy script remains the top follow-up.

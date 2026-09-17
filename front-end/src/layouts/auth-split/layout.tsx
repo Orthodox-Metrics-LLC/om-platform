@@ -7,12 +7,9 @@ import { merge } from 'es-toolkit';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import Alert from '@mui/material/Alert';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
-
-import { CONFIG } from 'src/global-config';
 
 import { Logo } from 'src/components/logo';
 
@@ -48,11 +45,7 @@ export function AuthSplitLayout({
     };
 
     const headerSlots: HeaderSectionProps['slots'] = {
-      topArea: (
-        <Alert severity="info" sx={{ display: 'none', borderRadius: 0 }}>
-          This is an info Alert.
-        </Alert>
-      ),
+      // `topArea` held the template's hidden demo alert; nothing belongs there.
       leftArea: (
         <>
           {/** @slot Logo */}
@@ -98,42 +91,28 @@ export function AuthSplitLayout({
     <MainSection
       {...slotProps?.main}
       sx={[
-        (theme) => ({ [theme.breakpoints.up(layoutQuery)]: { flexDirection: 'row' } }),
+        (theme) => ({
+          [theme.breakpoints.up(layoutQuery)]: {
+            flexDirection: 'row',
+            /**
+             * Without a cap the two halves drift apart on wide screens: the
+             * panel stays pinned at its max width on the far left while the
+             * content column flexes across the rest of the viewport, leaving
+             * the form stranded a long way from the artwork. Capping the pair
+             * and centring it keeps them together at any width.
+             */
+            width: '100%',
+            maxWidth: 1200,
+            mx: 'auto',
+          },
+        }),
         ...(Array.isArray(slotProps?.main?.sx) ? slotProps.main.sx : [slotProps?.main?.sx]),
       ]}
     >
-      <AuthSplitSection
-        layoutQuery={layoutQuery}
-        method={CONFIG.auth.method}
-        {...slotProps?.section}
-        methods={[
-          {
-            label: 'Jwt',
-            path: paths.auth.jwt.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-jwt.svg`,
-          },
-          {
-            label: 'Firebase',
-            path: paths.auth.firebase.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-firebase.svg`,
-          },
-          {
-            label: 'Amplify',
-            path: paths.auth.amplify.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-amplify.svg`,
-          },
-          {
-            label: 'Auth0',
-            path: paths.auth.auth0.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-auth0.svg`,
-          },
-          {
-            label: 'Supabase',
-            path: paths.auth.supabase.signIn,
-            icon: `${CONFIG.assetsDir}/assets/icons/platforms/ic-supabase.svg`,
-          },
-        ]}
-      />
+      {/* The template used this slot to switch between demo auth providers
+          (Jwt / Firebase / Amplify / Auth0 / Supabase). Orthodox Metrics has one
+          auth backend, so the switcher is gone and the panel is decorative. */}
+      <AuthSplitSection layoutQuery={layoutQuery} {...slotProps?.section} />
       <AuthSplitContent layoutQuery={layoutQuery} {...slotProps?.content}>
         {children}
       </AuthSplitContent>

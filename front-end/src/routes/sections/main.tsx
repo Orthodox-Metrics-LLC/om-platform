@@ -1,7 +1,7 @@
 import type { RouteObject } from 'react-router';
 
-import { Outlet } from 'react-router';
 import { lazy, Suspense } from 'react';
+import { Outlet, Navigate } from 'react-router';
 
 import { MainLayout } from 'src/layouts/main';
 import { SimpleLayout } from 'src/layouts/simple';
@@ -31,6 +31,13 @@ const Page404 = lazy(() => import('src/pages/error/404'));
 // Blank
 const BlankPage = lazy(() => import('src/pages/blank'));
 
+// ----- Orthodox Metrics public site -----
+const EnrollPage = lazy(() => import('src/pages/enroll'));
+const LatestNewsPage = lazy(() => import('src/pages/latest-news'));
+const TermsPage = lazy(() => import('src/pages/terms'));
+const PrivacyPage = lazy(() => import('src/pages/privacy'));
+const SecurityPage = lazy(() => import('src/pages/security'));
+
 // ----------------------------------------------------------------------
 
 export const mainRoutes: RouteObject[] = [
@@ -48,9 +55,19 @@ export const mainRoutes: RouteObject[] = [
           </MainLayout>
         ),
         children: [
-          { path: 'about-us', element: <AboutPage /> },
-          { path: 'contact-us', element: <ContactPage /> },
-          { path: 'faqs', element: <FaqsPage /> },
+          // Orthodox Metrics canonical public routes (PUBLIC_ROUTES).
+          { path: 'about', element: <AboutPage /> },
+          { path: 'contact', element: <ContactPage /> },
+          { path: 'faq', element: <FaqsPage /> },
+          { path: 'enroll', element: <EnrollPage /> },
+          { path: 'latest-news', element: <LatestNewsPage /> },
+          { path: 'terms', element: <TermsPage /> },
+          { path: 'privacy', element: <PrivacyPage /> },
+          { path: 'security', element: <SecurityPage /> },
+          // Minimal template paths, kept so older links keep working.
+          { path: 'about-us', element: <Navigate to="/about" replace /> },
+          { path: 'contact-us', element: <Navigate to="/contact" replace /> },
+          { path: 'faqs', element: <Navigate to="/faq" replace /> },
           { path: 'blank', element: <BlankPage /> },
           {
             path: 'product',

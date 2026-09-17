@@ -21,22 +21,42 @@ import { Iconify } from 'src/components/iconify';
 
 const LINKS = [
   {
-    headline: 'Minimal',
+    headline: 'Product',
     children: [
-      { name: 'About us', href: paths.about },
-      { name: 'Contact us', href: paths.contact },
-      { name: 'FAQs', href: paths.faqs },
+      { name: 'Record capabilities', href: paths.records },
+      { name: 'Paper to digital', href: paths.ocr },
+      { name: 'Pricing', href: paths.pricing },
+      { name: 'Enroll Your Parish', href: paths.enroll },
+    ],
+  },
+  {
+    headline: 'Company',
+    children: [
+      { name: 'About Us', href: paths.about },
+      { name: 'Latest News', href: paths.latestNews },
+      { name: 'Contact', href: paths.contact },
+      { name: 'FAQ', href: paths.faqs },
     ],
   },
   {
     headline: 'Legal',
     children: [
-      { name: 'Terms and condition', href: '#' },
-      { name: 'Privacy policy', href: '#' },
+      { name: 'Terms of Service', href: paths.terms },
+      { name: 'Privacy Policy', href: paths.privacy },
+      { name: 'Security', href: paths.security },
     ],
   },
-  { headline: 'Contact', children: [{ name: 'support@minimals.cc', href: '#' }] },
+  {
+    headline: 'Support',
+    children: [
+      { name: 'info@orthodoxmetrics.com', href: paths.external.supportEmail },
+      { name: 'Monday–Friday, 9am–5pm EST', href: '' },
+    ],
+  },
 ];
+
+/** mailto:/http(s): links must not go through the router. */
+const isExternalHref = (href: string) => /^(mailto:|tel:|https?:)/.test(href);
 
 // ----------------------------------------------------------------------
 
@@ -85,8 +105,9 @@ export function Footer({
                 [theme.breakpoints.up(layoutQuery)]: { mx: 'unset' },
               })}
             >
-              The starting point for your next project with Minimal UI Kit, built on the newest
-              version of Material-UI ©, ready to be customized to your style.
+              Orthodox Metrics is the records platform for Orthodox parishes — secure baptism,
+              marriage, and funeral registers, OCR digitization of historic ledgers, and
+              multi-tenant parish administration.
             </Typography>
 
             <Box
@@ -134,17 +155,23 @@ export function Footer({
                     {list.headline}
                   </Typography>
 
-                  {list.children.map((link) => (
-                    <Link
-                      key={link.name}
-                      component={RouterLink}
-                      href={link.href}
-                      color="inherit"
-                      variant="body2"
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
+                  {list.children.map((link) =>
+                    link.href ? (
+                      <Link
+                        key={link.name}
+                        {...(isExternalHref(link.href) ? {} : { component: RouterLink })}
+                        href={link.href}
+                        color="inherit"
+                        variant="body2"
+                      >
+                        {link.name}
+                      </Link>
+                    ) : (
+                      <Typography key={link.name} variant="body2" sx={{ color: 'text.secondary' }}>
+                        {link.name}
+                      </Typography>
+                    )
+                  )}
                 </Box>
               ))}
             </Box>
@@ -152,7 +179,7 @@ export function Footer({
         </Grid>
 
         <Typography variant="body2" sx={{ mt: 10 }}>
-          © All rights reserved.
+          © {new Date().getFullYear()} Orthodox Metrics. All rights reserved.
         </Typography>
       </Container>
     </FooterRoot>
@@ -176,9 +203,7 @@ export function HomeFooter({ sx, ...other }: FooterProps) {
       <Container>
         <Logo />
         <Box sx={{ mt: 1, typography: 'caption' }}>
-          © All rights reserved.
-          <br /> made by
-          <Link href="https://minimals.cc/"> minimals.cc </Link>
+          © {new Date().getFullYear()} Orthodox Metrics. All rights reserved.
         </Box>
       </Container>
     </FooterRoot>

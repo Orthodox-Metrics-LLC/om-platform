@@ -1,34 +1,30 @@
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 
-import { FaqsHero } from '../faqs-hero';
-import { FaqsList } from '../faqs-list';
-import { FaqsForm } from '../faqs-form';
-import { FaqsCategory } from '../faqs-category';
+import { HomeFAQs } from 'src/sections/home/home-faqs';
+import { ContactForm } from 'src/sections/contact/contact-form';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Renders the home page's FAQ section rather than a second set of questions.
+ *
+ * The template's version drove this page from Minimal's `_faqs` mock, and paired
+ * it with a category row whose icons were e-commerce concepts (delivery, payment,
+ * refund, package) that do not apply to Orthodox Metrics, plus a stock hero
+ * photograph. One source of questions means the two pages cannot disagree.
+ *
+ * The "still have questions" form is the real contact form rather than the
+ * template's `FaqsForm`, which had no submit handler at all.
+ */
 export function FaqsView() {
   return (
     <>
-      <FaqsHero />
-      <Container component="section" sx={{ pb: 10, position: 'relative', pt: { xs: 10, md: 15 } }}>
-        <FaqsCategory />
+      <HomeFAQs />
 
-        <Typography variant="h3" sx={{ my: { xs: 5, md: 10 } }}>
-          Frequently asked questions
-        </Typography>
-
-        <Box
-          sx={{
-            gap: 10,
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' },
-          }}
-        >
-          <FaqsList />
-          <FaqsForm />
+      <Container component="section" sx={{ pb: { xs: 10, md: 15 } }}>
+        <Box sx={{ maxWidth: 640, mx: 'auto' }}>
+          <ContactForm />
         </Box>
       </Container>
     </>

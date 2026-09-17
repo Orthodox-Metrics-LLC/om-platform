@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 
 import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
@@ -85,18 +86,12 @@ const renderDescription = () => (
         typography: { xs: 'h2', md: 'h1' },
       }}
     >
-      Get started with
-      <br /> Minimal kit
-      <Box
-        component="span"
-        sx={(theme) => ({
-          ...theme.mixins.textGradient(
-            `to right, ${theme.vars.palette.common.white}, ${varAlpha(theme.vars.palette.common.whiteChannel, 0.4)}`
-          ),
-          ml: 1,
-        })}
-      >
-        today
+      Ready to preserve
+      <br /> your parish
+      {/* Solid white throughout, matching the supplied banner artwork — the
+          template's fading gradient made the last word look cut off. */}
+      <Box component="span" sx={{ ml: 1 }}>
+        history?
       </Box>
     </Box>
 
@@ -110,33 +105,31 @@ const renderDescription = () => (
     >
       <m.div variants={varFade('inRight', { distance: 24 })}>
         <Button
+          component={RouterLink}
           color="primary"
           size="large"
           variant="contained"
-          target="_blank"
-          rel="noopener noreferrer"
-          href={paths.minimalStore}
+          href={paths.contact}
         >
-          Purchase now
+          Contact Orthodox Metrics
         </Button>
       </m.div>
 
       <m.div variants={varFade('inRight', { distance: 24 })}>
         <Button
+          component={RouterLink}
           color="inherit"
           size="large"
           variant="outlined"
-          target="_blank"
-          rel="noopener noreferrer"
-          href={paths.freeUI}
-          startIcon={<Iconify width={16} icon="eva:external-link-fill" sx={{ mr: 0.5 }} />}
+          href={paths.ocr}
+          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
           sx={{
             color: 'common.white',
             borderColor: 'common.white',
             '&:hover': { borderColor: 'currentColor' },
           }}
         >
-          Get free version
+          See how it works
         </Button>
       </m.div>
     </Box>
@@ -149,12 +142,13 @@ const renderImage = () => (
       component={m.img}
       animate={{ y: [-20, 0, -20] }}
       transition={{ duration: 4, repeat: Infinity }}
-      alt="Rocket"
-      src={`${CONFIG.assetsDir}/assets/illustrations/illustration-rocket-large.webp`}
+      alt="An Orthodox service book beside a parish church and a records chart"
+      src={`${CONFIG.assetsDir}/assets/images/home/om-cta-illustration.webp`}
       sx={{
         zIndex: 9,
-        width: 360,
-        aspectRatio: '1/1',
+        width: 320,
+        // The artwork is portrait, not square like the illustration it replaced.
+        aspectRatio: 555 / 690,
         position: 'relative',
       }}
     />

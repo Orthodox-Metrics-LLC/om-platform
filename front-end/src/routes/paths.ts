@@ -16,13 +16,39 @@ const ROOTS = {
 // ----------------------------------------------------------------------
 
 export const paths = {
+  /**
+   * Orthodox Metrics public site. Paths follow OM's canonical PUBLIC_ROUTES, not the
+   * template's defaults — `/about` not `/about-us`, `/faq` not `/faqs`. The template
+   * paths are kept as redirects in `routes/sections/main.tsx`.
+   */
+  home: '/',
+  about: '/about',
+  contact: '/contact',
+  faqs: '/faq',
+  enroll: '/enroll',
+  latestNews: '/latest-news',
+  terms: '/terms',
+  privacy: '/privacy',
+  security: '/security',
+  /**
+   * Deep links into the home page's own walkthrough sections — see
+   * `sections/home/landing-sections.ts`. Canonical OM routes.
+   */
+  records: '/records',
+  capabilities: '/capabilities',
+  ocr: '/ocr',
+  analytics: '/analytics',
+  /** OM's real login. Distinct from the template's `auth` demo routes below. */
+  signIn: '/auth/login',
+  external: {
+    supportEmail: 'mailto:info@orthodoxmetrics.com',
+  },
+
+  // ----- template defaults below -----
   comingSoon: '/coming-soon',
   maintenance: '/maintenance',
   pricing: '/pricing',
   payment: '/payment',
-  about: '/about-us',
-  contact: '/contact-us',
-  faqs: '/faqs',
   page403: '/error/403',
   page404: '/error/404',
   page500: '/error/500',

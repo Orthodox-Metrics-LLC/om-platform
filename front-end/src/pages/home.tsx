@@ -3,9 +3,9 @@ import { HomeView } from 'src/sections/home/view';
 // ----------------------------------------------------------------------
 
 const metadata = {
-  title: 'Minimals UI: The starting point for your next project',
+  title: 'Orthodox Metrics — Preserve your parish history',
   description:
-    'The starting point for your next project with Minimal UI Kit, built on the newest version of Material-UI ©, ready to be customized to your style',
+    'The modern platform for baptism, marriage, and funeral registers — digitization, search, and stewardship in one place.',
 };
 
 export default function Page() {

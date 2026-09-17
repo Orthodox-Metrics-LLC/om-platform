@@ -8,6 +8,7 @@ import Drawer from '@mui/material/Drawer';
 
 import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
 
 import { Logo } from 'src/components/logo';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -97,12 +98,12 @@ export function NavMobile({ data, open, onClose, slots, sx }: NavMobileProps) {
 
           <Button
             fullWidth
+            component={RouterLink}
             variant="contained"
-            rel="noopener noreferrer"
-            target="_blank"
-            href={paths.minimalStore}
+            color="inherit"
+            href={paths.enroll}
           >
-            Purchase
+            Get Started
           </Button>
         </Box>
       )}

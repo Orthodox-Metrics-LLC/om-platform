@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { styled, useTheme } from '@mui/material/styles';
 
 import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
@@ -50,8 +51,8 @@ export function HomeHugePackElements({ sx, ...other }: BoxProps) {
         <Container sx={{ textAlign: { xs: 'center', md: 'left' } }}>
           <Grid container rowSpacing={{ xs: 3, md: 0 }} columnSpacing={{ xs: 0, md: 8 }}>
             <Grid size={{ xs: 12, md: 6, lg: 7 }}>
-              <SectionCaption title="Interface Starter Kit" />
-              <SectionTitle title="Large bundle of" txtGradient="elements" sx={{ mt: 3 }} />
+              <SectionCaption title="Metrical record lifecycle" />
+              <SectionTitle title="Large bundle of records" sx={{ mt: 3 }} />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6, lg: 5 }}>
@@ -60,10 +61,10 @@ export function HomeHugePackElements({ sx, ...other }: BoxProps) {
                   sx={{ color: 'text.disabled', fontSize: { md: 20 }, lineHeight: { md: 36 / 20 } }}
                 >
                   <Box component="span" sx={{ color: 'text.primary' }}>
-                    Explore a comprehensive range of elements
+                    Orthodox Metrics handles the complete sacramental lifecycle
                   </Box>
-                  <br />
-                  like menus, sliders, buttons, inputs, and others, all conveniently gathered here.
+                  <br />— from digitizing century-old handwritten ledgers to generating official
+                  certificates on demand.
                 </Typography>
               </m.div>
             </Grid>
@@ -71,16 +72,15 @@ export function HomeHugePackElements({ sx, ...other }: BoxProps) {
 
           <m.div variants={varFade('inUp', { distance: 24 })}>
             <Button
+              component={RouterLink}
               size="large"
               color="inherit"
               variant="outlined"
-              target="_blank"
-              rel="noopener noreferrer"
-              href={paths.components}
+              href={paths.contact}
               endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
               sx={{ mt: 5, mx: 'auto' }}
             >
-              Browse components
+              Talk to us about your registers
             </Button>
           </m.div>
         </Container>
@@ -137,28 +137,17 @@ function ScrollableContent() {
     <ScrollRoot ref={containerRef} sx={{ height: scrollRect.scrollWidth, minHeight: '100vh' }}>
       <ScrollContainer style={{ background }} data-scrolling={startScroll}>
         <ScrollContent ref={scrollRef} layout transition={{ ease: 'linear', duration: 0.25 }}>
-          <ScrollItem
-            style={{ x: x1 }}
-            sx={{
-              height: { xs: 160, md: 180 },
-              width: { xs: '600%', md: '400%' },
-              backgroundImage: `url(${CONFIG.assetsDir}/assets/images/home/bundle-light-1.webp)`,
-              ...theme.applyStyles('dark', {
-                backgroundImage: `url(${CONFIG.assetsDir}/assets/images/home/bundle-dark-1.webp)`,
-              }),
-            }}
-          />
-          <ScrollItem
-            style={{ x: x2 }}
-            sx={{
-              height: { xs: 400, md: 480 },
-              width: { xs: '600%', md: '400%' },
-              backgroundImage: `url(${CONFIG.assetsDir}/assets/images/home/bundle-light-2.webp)`,
-              ...theme.applyStyles('dark', {
-                backgroundImage: `url(${CONFIG.assetsDir}/assets/images/home/bundle-dark-2.webp)`,
-              }),
-            }}
-          />
+          <ScrollItem style={{ x: x1 }} sx={{ height: { xs: 130, md: 180 } }}>
+            {repeatTiles(TOP_ROW, 4).map((tile, index) => (
+              <StripTile key={`${tile.src}-${index}`} tile={tile} />
+            ))}
+          </ScrollItem>
+
+          <ScrollItem style={{ x: x2 }} sx={{ height: { xs: 320, md: 480 } }}>
+            {repeatTiles(BOTTOM_ROW, 2).map((tile, index) => (
+              <StripTile key={`${tile.src}-${index}`} tile={tile} />
+            ))}
+          </ScrollItem>
         </ScrollContent>
       </ScrollContainer>
     </ScrollRoot>
@@ -197,8 +186,112 @@ const ScrollContent = styled(m.div)(({ theme }) => ({
   },
 }));
 
-const ScrollItem = styled(m.div)({
-  backgroundSize: 'auto 100%',
-  backgroundRepeat: 'repeat-x',
-  backgroundPosition: 'center center',
-});
+const ScrollItem = styled(m.div)(({ theme }) => ({
+  display: 'flex',
+  flexShrink: 0,
+  alignItems: 'center',
+  width: 'max-content',
+  gap: theme.spacing(2.5),
+  [theme.breakpoints.up('md')]: {
+    gap: theme.spacing(4),
+  },
+}));
+
+// ----------------------------------------------------------------------
+
+/** `ratio` is the asset's intrinsic width/height. */
+type StripTileItem = { src: string; alt: string; ratio: number };
+
+function StripTile({ tile }: { tile: StripTileItem }) {
+  return (
+    <Box
+      component="img"
+      loading="lazy"
+      alt={tile.alt}
+      src={`${CONFIG.assetsDir}/assets/images/home/records/${tile.src}`}
+      sx={(theme) => ({
+        height: 1,
+        flexShrink: 0,
+        borderRadius: 2,
+        objectFit: 'contain',
+        bgcolor: 'background.paper',
+        boxShadow: theme.vars.customShadows.z8,
+        /**
+         * The declared ratio sizes the box from the row height before the image
+         * bytes arrive. Without it, lazily-loaded images have no intrinsic width
+         * when `useClientRect` measures the row, the measured scroll width
+         * collapses, and the section becomes too short to scroll through.
+         */
+        aspectRatio: tile.ratio,
+      })}
+    />
+  );
+}
+
+/**
+ * The rows have to be wider than the viewport for the horizontal scroll to have
+ * anywhere to travel, so the tiles are repeated — the same effect the original
+ * `repeat-x` background produced.
+ */
+function repeatTiles(tiles: StripTileItem[], times: number): StripTileItem[] {
+  return Array.from({ length: times }, () => tiles).flat();
+}
+
+// ----------------------------------------------------------------------
+
+/** Shorter row: wide dashboard and summary views. */
+const TOP_ROW: StripTileItem[] = [
+  { src: 'records-overview.webp', ratio: 1.495, alt: 'Church records summary with yearly totals' },
+  {
+    src: 'parish-history.webp',
+    ratio: 2.665,
+    alt: 'Parish history dashboard showing record trends by year',
+  },
+  {
+    src: 'register-cards-trio.webp',
+    ratio: 2.04,
+    alt: 'Three baptism register cards from a parish archive',
+  },
+  {
+    src: 'notebook-entries.webp',
+    ratio: 1.495,
+    alt: 'Guide to reading entries in a parish notebook',
+  },
+];
+
+/**
+ * Taller row. Opens on the same baptism record (No. 15401) as it moves from the
+ * handwritten page, to a transcription, to a structured record in the platform.
+ */
+const BOTTOM_ROW: StripTileItem[] = [
+  {
+    src: 'register-handwritten.webp',
+    ratio: 0.8,
+    alt: 'Handwritten baptism register card, parish record 15401',
+  },
+  {
+    src: 'register-transcribed.webp',
+    ratio: 0.8,
+    alt: 'The same baptism record transcribed into print',
+  },
+  {
+    src: 'register-digitized.webp',
+    ratio: 0.8,
+    alt: 'The same baptism record as a structured digital record',
+  },
+  {
+    src: 'ocr-batch-progress.webp',
+    ratio: 1.234,
+    alt: 'OCR batch processing progress for a parish register',
+  },
+  {
+    src: 'ocr-batch-complete.webp',
+    ratio: 1.128,
+    alt: 'Completed OCR batch ready for review',
+  },
+  {
+    src: 'certificate-generator.webp',
+    ratio: 1.776,
+    alt: 'Certificate generator with a live baptism certificate preview',
+  },
+];

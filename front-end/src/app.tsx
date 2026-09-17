@@ -16,6 +16,7 @@ import { SettingsDrawer, defaultSettings, SettingsProvider } from 'src/component
 
 import { CheckoutProvider } from 'src/sections/checkout/context';
 
+import { OmAuthProvider } from 'src/auth/context/om-auth';
 import { AuthProvider as JwtAuthProvider } from 'src/auth/context/jwt';
 import { AuthProvider as Auth0AuthProvider } from 'src/auth/context/auth0';
 import { AuthProvider as AmplifyAuthProvider } from 'src/auth/context/amplify';
@@ -42,25 +43,29 @@ export default function App({ children }: AppProps) {
 
   return (
     <I18nProvider>
-      <AuthProvider>
-        <SettingsProvider defaultSettings={defaultSettings}>
-          <LocalizationProvider>
-            <ThemeProvider
-              modeStorageKey={themeConfig.modeStorageKey}
-              defaultMode={themeConfig.defaultMode}
-            >
-              <MotionLazy>
-                <CheckoutProvider>
-                  <Snackbar />
-                  <ProgressBar />
-                  <SettingsDrawer defaultSettings={defaultSettings} />
-                  {children}
-                </CheckoutProvider>
-              </MotionLazy>
-            </ThemeProvider>
-          </LocalizationProvider>
-        </SettingsProvider>
-      </AuthProvider>
+      {/* Orthodox Metrics auth against the real backend. Sits outside the template's
+          own AuthProvider, which drives its demo provider pages. */}
+      <OmAuthProvider>
+        <AuthProvider>
+          <SettingsProvider defaultSettings={defaultSettings}>
+            <LocalizationProvider>
+              <ThemeProvider
+                modeStorageKey={themeConfig.modeStorageKey}
+                defaultMode={themeConfig.defaultMode}
+              >
+                <MotionLazy>
+                  <CheckoutProvider>
+                    <Snackbar />
+                    <ProgressBar />
+                    <SettingsDrawer defaultSettings={defaultSettings} />
+                    {children}
+                  </CheckoutProvider>
+                </MotionLazy>
+              </ThemeProvider>
+            </LocalizationProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </OmAuthProvider>
     </I18nProvider>
   );
 }

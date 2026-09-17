@@ -61,7 +61,7 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
               },
             ]}
           >
-            <SectionTitle caption="App Features" title="Highlight" txtGradient="features" />
+            <SectionTitle caption="Platform features" title="Highlight features" />
 
             <SvgIcon
               component={m.svg}
@@ -93,27 +93,34 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 const ITEMS = [
   {
     title: 'Dark mode',
-    subtitle: 'A dark theme that feels easier on the eyes.',
+    subtitle: 'A quieter interface for long sessions in the archive.',
     icon: 'solar:cloudy-moon-bold-duotone',
-    imgUrl: [`${CONFIG.assetsDir}/assets/images/home/highlight-darkmode.webp`],
+    images: [{ src: 'dashboard-dark.webp', ratio: 1.0, alt: 'The Orthodox Metrics dashboard in dark mode' }],
   },
   {
-    title: 'Color presets',
-    subtitle: 'Express your own style with just one click.',
+    title: 'Theme presets',
+    subtitle: 'Each parish picks the palette that suits its own character.',
     icon: 'solar:pallete-2-bold-duotone',
-    imgUrl: [
-      `${CONFIG.assetsDir}/assets/images/home/highlight-presets-1.webp`,
-      `${CONFIG.assetsDir}/assets/images/home/highlight-presets-2.webp`,
-      `${CONFIG.assetsDir}/assets/images/home/highlight-presets-3.webp`,
-      `${CONFIG.assetsDir}/assets/images/home/highlight-presets-4.webp`,
-      `${CONFIG.assetsDir}/assets/images/home/highlight-presets-5.webp`,
+    images: [
+      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The dashboard in a blue theme' },
+      { src: 'dashboard-presets.webp', ratio: 1.0, alt: 'The dashboard in a gold theme' },
     ],
   },
   {
-    title: 'Right-to-left',
-    subtitle: 'Support languages such as Arabic, Persian, and Hebrew.',
-    icon: 'solar:align-right-bold-duotone',
-    imgUrl: [`${CONFIG.assetsDir}/assets/images/home/highlight-rtl.webp`],
+    title: 'Multilingual interface',
+    subtitle:
+      'The whole dashboard in Greek, Russian, Georgian, Arabic, and English — including full right-to-left layout.',
+    icon: 'solar:global-bold-duotone',
+    images: [
+      { src: 'dashboard-greek.webp', ratio: 1.3339, alt: 'The dashboard in Greek' },
+      { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The dashboard in Russian' },
+      { src: 'dashboard-georgian.webp', ratio: 1.5, alt: 'The dashboard in Georgian' },
+      {
+        src: 'dashboard-arabic.webp',
+        ratio: 1.3333,
+        alt: 'The dashboard in Arabic, laid out right-to-left',
+      },
+    ],
   },
 ] as const;
 
@@ -233,11 +240,12 @@ function Item({ item, sx, ...other }: ItemProps) {
       </Box>
 
       <Box sx={{ display: 'flex', gap: { xs: 5, md: 8 } }}>
-        {item.imgUrl.map((url) => (
+        {item.images.map((image) => (
           <Box
-            key={url}
+            key={image.src}
             sx={[
               (theme) => ({
+                flexShrink: 0,
                 borderRadius: 2,
                 overflow: 'hidden',
                 boxShadow: `-40px 40px 80px 0px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.16)}`,
@@ -249,16 +257,22 @@ function Item({ item, sx, ...other }: ItemProps) {
           >
             <Box
               component="img"
-              alt={url}
-              src={url}
+              loading="lazy"
+              alt={image.alt}
+              src={`${CONFIG.assetsDir}/assets/images/home/highlights/${image.src}`}
               sx={{
-                width: {
-                  xs: 480,
-                  sm: 640,
-                  md: 800,
-                  lg: 1140,
-                  xl: 1280,
-                },
+                display: 'block',
+                /**
+                 * Sized by height, not width — the artwork comes in several
+                 * aspect ratios and a shared height keeps the row aligned.
+                 */
+                height: { xs: 300, sm: 400, md: 500, lg: 620, xl: 680 },
+                /**
+                 * Declared so the box has width before the lazy image loads —
+                 * this section derives its scroll length from the measured
+                 * content width, which would otherwise collapse.
+                 */
+                aspectRatio: image.ratio,
               }}
             />
           </Box>

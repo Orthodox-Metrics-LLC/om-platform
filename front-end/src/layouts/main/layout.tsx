@@ -6,11 +6,11 @@ import type { MainSectionProps, HeaderSectionProps, LayoutSectionProps } from '.
 import { useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
-import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 
 import { paths } from 'src/routes/paths';
 import { usePathname } from 'src/routes/hooks';
+import { RouterLink } from 'src/routes/components';
 
 import { Logo } from 'src/components/logo';
 
@@ -56,11 +56,6 @@ export function MainLayout({
 
   const renderHeader = () => {
     const headerSlots: HeaderSectionProps['slots'] = {
-      topArea: (
-        <Alert severity="info" sx={{ display: 'none', borderRadius: 0 }}>
-          This is an info Alert.
-        </Alert>
-      ),
       leftArea: (
         <>
           {/** @slot Nav mobile */}
@@ -96,18 +91,18 @@ export function MainLayout({
             {/** @slot Sign in button */}
             <SignInButton />
 
-            {/** @slot Purchase button */}
+            {/** @slot Get started button */}
             <Button
+              component={RouterLink}
               variant="contained"
-              rel="noopener noreferrer"
-              target="_blank"
-              href={paths.minimalStore}
+              color="inherit"
+              href={paths.enroll}
               sx={(theme) => ({
                 display: 'none',
                 [theme.breakpoints.up(layoutQuery)]: { display: 'inline-flex' },
               })}
             >
-              Purchase
+              Get Started
             </Button>
           </Box>
         </>

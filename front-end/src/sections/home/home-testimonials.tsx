@@ -11,9 +11,7 @@ import Divider from '@mui/material/Divider';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
-import { fToNow } from 'src/utils/format-time';
-
-import { _mock } from 'src/_mock';
+import { CONFIG } from 'src/global-config';
 
 import { varFade, MotionViewport, AnimateCountUp } from 'src/components/animate';
 import {
@@ -75,8 +73,7 @@ export function HomeTestimonials({ sx, ...other }: BoxProps) {
   const renderDescription = () => (
     <SectionTitle
       caption="testimonials"
-      title="Rumors are flying"
-      txtGradient="that..."
+      title="Who trusts Orthodox Metrics"
       sx={{ mb: { xs: 5, md: 8 }, textAlign: 'center' }}
     />
   );
@@ -125,7 +122,6 @@ export function HomeTestimonials({ sx, ...other }: BoxProps) {
           <Stack key={item.id} component={m.div} variants={varFade('in')}>
             <Stack spacing={1} sx={{ typography: 'subtitle2' }}>
               <Rating size="small" name="read-only" value={item.rating} precision={0.5} readOnly />
-              {item.category}
             </Stack>
 
             <Typography
@@ -144,7 +140,7 @@ export function HomeTestimonials({ sx, ...other }: BoxProps) {
                 <Box component="span">{item.name}</Box>
 
                 <Box component="span" sx={{ typography: 'body2', color: 'text.disabled' }}>
-                  {fToNow(new Date(item.postedAt))}
+                  {item.role}
                 </Box>
               </Stack>
             </Box>
@@ -181,16 +177,16 @@ export function HomeTestimonials({ sx, ...other }: BoxProps) {
         sx={{ gap: 5, flexDirection: { xs: 'column', md: 'row' } }}
       >
         {[
-          { label: 'Purchased order', value: 12.121 },
-          { label: 'Happy customers', value: 160 },
+          { label: 'Records digitized', value: 120.4 },
+          { label: 'Parishes served', value: 500 },
           { label: 'Review rate', value: 4.9 },
         ].map((item) => (
           <Stack key={item.label} spacing={2} sx={{ textAlign: 'center', width: 1 }}>
             <m.div variants={varFade('inUp', { distance: 24 })}>
               <AnimateCountUp
                 to={item.value}
-                unit={item.label === 'Purchased order' ? 'k+' : '+'}
-                toFixed={item.label === 'Happy customers' ? 0 : 1}
+                unit={item.label === 'Records digitized' ? 'k+' : '+'}
+                toFixed={item.label === 'Parishes served' ? 0 : 1}
                 sx={[
                   (theme) => ({
                     fontWeight: 'fontWeightBold',
@@ -247,63 +243,54 @@ export function HomeTestimonials({ sx, ...other }: BoxProps) {
 
 // ----------------------------------------------------------------------
 
+/** Avatars are illustrated figures, not photographs of real people. */
 const createReview = (index: number) => ({
-  id: _mock.id(index),
-  name: _mock.fullName(index),
-  avatar: _mock.image.avatar(index),
+  id: `om-testimonial-${index}`,
+  avatar: `${CONFIG.assetsDir}/assets/images/home/avatars/avatar-${index}.webp`,
   rating: 5,
 });
 
 const TESTIMONIALS = [
   {
     ...createReview(1),
-    category: 'Design Quality',
-    content: `The quality of this template is very good, the TypeScript files are neat and the communication with the team behind this template is very good! I would recommend this template for any kind of project, as they implement new features every now and then and enhance their design. I will definitely be using more templates from this team and re-purchasing this template for other projects.`,
-    postedAt: 'April 20, 2024 23:15:30',
+    name: 'Fr. Michael D.',
+    role: 'Parish Priest',
+    content:
+      'Orthodox Metrics transformed how we manage our 90-year archive. Records that took hours to find are now searchable in seconds.',
   },
   {
     ...createReview(2),
-    category: 'Design Quality',
-    content: `Amazing. I've never purchased complete front ends before, but I'll definitely be doing this again!`,
-    postedAt: 'March 19, 2024 23:15:30',
+    name: 'Nicholas K.',
+    role: 'Parish Secretary',
+    content:
+      'The certificate generation alone saves me an entire day each month. Everything is accurate and beautifully formatted.',
   },
   {
     ...createReview(3),
-    category: 'Code Quality',
-    content: `Clean & Complete (Design & Code). Thansk Minimal team :)`,
-    postedAt: 'April 19, 2023 23:15:30',
+    name: 'Dn. Peter S.',
+    role: 'Deacon',
+    content:
+      'Finally, a system that understands Orthodox parish needs — dual calendars, multilingual support, the whole thing.',
   },
   {
     ...createReview(4),
-    category: 'Customer Support',
-    content: `Thanks to Minimal for customer support with email. I solved the problem. And the code quality is good, too.`,
-    postedAt: 'May 19, 2023 23:15:30',
+    name: 'Andrei R.',
+    role: 'Diocesan Administrator',
+    content:
+      'Rolling up data across twelve parishes used to be a nightmare. Now I have a single dashboard for everything.',
   },
   {
     ...createReview(5),
-    category: 'Customer Support',
+    name: 'Fr. George T.',
+    role: 'Cathedral Dean',
     content:
-      'Great UI kit, really beautiful as well. Also the customer support is very warm-hearted. However, I hope the components and themes can be provided as a separated project (package).',
-    postedAt: 'June 19, 2023 23:15:30',
+      'We digitized over 4,000 pages of historical registers. The OCR quality exceeded our expectations.',
   },
   {
     ...createReview(6),
-    category: 'Design Quality',
-    content: 'I would never have been able to create all these beautifull components myself!',
-    postedAt: 'July 19, 2023 23:15:30',
-  },
-  {
-    ...createReview(7),
-    category: 'Code Quality',
+    name: 'Stefan M.',
+    role: 'Office Manager',
     content:
-      'The quality of this template is excellent. However, as an individual, the cost of obtaining the TypeScript Source version is beyond my means. Despite my strong desire to acquire it, my limited personal budget does not allow me to do so.',
-    postedAt: 'August 19, 2023 23:15:30',
-  },
-  {
-    ...createReview(8),
-    category: 'Customizability',
-    content:
-      'The design and code quality are impressive. Regular updates and excellent customer support are major advantages.',
-    postedAt: 'September 19, 2023 23:15:30',
+      'The multilingual support is incredible. We serve a mixed Greek and English congregation and everything works seamlessly.',
   },
 ];

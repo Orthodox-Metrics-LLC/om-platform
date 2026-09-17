@@ -32,9 +32,9 @@ export function AuthSplitSection({
   method,
   methods,
   layoutQuery = 'md',
-  title = 'Manage the job',
-  imgUrl = `${CONFIG.assetsDir}/assets/illustrations/illustration-dashboard.webp`,
-  subtitle = 'More effectively with optimized workflows.',
+  title = '',
+  imgUrl = `${CONFIG.assetsDir}/assets/images/auth/sign-in-panel.webp`,
+  subtitle = '',
   ...other
 }: AuthSplitSectionProps) {
   return (
@@ -50,7 +50,10 @@ export function AuthSplitSection({
           px: 3,
           pb: 3,
           width: 1,
-          maxWidth: 480,
+          // Grows with the viewport rather than staying a fixed strip, so the
+          // artwork keeps pace with the form column.
+          flex: '1 1 50%',
+          maxWidth: 560,
           display: 'none',
           position: 'relative',
           pt: 'var(--layout-header-desktop-height)',
@@ -66,23 +69,28 @@ export function AuthSplitSection({
       ]}
       {...other}
     >
-      <div>
-        <Typography variant="h3" sx={{ textAlign: 'center' }}>
-          {title}
-        </Typography>
+      {/* Optional — the default artwork carries its own lockup and needs no caption. */}
+      {(title || subtitle) && (
+        <div>
+          {title && (
+            <Typography variant="h3" sx={{ textAlign: 'center' }}>
+              {title}
+            </Typography>
+          )}
 
-        {subtitle && (
-          <Typography sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}>
-            {subtitle}
-          </Typography>
-        )}
-      </div>
+          {subtitle && (
+            <Typography sx={{ color: 'text.secondary', textAlign: 'center', mt: 2 }}>
+              {subtitle}
+            </Typography>
+          )}
+        </div>
+      )}
 
       <Box
         component="img"
-        alt="Dashboard illustration"
+        alt="An Orthodox parish register open beside candles, an icon of Christ, and a domed church"
         src={imgUrl}
-        sx={{ width: 1, aspectRatio: '4/3', objectFit: 'cover' }}
+        sx={{ width: 1, borderRadius: 2, aspectRatio: '4/3', objectFit: 'cover' }}
       />
 
       {!!methods?.length && method && (

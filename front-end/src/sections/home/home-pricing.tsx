@@ -14,8 +14,7 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
 import { paths } from 'src/routes/paths';
-
-import { CONFIG } from 'src/global-config';
+import { RouterLink } from 'src/routes/components';
 
 import { Iconify } from 'src/components/iconify';
 import { varFade, varScale, MotionViewport } from 'src/components/animate';
@@ -26,14 +25,14 @@ import { FloatLine, FloatXIcon } from './components/svg-elements';
 // ----------------------------------------------------------------------
 
 export function HomePricing({ sx, ...other }: BoxProps) {
-  const tabs = useTabs('Standard');
+  const tabs = useTabs('Parish Essentials');
 
   const renderDescription = () => (
     <SectionTitle
       caption="plans"
-      title="Transparent"
-      txtGradient="pricing"
-      description="Choose from flexible pricing options designed to fit your business needs and budget with no hidden fees."
+      title="Flexible plans designed to"
+      txtGradient="scale"
+      description="From small rural parishes to cathedral archives — one-time digitization for your historic books, plus affordable monthly hosting for a living sacramental registry."
       sx={{ mb: 8, textAlign: 'center' }}
     />
   );
@@ -139,10 +138,16 @@ export function HomePricing({ sx, ...other }: BoxProps) {
 type PlanCardProps = BoxProps & {
   plan: {
     license: string;
-    price: number;
-    commons: string[];
-    options: string[];
-    icons: string[];
+    /** Display text, e.g. `$4.99`, or wording such as `Contact Us`. */
+    price: string;
+    /** Suffix shown after a quoted figure; omitted when there is no figure. */
+    period?: string;
+    caption: string;
+    features: string[];
+    cta: string;
+    href: string;
+    /** Renders the emphasised middle card treatment. */
+    highlight?: boolean;
   };
 };
 
@@ -158,9 +163,7 @@ const renderLines = () => (
 );
 
 function PlanCard({ plan, sx, ...other }: PlanCardProps) {
-  const standardLicense = plan.license === 'Standard';
-
-  const plusLicense = plan.license === 'Plus';
+  const plusLicense = !!plan.highlight;
 
   return (
     <MotionViewport>
@@ -180,7 +183,9 @@ function PlanCard({ plan, sx, ...other }: PlanCardProps) {
       >
         {plusLicense && renderLines()}
 
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        {/* `gap` matters when the plan name fits on one line — without it the
+            name and the price run together. */}
+        <Box sx={{ gap: 2, display: 'flex', alignItems: 'center' }}>
           <Box sx={{ flex: '1 1 auto' }}>
             <m.div variants={varFade('inLeft', { distance: 24 })}>
               <Typography variant="h4" component="h6">
@@ -195,8 +200,7 @@ function PlanCard({ plan, sx, ...other }: PlanCardProps) {
                   height: 6,
                   opacity: 0.24,
                   borderRadius: 1,
-                  bgcolor: 'error.main',
-                  ...(standardLicense && { bgcolor: 'primary.main' }),
+                  bgcolor: 'primary.main',
                   ...(plusLicense && { bgcolor: 'secondary.main' }),
                 }}
               />
@@ -204,36 +208,32 @@ function PlanCard({ plan, sx, ...other }: PlanCardProps) {
           </Box>
 
           <m.div variants={varFade('inLeft', { distance: 24 })}>
-            <Box component="span" sx={{ typography: 'h3' }}>
-              ${plan.price}
+            <Box
+              component="span"
+              sx={{ whiteSpace: 'nowrap', typography: plan.period ? 'h3' : 'h4' }}
+            >
+              {plan.price}
+              {plan.period && (
+                <Box component="span" sx={{ typography: 'body2', color: 'text.disabled' }}>
+                  {plan.period}
+                </Box>
+              )}
             </Box>
           </m.div>
         </Box>
 
-        <Box sx={{ gap: 2, display: 'flex' }}>
-          {plan.icons.map((icon, index) => (
-            <Box
-              component={m.img}
-              variants={varFade('in')}
-              key={icon}
-              alt={icon}
-              src={icon}
-              sx={{
-                width: 24,
-                height: 24,
-                ...(standardLicense && [1, 2].includes(index) && { display: 'none' }),
-              }}
-            />
-          ))}
-          {standardLicense && (
-            <Box component={m.span} variants={varFade('in')} sx={{ ml: -1 }}>
-              (only)
-            </Box>
-          )}
-        </Box>
+        <m.div variants={varFade('in')}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {plan.caption}
+          </Typography>
+        </m.div>
 
         <Stack spacing={2.5}>
-          {plan.commons.map((option) => (
+          <m.div variants={varFade('inLeft', { distance: 24 })}>
+            <Divider sx={{ borderStyle: 'dashed' }} />
+          </m.div>
+
+          {plan.features.map((option) => (
             <Box
               key={option}
               component={m.div}
@@ -249,50 +249,18 @@ function PlanCard({ plan, sx, ...other }: PlanCardProps) {
               {option}
             </Box>
           ))}
-
-          <m.div variants={varFade('inLeft', { distance: 24 })}>
-            <Divider sx={{ borderStyle: 'dashed' }} />
-          </m.div>
-
-          {plan.options.map((option, index) => {
-            const disabled =
-              (standardLicense && [1, 2, 3].includes(index)) ||
-              (plusLicense && [3].includes(index));
-
-            return (
-              <Box
-                key={option}
-                component={m.div}
-                variants={varFade('in')}
-                sx={{
-                  gap: 1.5,
-                  display: 'flex',
-                  typography: 'body2',
-                  alignItems: 'center',
-                  ...(disabled && { color: 'text.disabled', textDecoration: 'line-through' }),
-                }}
-              >
-                <Iconify
-                  width={18}
-                  icon={disabled ? 'mingcute:close-line' : 'eva:checkmark-fill'}
-                />
-                {option}
-              </Box>
-            );
-          })}
         </Stack>
 
         <m.div variants={varFade('inUp', { distance: 24 })}>
           <Button
             fullWidth
+            component={RouterLink}
             variant={plusLicense ? 'contained' : 'outlined'}
             color="inherit"
             size="large"
-            target="_blank"
-            rel="noopener noreferrer"
-            href={paths.minimalStore}
+            href={plan.href}
           >
-            Get started
+            {plan.cta}
           </Button>
         </m.div>
       </Box>
@@ -302,25 +270,47 @@ function PlanCard({ plan, sx, ...other }: PlanCardProps) {
 
 // ----------------------------------------------------------------------
 
-const PLANS = Array.from({ length: 3 }, (_, index) => ({
-  license: ['Standard', 'Plus', 'Extended'][index],
-  price: [69, 129, 599][index],
-  commons: [
-    'One end products',
-    '12 months updates',
-    '6 months of support',
-    'One-time payments',
-    'Lifetime perpetual license.',
-  ],
-  options: [
-    'JavaScript version',
-    'TypeScript version',
-    'Design resources (Figma)',
-    'Commercial applications',
-  ],
-  icons: [
-    `${CONFIG.assetsDir}/assets/icons/platforms/ic-js.svg`,
-    `${CONFIG.assetsDir}/assets/icons/platforms/ic-ts.svg`,
-    `${CONFIG.assetsDir}/assets/icons/platforms/ic-figma.svg`,
-  ],
-}));
+const PLANS = [
+  {
+    license: 'Parish Essentials',
+    price: '$4.99',
+    period: '/mo',
+    caption: 'For small, historical parishes with limited modern intake.',
+    features: [
+      'Up to 1,000 historical pages',
+      'Standard search & metrics dashboard',
+      'Secure cloud hosting & backup',
+      'Email support',
+    ],
+    cta: 'Get Started',
+    href: paths.enroll,
+  },
+  {
+    license: 'Diocesan Standard',
+    price: '$19.99',
+    period: '/mo',
+    caption: 'For active, mid-sized communities with deep historical archives.',
+    features: [
+      'Up to 5,000 historical pages',
+      'Multi-user parish staff access',
+      'Certificate generation',
+      'Data export & import tools',
+    ],
+    cta: 'Choose Standard',
+    href: paths.enroll,
+    highlight: true,
+  },
+  {
+    license: 'Cathedral Pro',
+    price: 'Contact Us',
+    caption: 'For large cathedrals, monastic libraries, or central diocesan archives.',
+    features: [
+      'Unlimited historical processing',
+      '~50+ new pages/month',
+      'Dedicated onboarding & training',
+      'Multi-parish diocesan rollup',
+    ],
+    cta: 'Contact Us',
+    href: paths.contact,
+  },
+];
