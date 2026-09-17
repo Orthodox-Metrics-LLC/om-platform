@@ -1,0 +1,80 @@
+# Orthodox Metrics platform — deliberately written, NOT copied from
+# /var/www/orthodoxmetrics/prod/.gitignore.
+#
+# That file bans media by extension repo-wide (`*.png`, `*.jpg`, `*.jpeg`) and then
+# re-admits individual paths one negation rule at a time. Every new image location
+# needs another rule, its own comments record a production build failing with
+# "Could not resolve ./assets/...png" because of it, and it is why the Minimal
+# template could not live in that repo.
+#
+# Policy here: images are source and are tracked. Things are excluded because they
+# are BUILD OUTPUT, SECRETS, or NOT SOURCE — never because of their file extension.
+# Large binaries stay out by placement (asset library), not by pattern.
+
+# ---------- dependencies ----------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# ---------- build output ----------
+dist/
+dist-*/
+build/
+out/
+*.tsbuildinfo
+
+# ---------- caches ----------
+.vite/
+.cache/
+.eslintcache
+.stylelintcache
+coverage/
+.nyc_output/
+
+# ---------- secrets ----------
+# `.env.example` and `.env.production` (which holds only non-secret build flags)
+# are tracked deliberately.
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+!*.pub
+
+# ---------- logs / runtime ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+pids/
+*.pid
+*.seed
+
+# ---------- editor / OS ----------
+.DS_Store
+Thumbs.db
+.idea/
+*.iml
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ---------- explicitly NOT ignored, for the avoidance of doubt ----------
+# Media is source. Do not add extension-based media rules here.
+!**/*.png
+!**/*.jpg
+!**/*.jpeg
+!**/*.webp
+!**/*.svg
+!**/*.ico
+!**/*.woff
+!**/*.woff2
