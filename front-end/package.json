@@ -6,9 +6,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "start": "vite preview",
-    "build": "tsc && vite build",
+    "dev": "NODE_OPTIONS=--max-old-space-size=6144 vite",
+    "start": "NODE_OPTIONS=--max-old-space-size=6144 vite preview",
+    "build": "NODE_OPTIONS=--max-old-space-size=6144 tsc && vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:print": "npx eslint --print-config eslint.config.mjs > eslint-show-config.json",
@@ -21,7 +21,8 @@
     "re:build-npm": "npm run clean && npm install && npm run build",
     "tsc:watch": "tsc --noEmit --watch",
     "tsc:print": "tsc --showConfig",
-    "tsc:check": "tsc --noEmit --pretty"
+    "tsc:check": "tsc --noEmit --pretty",
+    "tsc": "NODE_OPTIONS=--max-old-space-size=6144 tsc --noEmit"
   },
   "engines": {
     "node": ">=22.12.0"
@@ -93,7 +94,7 @@
     "react-hook-form": "^7.75.0",
     "react-i18next": "^17.0.7",
     "react-joyride": "^3.1.0",
-    "react-map-gl": "^8.1.1",
+    "react-map-gl": "^8.1.3",
     "react-markdown": "^10.1.0",
     "react-organizational-chart": "^2.2.1",
     "react-phone-number-input": "^3.4.16",
