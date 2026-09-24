@@ -1,5 +1,5 @@
 import { varAlpha } from 'minimal-shared/utils';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -9,6 +9,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
 import { UsMapPicker } from 'src/components/us-map/us-map-picker';
+import { useSvgPanZoom } from 'src/components/us-map/use-svg-pan-zoom';
 import { LAND_PATH, STATE_BORDERS_PATH } from 'src/components/us-map/paths';
 import { VIEWBOX_WIDTH, projectLngLat, VIEWBOX_HEIGHT } from 'src/components/us-map/projection';
 
@@ -57,8 +58,8 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
     [parishes]
   );
 
-  const viewBox = useMemo(() => {
-    if (!projected.length) return `0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`;
+  const baseViewBox = useMemo(() => {
+    if (!projected.length) return { x: 0, y: 0, w: VIEWBOX_WIDTH, h: VIEWBOX_HEIGHT };
 
     const xs = projected.map((p) => p.x);
     const ys = projected.map((p) => p.y);
@@ -74,7 +75,7 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
     const w = maxX - minX + padX * 2;
     const h = maxY - minY + padY * 2;
 
-    return `${minX - padX} ${minY - padY} ${w} ${h}`;
+    return { x: minX - padX, y: minY - padY, w, h };
   }, [projected]);
 
   if (!state) {
@@ -122,14 +123,65 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
   }
 
   return (
+    <ParishPinMap
+      state={state}
+      projected={projected}
+      selectedId={selectedId}
+      baseViewBox={baseViewBox}
+      onSelect={onSelect}
+    />
+  );
+}
+
+// ----------------------------------------------------------------------
+
+type ProjectedParish = ParishFeature & { x: number; y: number };
+
+type ParishPinMapProps = {
+  state: string;
+  projected: ProjectedParish[];
+  selectedId?: number | null;
+  baseViewBox: { x: number; y: number; w: number; h: number };
+  onSelect: (parish: ParishFeature) => void;
+};
+
+/**
+ * Pan/zoom is intentionally bounded to `baseViewBox` (the fitted bounding box
+ * of this state's parishes) at the low end — `minScale: 1` means the wheel
+ * and +/- controls can zoom IN to separate overlapping pins, but never zoom
+ * OUT past the state framing back toward the whole country.
+ */
+function ParishPinMap({ state, projected, selectedId, baseViewBox, onSelect }: ParishPinMapProps) {
+  const handleTap = useCallback(
+    ({ target }: { target: EventTarget | null }) => {
+      const id = (target as Element | null)?.getAttribute?.('data-parish-id');
+      const parish = id ? projected.find((p) => String(p.id) === id) : undefined;
+      if (parish) onSelect(parish);
+    },
+    [projected, onSelect]
+  );
+
+  const { svgRef, viewBox, scale, handlers } = useSvgPanZoom(baseViewBox, {
+    minScale: 1,
+    maxScale: 8,
+    // Zero overpan: panning is bounded exactly to the state's fitted frame,
+    // so zooming back out always returns precisely to that frame rather than
+    // drifting toward whatever the last zoom-out pivot happened to be.
+    overpanRatio: 0,
+    onTap: handleTap,
+  });
+
+  return (
     <Box>
       <MapFrame>
         <Box
           component="svg"
-          viewBox={viewBox}
+          ref={svgRef}
+          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
           role="group"
           aria-label={`Orthodox parishes in ${state}`}
-          sx={{ width: 1, height: 1, display: 'block' }}
+          {...handlers}
+          sx={{ width: 1, height: 1, display: 'block', touchAction: 'none', cursor: 'grab' }}
         >
           <Box
             component="path"
@@ -141,7 +193,7 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
             d={STATE_BORDERS_PATH}
             sx={(theme) => ({
               fill: 'none',
-              strokeWidth: 0.6,
+              strokeWidth: 0.6 / scale,
               stroke: varAlpha(theme.vars.palette.grey['500Channel'], 0.4),
             })}
           />
@@ -157,11 +209,11 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
                   component="circle"
                   cx={p.x}
                   cy={p.y}
-                  r={selected ? 6 : 3.5}
+                  r={(selected ? 6 : 3.5) / scale}
+                  data-parish-id={p.id}
                   tabIndex={0}
                   role="button"
                   aria-label={`Select ${p.name}, ${p.city}`}
-                  onClick={() => onSelect(p)}
                   onKeyDown={(event: React.KeyboardEvent) => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
@@ -170,12 +222,12 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
                   }}
                   sx={(theme) => ({
                     cursor: 'pointer',
-                    strokeWidth: 1.5,
+                    strokeWidth: 1.5 / scale,
                     stroke: theme.vars.palette.common.white,
                     fill: selected
                       ? theme.vars.palette.primary.dark
                       : theme.vars.palette.primary.main,
-                    transition: theme.transitions.create(['r', 'fill']),
+                    transition: theme.transitions.create(['fill']),
                     '&:hover': { fill: theme.vars.palette.primary.dark },
                   })}
                 />
@@ -187,7 +239,7 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
 
       <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
         {projected.length} parish{projected.length === 1 ? '' : 'es'} listed in {state}. Tap a pin to
-        select yours, or enter it below if it is not shown.
+        select yours, scroll to zoom in on dense areas, or enter it below if it is not shown.
       </Typography>
     </Box>
   );
