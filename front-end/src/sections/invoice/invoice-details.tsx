@@ -60,7 +60,7 @@ export function InvoiceDetails({ invoice }: Props) {
         <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Have a question?
         </Typography>
-        <Typography variant="body2">support@minimals.cc</Typography>
+        <Typography variant="body2">info@orthodoxmetrics.com</Typography>
       </Box>
     </Box>
   );

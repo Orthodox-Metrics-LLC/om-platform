@@ -1,6 +1,6 @@
 {
-  "name": "@minimal-kit/vite-ts",
-  "author": "Minimals",
+  "name": "om-platform-front-end",
+  "author": "Orthodox Metrics",
   "version": "7.7.0",
   "description": "Vite & TypeScript",
   "private": true,

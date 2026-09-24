@@ -85,7 +85,7 @@ export const _notifications = Array.from({ length: 9 }, (_, index) => ({
   title:
     (index === 0 && `<p><strong>Deja Brady</strong> sent you a friend request</p>`) ||
     (index === 1 &&
-      `<p><strong>Jayvon Hull</strong> mentioned you in <strong><a href='#'>Minimal UI</a></strong></p>`) ||
+      `<p><strong>Jayvon Hull</strong> mentioned you in <strong><a href='#'>Orthodox Metrics</a></strong></p>`) ||
     (index === 2 &&
       `<p><strong>Lainey Davidson</strong> added file to <strong><a href='#'>File manager</a></strong></p>`) ||
     (index === 3 &&
