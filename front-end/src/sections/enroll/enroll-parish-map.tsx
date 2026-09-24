@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { Iconify } from 'src/components/iconify';
+import { UsMapPicker } from 'src/components/us-map/us-map-picker';
 import { LAND_PATH, STATE_BORDERS_PATH } from 'src/components/us-map/paths';
 import { VIEWBOX_WIDTH, projectLngLat, VIEWBOX_HEIGHT } from 'src/components/us-map/projection';
 
@@ -29,6 +30,7 @@ type Props = {
   state: string;
   selectedId?: number | null;
   onSelect: (parish: ParishFeature) => void;
+  onSelectState?: (code: string) => void;
 };
 
 /**
@@ -43,7 +45,7 @@ type Props = {
  * to a stored state outline — there is no per-state geometry available here, and
  * the parishes themselves describe the area of interest well enough.
  */
-export function EnrollParishMap({ state, selectedId, onSelect }: Props) {
+export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: Props) {
   const { parishes, loading, error } = useParishes(state);
 
   const projected = useMemo(
@@ -77,9 +79,18 @@ export function EnrollParishMap({ state, selectedId, onSelect }: Props) {
 
   if (!state) {
     return (
-      <MapFrame>
-        <Placeholder icon="mingcute:location-fill" text="Select your state to see parishes on the map." />
-      </MapFrame>
+      <Box>
+        <MapFrame>
+          <UsMapPicker
+            onSelectState={(code) => onSelectState?.(code)}
+            sx={{ width: 1, height: 1 }}
+          />
+        </MapFrame>
+
+        <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+          Pan and zoom to find your state, or use the dropdown below.
+        </Typography>
+      </Box>
     );
   }
 

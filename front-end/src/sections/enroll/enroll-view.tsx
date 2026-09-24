@@ -144,6 +144,7 @@ export function EnrollView() {
                   state={values.state}
                   selectedId={selectedParishId}
                   onSelect={handleSelectParish}
+                  onSelectState={(code) => setValue('state', code, { shouldValidate: true })}
                 />
               )}
 
