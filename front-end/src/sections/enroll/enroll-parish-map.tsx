@@ -1,17 +1,21 @@
+import type { GeoJSONSource } from 'maplibre-gl';
+import type { Point, FeatureCollection } from 'geojson';
+import type { MapRef, LayerProps, MapMouseEvent } from 'react-map-gl/maplibre';
+
 import { varAlpha } from 'minimal-shared/utils';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Layer, Source, NavigationControl } from 'react-map-gl/maplibre';
+import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
-import Tooltip from '@mui/material/Tooltip';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import 'src/components/map/styles.css';
 import { Iconify } from 'src/components/iconify';
+import { Map, MapPopup, MAP_STYLES } from 'src/components/map';
 import { UsMapPicker } from 'src/components/us-map/us-map-picker';
-import { useSvgPanZoom } from 'src/components/us-map/use-svg-pan-zoom';
-import { LAND_PATH, STATE_BORDERS_PATH } from 'src/components/us-map/paths';
-import { VIEWBOX_WIDTH, projectLngLat, VIEWBOX_HEIGHT } from 'src/components/us-map/projection';
 
 // ----------------------------------------------------------------------
 
@@ -34,49 +38,19 @@ type Props = {
   onSelectState?: (code: string) => void;
 };
 
+const PARISH_SOURCE = 'parishes';
+const INTERACTIVE_LAYERS = ['parish-clusters', 'parish-pins', 'parish-labels', 'parish-labels-close'];
+
 /**
  * Parish picker for the enrollment wizard.
  *
- * Pins come from `GET /api/crm-public/parishes-geo?state=XX`, which returns
- * GeoJSON point features from the CRM. They are plotted on the same
- * Natural Earth map used by the contact page, projected at runtime with the
- * identical Albers parameters so pins land on the right coastlines.
- *
- * The viewBox is zoomed to the bounding box of the returned parishes rather than
- * to a stored state outline — there is no per-state geometry available here, and
- * the parishes themselves describe the area of interest well enough.
+ * Before a state is chosen, the schematic US map is the picker. Afterward the
+ * parishes from `GET /api/crm-public/parishes-geo?state=XX` are drawn on a
+ * street map at their real coordinates, so a member can pan to their town and
+ * read the church name on the pin.
  */
 export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: Props) {
   const { parishes, loading, error } = useParishes(state);
-
-  const projected = useMemo(
-    () =>
-      parishes.map((p) => {
-        const { x, y } = projectLngLat(p.lng, p.lat);
-        return { ...p, x, y };
-      }),
-    [parishes]
-  );
-
-  const baseViewBox = useMemo(() => {
-    if (!projected.length) return { x: 0, y: 0, w: VIEWBOX_WIDTH, h: VIEWBOX_HEIGHT };
-
-    const xs = projected.map((p) => p.x);
-    const ys = projected.map((p) => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    // Pad generously so a state with one parish still shows context, and keep a
-    // 4:3-ish frame so the map does not become a sliver.
-    const padX = Math.max((maxX - minX) * 0.5, 40);
-    const padY = Math.max((maxY - minY) * 0.5, 30);
-    const w = maxX - minX + padX * 2;
-    const h = maxY - minY + padY * 2;
-
-    return { x: minX - padX, y: minY - padY, w, h };
-  }, [projected]);
 
   if (!state) {
     return (
@@ -111,7 +85,7 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
     );
   }
 
-  if (!projected.length) {
+  if (!parishes.length) {
     return (
       <MapFrame>
         <Placeholder
@@ -124,10 +98,10 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
 
   return (
     <ParishPinMap
+      key={state}
       state={state}
-      projected={projected}
+      parishes={parishes}
       selectedId={selectedId}
-      baseViewBox={baseViewBox}
       onSelect={onSelect}
     />
   );
@@ -135,114 +109,286 @@ export function EnrollParishMap({ state, selectedId, onSelect, onSelectState }: 
 
 // ----------------------------------------------------------------------
 
-type ProjectedParish = ParishFeature & { x: number; y: number };
-
 type ParishPinMapProps = {
   state: string;
-  projected: ProjectedParish[];
+  parishes: ParishFeature[];
   selectedId?: number | null;
-  baseViewBox: { x: number; y: number; w: number; h: number };
   onSelect: (parish: ParishFeature) => void;
 };
 
-/**
- * Pan/zoom is intentionally bounded to `baseViewBox` (the fitted bounding box
- * of this state's parishes) at the low end — `minScale: 1` means the wheel
- * and +/- controls can zoom IN to separate overlapping pins, but never zoom
- * OUT past the state framing back toward the whole country.
- */
-function ParishPinMap({ state, projected, selectedId, baseViewBox, onSelect }: ParishPinMapProps) {
-  const handleTap = useCallback(
-    ({ target }: { target: EventTarget | null }) => {
-      const id = (target as Element | null)?.getAttribute?.('data-parish-id');
-      const parish = id ? projected.find((p) => String(p.id) === id) : undefined;
-      if (parish) onSelect(parish);
-    },
-    [projected, onSelect]
+type ParishProps = {
+  id: number;
+  name: string;
+  city: string;
+};
+
+function ParishPinMap({ state, parishes, selectedId, onSelect }: ParishPinMapProps) {
+  const mapRef = useRef<MapRef>(null);
+  const [popupId, setPopupId] = useState<number | null>(null);
+
+  const data = useMemo<FeatureCollection<Point, ParishProps>>(
+    () => ({
+      type: 'FeatureCollection',
+      features: parishes.map((parish) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [parish.lng, parish.lat] },
+        properties: { id: parish.id, name: parish.name, city: parish.city },
+      })),
+    }),
+    [parishes]
   );
 
-  const { svgRef, viewBox, scale, handlers } = useSvgPanZoom(baseViewBox, {
-    minScale: 1,
-    maxScale: 8,
-    // Zero overpan: panning is bounded exactly to the state's fitted frame,
-    // so zooming back out always returns precisely to that frame rather than
-    // drifting toward whatever the last zoom-out pivot happened to be.
-    overpanRatio: 0,
-    onTap: handleTap,
-  });
+  const bounds = useMemo(() => parishBounds(parishes), [parishes]);
+  const popupParish = parishes.find((parish) => parish.id === popupId) ?? null;
+
+  const handleClick = useCallback(
+    async (event: MapMouseEvent) => {
+      const feature = event.features?.[0];
+      const mapEl = mapRef.current;
+      if (!feature || !mapEl) return;
+
+      const props = feature.properties ?? {};
+      if (props.cluster) {
+        const source = mapEl.getSource(PARISH_SOURCE) as GeoJSONSource | undefined;
+        const clusterId = Number(props.cluster_id);
+        if (!source?.getClusterExpansionZoom || !Number.isFinite(clusterId)) return;
+
+        const zoom = await source.getClusterExpansionZoom(clusterId);
+        if (feature.geometry.type !== 'Point') return;
+
+        mapEl.easeTo({
+          center: feature.geometry.coordinates as [number, number],
+          zoom: (zoom ?? mapEl.getZoom()) + 0.5,
+          duration: 500,
+        });
+        return;
+      }
+
+      const parish = parishes.find((item) => item.id === Number(props.id));
+      if (!parish) return;
+      setPopupId(parish.id);
+      onSelect(parish);
+    },
+    [parishes, onSelect]
+  );
+
+  const handleMouseMove = useCallback((event: MapMouseEvent) => {
+    const canvas = mapRef.current?.getCanvas();
+    if (canvas) canvas.style.cursor = event.features?.length ? 'pointer' : '';
+  }, []);
+
+  const pinPaint = useMemo(
+    () => pinLayer(selectedId ?? null),
+    [selectedId]
+  );
 
   return (
     <Box>
       <MapFrame>
-        <Box
-          component="svg"
-          ref={svgRef}
-          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
-          role="group"
-          aria-label={`Orthodox parishes in ${state}`}
-          {...handlers}
-          sx={{ width: 1, height: 1, display: 'block', touchAction: 'none', cursor: 'grab' }}
+        <Map
+          ref={mapRef}
+          mapStyle={MAP_STYLES.neutral}
+          initialViewState={{
+            bounds,
+            fitBoundsOptions: { padding: 48, maxZoom: 12 },
+          }}
+          interactiveLayerIds={INTERACTIVE_LAYERS}
+          onClick={handleClick}
+          onMouseMove={handleMouseMove}
+          dragRotate={false}
+          pitchWithRotate={false}
+          touchPitch={false}
+          minZoom={4}
+          maxZoom={17}
+          sx={{
+            height: 1,
+            '& .maplibregl-popup-content': {
+              maxWidth: 280,
+              padding: '12px 28px 12px 12px',
+            },
+          }}
         >
-          <Box
-            component="path"
-            d={LAND_PATH}
-            sx={(theme) => ({ fill: varAlpha(theme.vars.palette.grey['500Channel'], 0.16) })}
-          />
-          <Box
-            component="path"
-            d={STATE_BORDERS_PATH}
-            sx={(theme) => ({
-              fill: 'none',
-              strokeWidth: 0.6 / scale,
-              stroke: varAlpha(theme.vars.palette.grey['500Channel'], 0.4),
-            })}
-          />
+          <NavigationControl position="top-right" showCompass={false} />
 
-          {projected.map((p) => {
-            const selected = p.id === selectedId;
-            return (
-              <Tooltip
-                key={p.id}
-                title={`${p.name} — ${p.city}${p.jurisdiction ? ` (${p.jurisdiction})` : ''}`}
-              >
-                <Box
-                  component="circle"
-                  cx={p.x}
-                  cy={p.y}
-                  r={(selected ? 6 : 3.5) / scale}
-                  data-parish-id={p.id}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Select ${p.name}, ${p.city}`}
-                  onKeyDown={(event: React.KeyboardEvent) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      onSelect(p);
-                    }
-                  }}
-                  sx={(theme) => ({
-                    cursor: 'pointer',
-                    strokeWidth: 1.5 / scale,
-                    stroke: theme.vars.palette.common.white,
-                    fill: selected
-                      ? theme.vars.palette.primary.dark
-                      : theme.vars.palette.primary.main,
-                    transition: theme.transitions.create(['fill']),
-                    '&:hover': { fill: theme.vars.palette.primary.dark },
-                  })}
-                />
-              </Tooltip>
-            );
-          })}
-        </Box>
+          <Source
+            id={PARISH_SOURCE}
+            type="geojson"
+            data={data}
+            cluster
+            clusterRadius={48}
+            clusterMaxZoom={14}
+          >
+            <Layer {...clusterLayer} />
+            <Layer {...clusterCountLayer} />
+            <Layer {...pinPaint} />
+            <Layer {...labelLayer} />
+            <Layer {...closeLabelLayer} />
+          </Source>
+
+          {popupParish && (
+            <ParishPopup parish={popupParish} onClose={() => setPopupId(null)} />
+          )}
+        </Map>
       </MapFrame>
 
       <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
-        {projected.length} parish{projected.length === 1 ? '' : 'es'} listed in {state}. Tap a pin to
-        select yours, scroll to zoom in on dense areas, or enter it below if it is not shown.
+        {parishes.length} parish{parishes.length === 1 ? '' : 'es'} in {state}. Zoom toward your
+        town, or tap a numbered cluster, until the church name appears. Tap the pin to select it.
       </Typography>
     </Box>
   );
+}
+
+function ParishPopup({ parish, onClose }: { parish: ParishFeature; onClose: () => void }) {
+  const place = [parish.city, parish.state].filter(Boolean).join(', ');
+  const locality = [place, parish.zip].filter(Boolean).join(' ');
+
+  return (
+    <MapPopup
+      longitude={parish.lng}
+      latitude={parish.lat}
+      onClose={onClose}
+      closeOnClick={false}
+      offset={18}
+      focusAfterOpen={false}
+    >
+      <Stack spacing={0.25} sx={{ pr: 1, maxWidth: 240 }}>
+        <Typography variant="subtitle2">{parish.name}</Typography>
+        {!!parish.street && (
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+            {parish.street}
+          </Typography>
+        )}
+        {!!locality && (
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+            {locality}
+          </Typography>
+        )}
+        {!!parish.jurisdiction && (
+          <Typography variant="caption" sx={{ display: 'block', color: 'text.disabled' }}>
+            {parish.jurisdiction}
+          </Typography>
+        )}
+      </Stack>
+    </MapPopup>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+const clusterLayer: LayerProps = {
+  id: 'parish-clusters',
+  type: 'circle',
+  filter: ['has', 'point_count'],
+  paint: {
+    'circle-color': '#007867',
+    'circle-radius': ['step', ['get', 'point_count'], 16, 8, 20, 24, 26],
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff',
+  },
+};
+
+const clusterCountLayer: LayerProps = {
+  id: 'parish-cluster-count',
+  type: 'symbol',
+  filter: ['has', 'point_count'],
+  layout: {
+    'text-field': ['get', 'point_count_abbreviated'],
+    'text-font': ['Open Sans Bold', 'Noto Sans Bold'],
+    'text-size': 12,
+  },
+  paint: {
+    'text-color': '#ffffff',
+  },
+};
+
+function pinLayer(selectedId: number | null): LayerProps {
+  const selected = selectedId ?? -1;
+  return {
+    id: 'parish-pins',
+    type: 'circle',
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': ['case', ['==', ['get', 'id'], selected], '#004B50', '#00A76F'],
+      'circle-radius': ['case', ['==', ['get', 'id'], selected], 9, 6],
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#ffffff',
+    },
+  };
+}
+
+/** Town names while zooming in. Overlapping labels hide so a dense metro stays readable. */
+const labelLayer: LayerProps = {
+  id: 'parish-labels',
+  type: 'symbol',
+  minzoom: 8,
+  maxzoom: 13,
+  filter: ['!', ['has', 'point_count']],
+  layout: {
+    'text-field': [
+      'step',
+      ['zoom'],
+      ['get', 'city'],
+      11,
+      ['concat', ['get', 'name'], '\n', ['get', 'city']],
+    ],
+    'text-font': ['Open Sans Regular', 'Noto Sans Regular'],
+    'text-size': 12,
+    'text-offset': [0, 1.05],
+    'text-anchor': 'top',
+    'text-max-width': 12,
+    'text-allow-overlap': false,
+  },
+  paint: {
+    'text-color': '#004B50',
+    'text-halo-color': '#ffffff',
+    'text-halo-width': 1.4,
+  },
+};
+
+/** At street zoom every nearby church keeps its name, even when the pins sit close together. */
+const closeLabelLayer: LayerProps = {
+  id: 'parish-labels-close',
+  type: 'symbol',
+  minzoom: 13,
+  filter: ['!', ['has', 'point_count']],
+  layout: {
+    'text-field': ['concat', ['get', 'name'], '\n', ['get', 'city']],
+    'text-font': ['Open Sans Regular', 'Noto Sans Regular'],
+    'text-size': 12,
+    'text-offset': [0, 1.05],
+    'text-anchor': 'top',
+    'text-max-width': 12,
+    'text-allow-overlap': true,
+  },
+  paint: {
+    'text-color': '#004B50',
+    'text-halo-color': '#ffffff',
+    'text-halo-width': 1.4,
+  },
+};
+
+/** Fits the camera to the parishes, with enough padding that one church still shows its town. */
+function parishBounds(parishes: ParishFeature[]): [[number, number], [number, number]] {
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+
+  parishes.forEach((parish) => {
+    minLng = Math.min(minLng, parish.lng);
+    maxLng = Math.max(maxLng, parish.lng);
+    minLat = Math.min(minLat, parish.lat);
+    maxLat = Math.max(maxLat, parish.lat);
+  });
+
+  const lngPad = Math.max((maxLng - minLng) * 0.15, 0.12);
+  const latPad = Math.max((maxLat - minLat) * 0.15, 0.08);
+
+  return [
+    [minLng - lngPad, minLat - latPad],
+    [maxLng + lngPad, maxLat + latPad],
+  ];
 }
 
 // ----------------------------------------------------------------------
@@ -321,20 +467,33 @@ function useParishes(state: string) {
         const features = Array.isArray(data?.features) ? data.features : [];
         setParishes(
           features
-            // Rows without coordinates cannot be plotted; the backend still
-            // returns them, so they are filtered here rather than stacked at 0,0.
-            .filter((f: any) => Array.isArray(f?.geometry?.coordinates))
-            .map((f: any) => ({
-              id: f.properties?.id,
-              name: f.properties?.name ?? 'Unnamed parish',
-              city: f.properties?.city ?? '',
-              state: f.properties?.state ?? state,
-              street: f.properties?.street ?? null,
-              zip: f.properties?.zip ?? null,
-              jurisdiction: f.properties?.affiliation ?? f.properties?.jurisdiction ?? null,
-              lng: f.geometry.coordinates[0],
-              lat: f.geometry.coordinates[1],
-            }))
+            .filter((feature: { geometry?: { coordinates?: unknown } }) => {
+              const coordinates = feature?.geometry?.coordinates;
+              if (!Array.isArray(coordinates) || coordinates.length < 2) return false;
+              const lng = Number(coordinates[0]);
+              const lat = Number(coordinates[1]);
+              return Number.isFinite(lng) && Number.isFinite(lat) && !(lng === 0 && lat === 0);
+            })
+            .map(
+              (feature: {
+                properties?: Record<string, unknown>;
+                geometry: { coordinates: number[] };
+              }) => ({
+                id: Number(feature.properties?.id),
+                name: String(feature.properties?.name ?? 'Unnamed parish'),
+                city: String(feature.properties?.city ?? ''),
+                state: String(feature.properties?.state ?? state),
+                street: (feature.properties?.street as string | null) ?? null,
+                zip: (feature.properties?.zip as string | null) ?? null,
+                jurisdiction:
+                  (feature.properties?.affiliation as string | null) ??
+                  (feature.properties?.jurisdiction as string | null) ??
+                  null,
+                lng: feature.geometry.coordinates[0],
+                lat: feature.geometry.coordinates[1],
+              })
+            )
+            .filter((parish: ParishFeature) => Number.isFinite(parish.id))
         );
       })
       .catch(() => {
