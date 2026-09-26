@@ -78,3 +78,6 @@ Thumbs.db
 !**/*.ico
 !**/*.woff
 !**/*.woff2
+
+# Agent session worklogs (workspace artifacts, not app code)
+.om-worklog/

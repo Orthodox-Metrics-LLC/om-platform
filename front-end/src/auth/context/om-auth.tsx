@@ -78,12 +78,58 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * Authenticated fetch for OM backend calls made outside the auth context
+ * itself (portal pages, dashboards, etc.). Attaches the Bearer token when one
+ * exists; the session cookie covers the rest.
+ */
+export function omApiFetch(input: string, init: RequestInit = {}) {
+  return fetch(input, {
+    credentials: 'include',
+    ...init,
+    headers: { ...authHeaders(), ...init.headers },
+  });
+}
+
+function isOmdevHost(): boolean {
+  return window.location.hostname === 'omdev.orthodoxmetrics.com';
+}
+
+function userFromKeycloak(identity: {
+  email?: string | null;
+  name?: string | null;
+  username?: string | null;
+  roles?: string[] | null;
+}): OmUser {
+  const name = identity.name || '';
+  const parts = name.split(' ').filter(Boolean);
+  const roles = identity.roles || [];
+  return {
+    id: 0,
+    email: identity.email || identity.username || '',
+    username: identity.username || null,
+    first_name: parts[0] || null,
+    last_name: parts.slice(1).join(' ') || null,
+    display_name: identity.name || identity.username || identity.email || null,
+    role: roles[0] || 'user',
+    church_id: null,
+  };
+}
+
 export function OmAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<OmUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   const checkSession = useCallback(async () => {
     try {
+      if (isOmdevHost()) {
+        const oidc = await fetch('/api/auth/oidc/omdev/status', { credentials: 'include' });
+        const oidcData = await oidc.json().catch(() => null);
+        if (oidcData?.signed_in && oidcData.identity) {
+          setUser(userFromKeycloak(oidcData.identity));
+          return;
+        }
+      }
       const res = await fetch('/api/auth/check', {
         credentials: 'include',
         headers: authHeaders(),
@@ -123,6 +169,13 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (isOmdevHost()) {
+      const back = `${window.location.origin}/`;
+      window.location.assign(
+        `/api/auth/oidc/omdev/logout?post_logout_redirect_uri=${encodeURIComponent(back)}`
+      );
+      return;
+    }
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',

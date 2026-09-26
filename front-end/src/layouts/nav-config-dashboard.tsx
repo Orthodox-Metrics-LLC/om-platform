@@ -63,8 +63,14 @@ const ICONS = {
  */
 export const navData: NavSectionProps['data'] = [
   /**
-   * Overview
+   * OM Parish Portal — migrated OM authenticated pages live here.
    */
+  {
+    subheader: 'Parish Portal',
+    items: [
+      { title: 'Portal Home', path: paths.portal.root, icon: ICONS.dashboard, deepMatch: true },
+    ],
+  },
   {
     subheader: 'Overview',
     items: [

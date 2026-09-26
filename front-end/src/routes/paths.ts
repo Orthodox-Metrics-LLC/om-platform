@@ -114,6 +114,13 @@ export const paths = {
       verify: `${ROOTS.AUTH_DEMO}/centered/verify`,
     },
   },
+  /**
+   * OM Parish Portal — the authenticated church-facing surface being migrated
+   * page-by-page from prod (`/portal` is OM's canonical URL).
+   */
+  portal: {
+    root: '/portal',
+  },
   // DASHBOARD
   dashboard: {
     root: ROOTS.DASHBOARD,

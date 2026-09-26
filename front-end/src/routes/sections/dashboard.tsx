@@ -81,6 +81,8 @@ const PermissionDeniedPage = lazy(() => import('src/pages/dashboard/permission')
 const ParamsPage = lazy(() => import('src/pages/dashboard/params'));
 const SubpathsPage = lazy(() => import('src/pages/dashboard/subpaths'));
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
+// OM Parish Portal
+const PortalPage = lazy(() => import('src/pages/portal'));
 
 // ----------------------------------------------------------------------
 
@@ -216,5 +218,15 @@ export const dashboardRoutes: RouteObject[] = [
         ],
       },
     ],
+  },
+  /**
+   * OM Parish Portal — kept at OM's canonical `/portal` URL rather than under
+   * `/dashboard`, since migrated portal children (`/portal/records`, …) will
+   * hang off this route as they land.
+   */
+  {
+    path: 'portal',
+    element: CONFIG.auth.skip ? dashboardLayout() : <AuthGuard>{dashboardLayout()}</AuthGuard>,
+    children: [{ index: true, element: <PortalPage /> }],
   },
 ];
