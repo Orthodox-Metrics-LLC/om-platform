@@ -1,6 +1,6 @@
 import type { BoxProps } from '@mui/material/Box';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { m, useSpring, useMotionValue, useReducedMotion } from 'framer-motion';
 
@@ -41,6 +41,7 @@ export function HomeHero({ sx, ...other }: BoxProps) {
   const reduceMotion = useReducedMotion();
 
   const sectionRef = useRef<HTMLDivElement>(null);
+  const [showVideo, setShowVideo] = useState(false);
 
   const physics = { damping: 22, mass: 0.3, stiffness: 90 };
   const pointerX = useMotionValue(0);
@@ -150,15 +151,14 @@ export function HomeHero({ sx, ...other }: BoxProps) {
       </Button>
 
       <Button
-        component={RouterLink}
-        href={paths.ocr}
+        onClick={() => setShowVideo(true)}
         size="large"
         color="inherit"
         variant="outlined"
         startIcon={<Iconify width={24} icon="solar:play-circle-bold" />}
         sx={{ height: 52, px: 3, borderColor: 'currentColor' }}
       >
-        See how it works
+        Play Introduction Video
       </Button>
     </Box>
   );
@@ -233,22 +233,39 @@ export function HomeHero({ sx, ...other }: BoxProps) {
       style={reduceMotion ? undefined : { x: artworkX, y: artworkY }}
       sx={{ position: 'relative' }}
     >
-      <Box
-        component={m.img}
-        alt="The Orthodox Metrics dashboard beside a 1912 Greek baptism register, a parish church, and a censer"
-        src={`${CONFIG.assetsDir}/assets/images/home/hero-artwork.webp`}
-        animate={reduceMotion ? undefined : { y: [0, -12, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-        sx={{
-          width: 1,
-          display: 'block',
-          aspectRatio: ARTWORK_RATIO,
-          maskImage: HERO_EDGE_MASK,
-          maskComposite: 'intersect',
-          WebkitMaskImage: HERO_EDGE_MASK,
-          WebkitMaskComposite: 'source-in',
-        }}
-      />
+      {showVideo ? (
+        <Box
+          component="video"
+          src={`${CONFIG.assetsDir}/assets/video/om-metrics-intro.mp4`}
+          autoPlay
+          controls
+          playsInline
+          onEnded={() => setShowVideo(false)}
+          sx={{
+            width: 1,
+            display: 'block',
+            aspectRatio: ARTWORK_RATIO,
+            borderRadius: 1,
+          }}
+        />
+      ) : (
+        <Box
+          component={m.img}
+          alt="The Orthodox Metrics dashboard beside a 1912 Greek baptism register, a parish church, and a censer"
+          src={`${CONFIG.assetsDir}/assets/images/home/hero-artwork.webp`}
+          animate={reduceMotion ? undefined : { y: [0, -12, 0] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+          sx={{
+            width: 1,
+            display: 'block',
+            aspectRatio: ARTWORK_RATIO,
+            maskImage: HERO_EDGE_MASK,
+            maskComposite: 'intersect',
+            WebkitMaskImage: HERO_EDGE_MASK,
+            WebkitMaskComposite: 'source-in',
+          }}
+        />
+      )}
     </Box>
   );
 
