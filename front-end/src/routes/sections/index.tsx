@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router';
 
 import { lazy, Suspense } from 'react';
+import { Navigate } from 'react-router';
 
 import { MainLayout } from 'src/layouts/main';
 import { AuthSplitLayout } from 'src/layouts/auth-split';
@@ -18,7 +19,6 @@ import { componentsRoutes } from './components';
 // ----------------------------------------------------------------------
 
 const HomePage = lazy(() => import('src/pages/home'));
-const Page404 = lazy(() => import('src/pages/error/404'));
 const OmSignInPage = lazy(() => import('src/pages/auth/sign-in'));
 
 const homeElement = (
@@ -65,6 +65,6 @@ export const routesSection: RouteObject[] = [
   // Components
   ...componentsRoutes,
 
-  // No match
-  { path: '*', element: <Page404 /> },
+  // Unknown paths (legacy Google links like /samples) → site home
+  { path: '*', element: <Navigate to="/" replace /> },
 ];
