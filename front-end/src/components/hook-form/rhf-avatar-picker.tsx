@@ -72,7 +72,7 @@ export function RHFAvatarPicker({
               Choose your avatar
             </Typography>
 
-            <Box sx={{ gap: 1.5, display: 'flex', justifyContent: 'center' }}>
+            <Box sx={{ gap: 1.5, display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
               {options.map((option) => {
                 const selected = option.src === field.value;
                 return (
