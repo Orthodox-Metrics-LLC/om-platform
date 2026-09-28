@@ -47,11 +47,11 @@ export function CenteredResetPasswordView() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       /**
-       * Real OM endpoint: POST /api/auth/forgot-password. The backend always
-       * returns success (anti-enumeration) and emails a temporary password —
-       * not a reset link — so success routes to the check-your-email view.
+       * Real OM endpoint: POST /api/auth/forgot-password-code. The backend
+       * always returns success (anti-enumeration) and emails a 6-digit
+       * verification code plus a link to the verify page.
        */
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password-code', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -105,7 +105,7 @@ export function CenteredResetPasswordView() {
       <FormHead
         icon={<PasswordIcon />}
         title="Forgot your password?"
-        description={`Please enter the email address associated with your account and we'll email you a link to reset your password.`}
+        description={`Please enter the email address associated with your account and we'll email you a verification code to reset your password.`}
       />
 
       <Form methods={methods} onSubmit={onSubmit}>

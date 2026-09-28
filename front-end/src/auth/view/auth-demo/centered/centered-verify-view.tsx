@@ -1,7 +1,9 @@
+import * as z from 'zod';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 
@@ -10,34 +12,89 @@ import { useRouter, useSearchParams } from 'src/routes/hooks';
 
 import { EmailInboxIcon } from 'src/assets/icons';
 
+import { Form, Field, schemaUtils } from 'src/components/hook-form';
+
 import { FormHead } from '../../../components/form-head';
+import { FormResendCode } from '../../../components/form-resend-code';
+import { FormReturnLink } from '../../../components/form-return-link';
+
+// ----------------------------------------------------------------------
+
+export type VerifySchemaType = z.infer<typeof VerifySchema>;
+
+export const VerifySchema = z.object({
+  email: schemaUtils.email(),
+  code: z
+    .string()
+    .min(1, { error: 'Code is required!' })
+    .min(6, { error: 'Code must be at least 6 characters!' }),
+});
 
 // ----------------------------------------------------------------------
 
 /**
- * Post-reset confirmation for OM's real forgot-password flow.
- *
- * `POST /api/auth/forgot-password` emails a temporary password (the backend
- * always reports success to avoid user enumeration) — there is no 6-digit
- * code to verify, so the template's code field is replaced with the OM
- * instructions: sign in with the temporary password, then the forced
- * change-password step takes over. "Resend" re-issues the request.
+ * Verifies the 6-digit code emailed by `POST /api/auth/forgot-password-code`.
+ * On success the user is sent to the update-password page carrying email+code
+ * so the final reset step can consume the code.
  */
 export function CenteredVerifyView() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email') ?? '';
+  const emailParam = searchParams.get('email') ?? '';
 
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const [resendError, setResendError] = useState<string | null>(null);
+
+  const methods = useForm<VerifySchemaType>({
+    resolver: zodResolver(VerifySchema),
+    defaultValues: { email: emailParam, code: '' },
+  });
+
+  const {
+    watch,
+    setError,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
+
+  const currentEmail = watch('email');
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      const res = await fetch('/api/auth/verify-password-reset-code', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email.trim(), code: data.code.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || `Request failed (${res.status})`);
+      }
+
+      router.push(
+        `${paths.authDemo.centered.updatePassword}?email=${encodeURIComponent(
+          data.email.trim()
+        )}&code=${encodeURIComponent(data.code.trim())}`
+      );
+    } catch (error) {
+      setError('root', {
+        message: error instanceof Error ? error.message : 'Something went wrong. Try again.',
+      });
+    }
+  });
 
   const handleResend = async () => {
-    if (!email) return;
+    const email = currentEmail?.trim();
+    if (!email) {
+      setError('email', { message: 'Enter your email address to resend the code.' });
+      return;
+    }
     setResending(true);
-    setResendError(null);
+    setResent(false);
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/forgot-password-code', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +106,9 @@ export function CenteredVerifyView() {
       }
       setResent(true);
     } catch (error) {
-      setResendError(error instanceof Error ? error.message : 'Could not resend. Try again.');
+      setError('root', {
+        message: error instanceof Error ? error.message : 'Could not resend. Try again.',
+      });
     } finally {
       setResending(false);
     }
@@ -60,43 +119,41 @@ export function CenteredVerifyView() {
       <FormHead
         icon={<EmailInboxIcon />}
         title="Please check your email!"
-        description={
-          email
-            ? `We've emailed a temporary password to ${email}. \nSign in with it and you'll be prompted to set a new password.`
-            : `We've emailed a temporary password. \nSign in with it and you'll be prompted to set a new password.`
-        }
+        description={`We've emailed a 6-digit verification code. \nEnter the code below to verify your email address.`}
       />
 
-      <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
-        {resent && <Alert severity="success">A new temporary password was sent.</Alert>}
-        {resendError && <Alert severity="error">{resendError}</Alert>}
+      <Form methods={methods} onSubmit={onSubmit}>
+        <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
+          {methods.formState.errors.root?.message && (
+            <Alert severity="error">{methods.formState.errors.root.message}</Alert>
+          )}
+          {resent && <Alert severity="success">A new verification code was sent.</Alert>}
 
-        <Button
-          fullWidth
-          size="large"
-          color="inherit"
-          variant="contained"
-          onClick={() => router.push(paths.signIn)}
-        >
-          Return to sign in
-        </Button>
-      </Box>
+          <Field.Text
+            name="email"
+            label="Email address"
+            placeholder="example@gmail.com"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
 
-      {email ? (
-        <Box sx={{ mt: 3, typography: 'body2', alignSelf: 'center', textAlign: 'center' }}>
-          {"Didn't receive it? "}
-          <Link
-            variant="subtitle2"
-            onClick={handleResend}
-            sx={{
-              cursor: 'pointer',
-              ...(resending && { color: 'text.disabled', pointerEvents: 'none' }),
-            }}
+          <Field.Code name="code" />
+
+          <Button
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+            loadingIndicator="Verify..."
           >
-            {resending ? 'Sending…' : 'Resend'}
-          </Link>
+            Verify
+          </Button>
         </Box>
-      ) : null}
+      </Form>
+
+      <FormResendCode onResendCode={handleResend} disabled={resending} />
+
+      <FormReturnLink href={paths.signIn} />
     </>
   );
 }
