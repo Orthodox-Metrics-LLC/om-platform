@@ -1,5 +1,5 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
-import type { NotificationItemProps } from './notification-item';
+import type { OmNotification } from './use-om-notifications';
 
 import { m } from 'framer-motion';
 import { useState, useCallback } from 'react';
@@ -15,62 +15,83 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 
+import { paths } from 'src/routes/paths';
+import { useRouter } from 'src/routes/hooks';
+
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { varTap, varHover, transitionTap } from 'src/components/animate';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 import { NotificationItem } from './notification-item';
+import { useOmNotifications } from './use-om-notifications';
 
 // ----------------------------------------------------------------------
 
-const TABS = [
-  { value: 'all', label: 'All', count: 22 },
-  { value: 'unread', label: 'Unread', count: 12 },
-  { value: 'archived', label: 'Archived', count: 10 },
-];
+export type NotificationsDrawerProps = IconButtonProps;
 
-// ----------------------------------------------------------------------
-
-export type NotificationsDrawerProps = IconButtonProps & {
-  data?: NotificationItemProps['notification'][];
-};
-
-export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDrawerProps) {
+/** Live notifications from OM (friend requests, mentions/replies, files, chat, billing). */
+export function NotificationsDrawer({ sx, ...other }: NotificationsDrawerProps) {
+  const router = useRouter();
+  const { authenticated } = useAuthContext();
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
-
   const [currentTab, setCurrentTab] = useState('all');
+
+  const { items, markRead, markAllRead, dismiss, respondFriendRequest } = useOmNotifications(authenticated);
+
+  const unread = items.filter((n) => n.isUnRead);
+  const read = items.filter((n) => !n.isUnRead);
+  const visible = currentTab === 'unread' ? unread : currentTab === 'read' ? read : items;
+
+  const TABS = [
+    { value: 'all', label: 'All', count: items.length },
+    { value: 'unread', label: 'Unread', count: unread.length },
+    { value: 'read', label: 'Read', count: read.length },
+  ];
 
   const handleChangeTab = useCallback((event: React.SyntheticEvent, newValue: string) => {
     setCurrentTab(newValue);
   }, []);
 
-  const [notifications, setNotifications] = useState(data);
+  const handleOpen = useCallback(
+    async (n: OmNotification) => {
+      if (n.isUnRead) markRead(n.id);
+      if (n.actionUrl && n.actionUrl.startsWith('/dashboard')) {
+        onClose();
+        router.push(n.actionUrl);
+      } else if (n.typeName.startsWith('friend_')) {
+        // Legacy prod URLs — friend activity lives in the header Contacts popover here.
+        onClose();
+        router.push(paths.dashboard.user.profile + '?tab=friends');
+      }
+    },
+    [markRead, onClose, router]
+  );
 
-  const totalUnRead = notifications.filter((item) => item.isUnRead === true).length;
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map((notification) => ({ ...notification, isUnRead: false })));
-  };
+  const handleFriendRespond = useCallback(
+    async (requestId: number, action: 'accept' | 'decline') => {
+      try {
+        await respondFriendRequest(requestId, action);
+        toast.success(action === 'accept' ? 'Friend request accepted' : 'Friend request declined');
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not respond');
+      }
+    },
+    [respondFriendRequest]
+  );
 
   const renderHead = () => (
-    <Box
-      sx={{
-        py: 2,
-        pr: 1,
-        pl: 2.5,
-        minHeight: 68,
-        display: 'flex',
-        alignItems: 'center',
-      }}
-    >
+    <Box sx={{ py: 2, pr: 1, pl: 2.5, minHeight: 68, display: 'flex', alignItems: 'center' }}>
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
         Notifications
       </Typography>
 
-      {!!totalUnRead && (
+      {!!unread.length && (
         <Tooltip title="Mark all as read">
-          <IconButton color="primary" onClick={handleMarkAllAsRead}>
+          <IconButton color="primary" onClick={markAllRead}>
             <Iconify icon="eva:done-all-fill" />
           </IconButton>
         </Tooltip>
@@ -80,9 +101,16 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
         <Iconify icon="mingcute:close-line" />
       </IconButton>
 
-      <IconButton>
-        <Iconify icon="solar:settings-bold-duotone" />
-      </IconButton>
+      <Tooltip title="Notification settings">
+        <IconButton
+          onClick={() => {
+            onClose();
+            router.push(`${paths.dashboard.user.account}/notifications`);
+          }}
+        >
+          <Iconify icon="solar:settings-bold-duotone" />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 
@@ -97,11 +125,7 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
           icon={
             <Label
               variant={((tab.value === 'all' || tab.value === currentTab) && 'filled') || 'soft'}
-              color={
-                (tab.value === 'unread' && 'info') ||
-                (tab.value === 'archived' && 'success') ||
-                'default'
-              }
+              color={(tab.value === 'unread' && 'info') || 'default'}
             >
               {tab.count}
             </Label>
@@ -114,11 +138,21 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
   const renderList = () => (
     <Scrollbar>
       <Box component="ul">
-        {notifications?.map((notification) => (
+        {visible.map((notification) => (
           <Box component="li" key={notification.id} sx={{ display: 'flex' }}>
-            <NotificationItem notification={notification} />
+            <NotificationItem
+              notification={notification}
+              onOpen={handleOpen}
+              onDismiss={(n) => dismiss(n.id)}
+              onFriendRespond={handleFriendRespond}
+            />
           </Box>
         ))}
+        {!visible.length && (
+          <Typography variant="body2" sx={{ py: 8, textAlign: 'center', color: 'text.disabled' }}>
+            {currentTab === 'unread' ? "You're all caught up." : 'No notifications yet.'}
+          </Typography>
+        )}
       </Box>
     </Scrollbar>
   );
@@ -135,7 +169,7 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
         sx={sx}
         {...other}
       >
-        <Badge badgeContent={totalUnRead} color="error">
+        <Badge badgeContent={unread.length} color="error">
           <Iconify width={24} icon="solar:bell-bing-bold-duotone" />
         </Badge>
       </IconButton>
@@ -144,18 +178,15 @@ export function NotificationsDrawer({ data = [], sx, ...other }: NotificationsDr
         open={open}
         onClose={onClose}
         anchor="right"
-        slotProps={{
-          backdrop: { invisible: true },
-          paper: { sx: { width: 1, maxWidth: 420 } },
-        }}
+        slotProps={{ backdrop: { invisible: true }, paper: { sx: { width: 1, maxWidth: 420 } } }}
       >
         {renderHead()}
         {renderTabs()}
         {renderList()}
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth size="large">
-            View all
+          <Button fullWidth size="large" onClick={markAllRead} disabled={!unread.length}>
+            Mark all as read
           </Button>
         </Box>
       </Drawer>

@@ -1,76 +1,49 @@
 import type { ButtonProps } from '@mui/material/Button';
 
-import { useCallback } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useState, useCallback } from 'react';
 
 import Button from '@mui/material/Button';
 
+import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
-
-import { CONFIG } from 'src/global-config';
 
 import { toast } from 'src/components/snackbar';
 
-import { useAuthContext } from 'src/auth/hooks';
-import { signOut as jwtSignOut } from 'src/auth/context/jwt/action';
-import { signOut as amplifySignOut } from 'src/auth/context/amplify/action';
-import { signOut as supabaseSignOut } from 'src/auth/context/supabase/action';
-import { signOut as firebaseSignOut } from 'src/auth/context/firebase/action';
+import { useOmAuth } from 'src/auth/context/om-auth';
 
 // ----------------------------------------------------------------------
-
-const signOut =
-  (CONFIG.auth.method === 'supabase' && supabaseSignOut) ||
-  (CONFIG.auth.method === 'firebase' && firebaseSignOut) ||
-  (CONFIG.auth.method === 'amplify' && amplifySignOut) ||
-  jwtSignOut;
 
 type Props = ButtonProps & {
   onClose?: () => void;
 };
 
+/**
+ * Ends the real OM session (`POST /api/auth/logout` clears the session cookie,
+ * revokes the refresh token and drops the access token), then returns the user
+ * to the sign-in page.
+ */
 export function SignOutButton({ onClose, sx, ...other }: Props) {
   const router = useRouter();
-
-  const { checkUserSession } = useAuthContext();
-
-  const { logout: signOutAuth0 } = useAuth0();
+  const { signOut } = useOmAuth();
+  const [busy, setBusy] = useState(false);
 
   const handleLogout = useCallback(async () => {
+    setBusy(true);
     try {
       await signOut();
-      await checkUserSession?.();
-
       onClose?.();
-      router.refresh();
+      toast.success('You have been signed out');
+      router.replace(paths.signIn);
     } catch (error) {
       console.error(error);
-      toast.error('Unable to logout!');
+      toast.error('Unable to sign out');
+    } finally {
+      setBusy(false);
     }
-  }, [checkUserSession, onClose, router]);
-
-  const handleLogoutAuth0 = useCallback(async () => {
-    try {
-      await signOutAuth0();
-
-      onClose?.();
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      toast.error('Unable to logout!');
-    }
-  }, [onClose, router, signOutAuth0]);
+  }, [onClose, router, signOut]);
 
   return (
-    <Button
-      fullWidth
-      variant="soft"
-      size="large"
-      color="error"
-      onClick={CONFIG.auth.method === 'auth0' ? handleLogoutAuth0 : handleLogout}
-      sx={sx}
-      {...other}
-    >
+    <Button fullWidth variant="soft" size="large" color="error" loading={busy} onClick={handleLogout} sx={sx} {...other}>
       Logout
     </Button>
   );
