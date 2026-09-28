@@ -24,6 +24,7 @@ import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
 import { DashboardContent } from 'src/layouts/dashboard';
 import { CALENDAR_COLOR_OPTIONS } from 'src/_mock/_calendar';
+import { useActiveChurchId } from 'src/layouts/components/use-active-church';
 import { updateEvent, useGetEvents, refreshEvents } from 'src/actions/calendar';
 
 import { Iconify } from 'src/components/iconify';
@@ -54,7 +55,8 @@ export function CalendarView() {
   const openSources = useBoolean();
   const { user } = useAuthContext();
   const churchParam = useSearchParams().get('church');
-  const churchId = churchParam ? Number(churchParam) : null;
+  const activeChurchId = useActiveChurchId();
+  const churchId = churchParam ? Number(churchParam) : isPlatformRole(user?.role) ? activeChurchId : null;
   const platformNoChurch = isPlatformRole(user?.role) && !churchId;
 
   const { events, eventsLoading, canWrite } = useGetEvents(churchId);

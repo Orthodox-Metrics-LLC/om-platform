@@ -2,6 +2,7 @@ import { paths } from 'src/routes/paths';
 import { useSearchParams } from 'src/routes/hooks';
 
 import { CONFIG } from 'src/global-config';
+import { useActiveChurchId } from 'src/layouts/components/use-active-church';
 
 import { OverviewFileView } from 'src/sections/overview/file/view';
 import { FileManagerChurchPicker } from 'src/sections/file-manager/file-manager-church-picker';
@@ -15,9 +16,11 @@ const metadata = { title: `File | Dashboard - ${CONFIG.appName}` };
 export default function Page() {
   // super_admin/admin may inspect a specific church with ?church=<id>
   const church = useSearchParams().get('church');
-  const churchId = church ? Number(church) : null;
+  const activeChurchId = useActiveChurchId();
   const { user } = useAuthContext();
   const isPlatformAdmin = user?.role === 'super_admin' || user?.role === 'admin';
+  // explicit ?church= wins; otherwise platform admins follow the header parish switcher
+  const churchId = church ? Number(church) : isPlatformAdmin ? activeChurchId : null;
 
   return (
     <>
@@ -26,7 +29,7 @@ export default function Page() {
       {isPlatformAdmin && !churchId ? (
         <FileManagerChurchPicker heading="Files" basePath={paths.dashboard.general.file} />
       ) : (
-        <OverviewFileView churchId={churchId} />
+        <OverviewFileView key={churchId ?? 'own'} churchId={churchId} />
       )}
     </>
   );

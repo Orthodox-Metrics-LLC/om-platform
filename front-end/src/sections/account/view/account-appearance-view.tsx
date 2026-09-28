@@ -1,11 +1,19 @@
 import { useSearchParams } from 'src/routes/hooks';
 
+import { useActiveChurchId } from 'src/layouts/components/use-active-church';
+
+import { useAuthContext } from 'src/auth/hooks';
+import { isPlatformRole } from 'src/auth/context/om-auth';
+
 import { AccountAppearance } from '../account-appearance';
 
 // ----------------------------------------------------------------------
 
 export function AccountAppearanceView() {
-  // super_admin/admin may edit a specific parish with ?church=<id>
+  const { user } = useAuthContext();
   const church = useSearchParams().get('church');
-  return <AccountAppearance churchId={church ? Number(church) : null} />;
+  const activeChurchId = useActiveChurchId();
+  // explicit ?church= wins; platform admins otherwise follow the header parish switcher
+  const churchId = church ? Number(church) : isPlatformRole(user?.role) ? activeChurchId : null;
+  return <AccountAppearance key={churchId ?? 'own'} churchId={churchId} />;
 }

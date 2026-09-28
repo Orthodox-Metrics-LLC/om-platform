@@ -22,6 +22,8 @@ import { RouterLink } from 'src/routes/components';
 import { fToNow } from 'src/utils/format-time';
 import { fData } from 'src/utils/format-number';
 
+import { useActiveChurchId, setActiveChurchId } from 'src/layouts/components/use-active-church';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -40,7 +42,10 @@ export function ChurchFilesView() {
   const [churches, setChurches] = useState<OmAdminChurchStorage[]>([]);
   const [jurisdictions, setJurisdictions] = useState<string[]>([]);
   const [jurisdiction, setJurisdiction] = useState('');
-  const [churchId, setChurchId] = useState<number | null>(null);
+  const activeChurchId = useActiveChurchId();
+  const [churchId, setChurchIdState] = useState<number | null>(activeChurchId);
+  // selecting here also updates the header parish switcher
+  const setChurchId = (id: number | null) => { setChurchIdState(id); if (id) setActiveChurchId(id); };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
