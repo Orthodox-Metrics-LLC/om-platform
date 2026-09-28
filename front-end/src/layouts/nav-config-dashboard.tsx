@@ -69,7 +69,17 @@ export const churchNavData: NavSectionProps['data'] = [
   {
     subheader: 'Parish Portal',
     items: [
-      { title: 'Portal Home', path: paths.portal.root, icon: ICONS.dashboard, deepMatch: true },
+      {
+        title: 'Portal Home',
+        path: paths.portal.root,
+        icon: ICONS.dashboard,
+        children: [
+          { title: 'Overview', path: paths.portal.root },
+          { title: 'Records', path: paths.dashboard.records.root, deepMatch: true },
+          { title: 'Certificates', path: paths.dashboard.records.certificates },
+          { title: 'Sacramental calendar', path: paths.dashboard.records.sacramentalCalendar },
+        ],
+      },
       { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
       { title: 'File', path: paths.dashboard.general.file, icon: ICONS.file },
     ],

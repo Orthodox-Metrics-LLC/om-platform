@@ -131,6 +131,15 @@ export const paths = {
     calendar: `${ROOTS.DASHBOARD}/calendar`,
     fileManager: `${ROOTS.DASHBOARD}/file-manager`,
     assetManager: `${ROOTS.DASHBOARD}/asset-manager`,
+    records: {
+      root: `${ROOTS.DASHBOARD}/records`,
+      list: (type: string) => `${ROOTS.DASHBOARD}/records/${type}`,
+      new: (type: string) => `${ROOTS.DASHBOARD}/records/${type}/new`,
+      details: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}`,
+      edit: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}/edit`,
+      certificates: `${ROOTS.DASHBOARD}/records/certificates`,
+      sacramentalCalendar: `${ROOTS.DASHBOARD}/records/sacramental-calendar`,
+    },
     permission: `${ROOTS.DASHBOARD}/permission`,
     general: {
       app: `${ROOTS.DASHBOARD}/app`,

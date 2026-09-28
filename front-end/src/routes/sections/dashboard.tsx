@@ -72,6 +72,13 @@ const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
 const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
+// Sacramental records
+const RecordsListPage = lazy(() => import('src/pages/dashboard/records/list'));
+const RecordNewPage = lazy(() => import('src/pages/dashboard/records/new'));
+const RecordDetailsPage = lazy(() => import('src/pages/dashboard/records/details'));
+const RecordEditPage = lazy(() => import('src/pages/dashboard/records/edit'));
+const RecordsCertificatesPage = lazy(() => import('src/pages/dashboard/records/certificates'));
+const SacramentalCalendarPage = lazy(() => import('src/pages/dashboard/records/sacramental-calendar'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -204,6 +211,18 @@ export const dashboardRoutes: RouteObject[] = [
       },
       { path: 'file-manager', element: <FileManagerPage /> },
       { path: 'asset-manager', element: <AssetManagerPage /> },
+      {
+        path: 'records',
+        children: [
+          { index: true, element: <Navigate to="/dashboard/records/baptism" replace /> },
+          { path: 'certificates', element: <RecordsCertificatesPage /> },
+          { path: 'sacramental-calendar', element: <SacramentalCalendarPage /> },
+          { path: ':type', element: <RecordsListPage /> },
+          { path: ':type/new', element: <RecordNewPage /> },
+          { path: ':type/:id', element: <RecordDetailsPage /> },
+          { path: ':type/:id/edit', element: <RecordEditPage /> },
+        ],
+      },
       { path: 'mail', element: <MailPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'calendar', element: <CalendarPage /> },
