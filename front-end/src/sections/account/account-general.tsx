@@ -16,7 +16,7 @@ import { fDate } from 'src/utils/format-time';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
-import { Form, Field } from 'src/components/hook-form';
+import { Form, Field, schemaUtils } from 'src/components/hook-form';
 
 import { OM_AVATARS } from 'src/auth/utils';
 import { useOmAuth, omApiFetch, omRoleLabel } from 'src/auth/context/om-auth';
@@ -54,6 +54,7 @@ export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
 export const UpdateUserSchema = z.object({
   firstName: z.string().min(1, { error: 'First name is required!' }),
   lastName: z.string().min(1, { error: 'Last name is required!' }),
+  email: schemaUtils.email(),
   displayName: z.string(),
   avatarUrl: z.string(),
   phoneNumber: z.union([z.string(), z.null(), z.undefined()]),
@@ -68,6 +69,7 @@ export const UpdateUserSchema = z.object({
 const emptyValues: UpdateUserSchemaType = {
   firstName: '',
   lastName: '',
+  email: '',
   displayName: '',
   avatarUrl: '',
   phoneNumber: '',
@@ -83,6 +85,7 @@ function toFormValues(p: OmProfile): UpdateUserSchemaType {
   return {
     firstName: p.first_name ?? '',
     lastName: p.last_name ?? '',
+    email: p.email ?? '',
     displayName: p.display_name ?? '',
     avatarUrl: p.profile_image_url ?? '',
     phoneNumber: p.phone ?? '',
@@ -98,7 +101,9 @@ function toFormValues(p: OmProfile): UpdateUserSchemaType {
 // ----------------------------------------------------------------------
 
 export function AccountGeneral() {
-  const { checkSession } = useOmAuth();
+  const { user: sessionUser, checkSession } = useOmAuth();
+  // Only super admins may change their own email; everyone else asks a super admin.
+  const canEditEmail = sessionUser?.role === 'super_admin';
 
   const [profile, setProfile] = useState<OmProfile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -140,6 +145,10 @@ export function AccountGeneral() {
         body: JSON.stringify({
           first_name: data.firstName.trim(),
           last_name: data.lastName.trim(),
+          ...(canEditEmail &&
+            data.email.trim().toLowerCase() !== profile?.email && {
+              email: data.email.trim().toLowerCase(),
+            }),
           display_name: data.displayName.trim() || null,
           profile_image_url: data.avatarUrl || null,
           phone: data.phoneNumber || null,
@@ -245,11 +254,15 @@ export function AccountGeneral() {
                 label="Display name"
                 helperText="Shown across the platform; leave blank to use your full name."
               />
-              <TextField
+              <Field.Text
+                name="email"
                 label="Email address"
-                value={profile?.email ?? ''}
-                helperText="Managed by your administrator"
-                {...readOnlyProps}
+                disabled={!canEditEmail}
+                helperText={
+                  canEditEmail
+                    ? 'Super admins may change their own email'
+                    : 'Contact a super administrator to change your email'
+                }
               />
               <Field.Phone name="phoneNumber" label="Phone number" country="US" />
               <Field.Text name="jobTitle" label="Title / position" placeholder="e.g. Parish Secretary" />

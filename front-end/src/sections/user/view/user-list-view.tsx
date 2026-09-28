@@ -1,8 +1,9 @@
+import type { IUserTableFilters } from 'src/types/user';
 import type { TableHeadCellProps } from 'src/components/table';
-import type { IUserItem, IUserTableFilters } from 'src/types/user';
+import type { OmAdminUser, OmChurchOption, OmAccountStatus } from '../om-users-api';
 
-import { useState, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
+import { useState, useEffect, useCallback } from 'react';
 import { useBoolean, useSetState } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -19,7 +20,6 @@ import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _roles, _userList, USER_STATUS_OPTIONS } from 'src/_mock';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -39,34 +39,73 @@ import {
   TablePaginationCustom,
 } from 'src/components/table';
 
+import { useAuthContext } from 'src/auth/hooks';
+import { RoleBasedGuard } from 'src/auth/guard';
+import { omRoleLabel } from 'src/auth/context/om-auth';
+
 import { UserTableRow } from '../user-table-row';
 import { UserTableToolbar } from '../user-table-toolbar';
+import { UserApproveDialog } from '../user-approve-dialog';
 import { UserTableFiltersResult } from '../user-table-filters-result';
+import { omUsersApi, userFullName, OM_ROLE_OPTIONS, ACCOUNT_STATUS_OPTIONS } from '../om-users-api';
 
 // ----------------------------------------------------------------------
 
-const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...USER_STATUS_OPTIONS];
+const STATUS_OPTIONS = [{ value: 'all', label: 'All' }, ...ACCOUNT_STATUS_OPTIONS];
 
 const TABLE_HEAD: TableHeadCellProps[] = [
   { id: 'name', label: 'Name' },
-  { id: 'phoneNumber', label: 'Phone number', width: 180 },
-  { id: 'company', label: 'Company', width: 220 },
-  { id: 'role', label: 'Role', width: 180 },
-  { id: 'status', label: 'Status', width: 100 },
+  { id: 'phone', label: 'Phone number', width: 180 },
+  { id: 'church_name', label: 'Church', width: 220 },
+  { id: 'role', label: 'Role', width: 160 },
+  { id: 'account_status', label: 'Status', width: 110 },
   { id: '', width: 88 },
 ];
 
+const ROLE_FILTER_OPTIONS = OM_ROLE_OPTIONS.map((r) => r.label);
+
 // ----------------------------------------------------------------------
 
+/** Superadmins and admins only; everyone else gets the template's 403 panel. */
 export function UserListView() {
-  const table = useTable();
+  const { user } = useAuthContext();
+  return (
+    <RoleBasedGuard hasContent currentRole={user?.role} allowedRoles={['super_admin', 'admin']}>
+      <UserListContent actorRole={user?.role ?? ''} />
+    </RoleBasedGuard>
+  );
+}
+
+function UserListContent({ actorRole }: { actorRole: string }) {
+  const table = useTable({ defaultOrderBy: 'name' });
 
   const confirmDialog = useBoolean();
+  const approveDialog = useBoolean();
 
-  const [tableData, setTableData] = useState<IUserItem[]>(_userList);
+  const [tableData, setTableData] = useState<OmAdminUser[]>([]);
+  const [churches, setChurches] = useState<OmChurchOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [approveTarget, setApproveTarget] = useState<OmAdminUser | null>(null);
 
   const filters = useSetState<IUserTableFilters>({ name: '', role: [], status: 'all' });
   const { state: currentFilters, setState: updateFilters } = filters;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [users, churchList] = await Promise.all([omUsersApi.list(), omUsersApi.churches()]);
+      setTableData(users);
+      setChurches(churchList);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not load users');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const dataFiltered = applyFilter({
     inputData: tableData,
@@ -79,30 +118,65 @@ export function UserListView() {
   const canReset =
     !!currentFilters.name || currentFilters.role.length > 0 || currentFilters.status !== 'all';
 
-  const notFound = (!dataFiltered.length && canReset) || !dataFiltered.length;
+  const notFound = !loading && ((!dataFiltered.length && canReset) || !dataFiltered.length);
 
   const handleDeleteRow = useCallback(
-    (id: string) => {
-      const deleteRow = tableData.filter((row) => row.id !== id);
-
-      toast.success('Delete success!');
-
-      setTableData(deleteRow);
-
-      table.onUpdatePageDeleteRow(dataInPage.length);
+    async (id: number) => {
+      try {
+        await omUsersApi.remove(id);
+        toast.success('User deleted');
+        setTableData((prev) => prev.filter((row) => row.id !== id));
+        table.onUpdatePageDeleteRow(dataInPage.length);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Delete failed');
+      }
     },
-    [dataInPage.length, table, tableData]
+    [dataInPage.length, table]
   );
 
-  const handleDeleteRows = useCallback(() => {
-    const deleteRows = tableData.filter((row) => !table.selected.includes(row.id));
-
-    toast.success('Delete success!');
-
-    setTableData(deleteRows);
-
+  const handleDeleteRows = useCallback(async () => {
+    const ids = table.selected.map(Number);
+    const results = await Promise.allSettled(ids.map((id) => omUsersApi.remove(id)));
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed) toast.error(`${failed} of ${ids.length} could not be deleted`);
+    else toast.success(`${ids.length} user${ids.length === 1 ? '' : 's'} deleted`);
+    await load();
     table.onUpdatePageDeleteRows(dataInPage.length, dataFiltered.length);
-  }, [dataFiltered.length, dataInPage.length, table, tableData]);
+  }, [dataFiltered.length, dataInPage.length, table, load]);
+
+  const applyStatus = useCallback(
+    async (row: OmAdminUser, status: OmAccountStatus, churchId?: number | null) => {
+      try {
+        const res = await omUsersApi.setAccountStatus(row.id, {
+          account_status: status,
+          ...(churchId !== undefined && { church_id: churchId }),
+        });
+        toast.success(
+          status === 'active' && res.welcome_email_sent
+            ? `${userFullName(row)} approved — temporary password emailed`
+            : `${userFullName(row)} is now ${status}`
+        );
+        await load();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Status change failed');
+        throw e;
+      }
+    },
+    [load]
+  );
+
+  const handleChangeStatus = useCallback(
+    (row: OmAdminUser, status: OmAccountStatus) => {
+      if (status === 'active') {
+        // Activation always goes through the dialog so a church can be assigned.
+        setApproveTarget(row);
+        approveDialog.onTrue();
+        return;
+      }
+      applyStatus(row, status).catch(() => {});
+    },
+    [applyStatus, approveDialog]
+  );
 
   const handleFilterStatus = useCallback(
     (event: React.SyntheticEvent, newValue: string) => {
@@ -119,7 +193,8 @@ export function UserListView() {
       title="Delete"
       content={
         <>
-          Are you sure want to delete <strong> {table.selected.length} </strong> items?
+          Are you sure want to delete <strong> {table.selected.length} </strong> users? This cannot
+          be undone.
         </>
       }
       action={
@@ -141,7 +216,7 @@ export function UserListView() {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          heading="Users"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
             { name: 'User', href: paths.dashboard.user.root },
@@ -190,9 +265,9 @@ export function UserListView() {
                       'default'
                     }
                   >
-                    {['active', 'pending', 'banned', 'rejected'].includes(tab.value)
-                      ? tableData.filter((user) => user.status === tab.value).length
-                      : tableData.length}
+                    {tab.value === 'all'
+                      ? tableData.length
+                      : tableData.filter((u) => u.account_status === tab.value).length}
                   </Label>
                 }
               />
@@ -202,7 +277,7 @@ export function UserListView() {
           <UserTableToolbar
             filters={filters}
             onResetPage={table.onResetPage}
-            options={{ roles: _roles }}
+            options={{ roles: ROLE_FILTER_OPTIONS }}
           />
 
           {canReset && (
@@ -222,15 +297,17 @@ export function UserListView() {
               onSelectAllRows={(checked) =>
                 table.onSelectAllRows(
                   checked,
-                  dataFiltered.map((row) => row.id)
+                  dataFiltered.map((row) => String(row.id))
                 )
               }
               action={
-                <Tooltip title="Delete">
-                  <IconButton color="primary" onClick={confirmDialog.onTrue}>
-                    <Iconify icon="solar:trash-bin-trash-bold" />
-                  </IconButton>
-                </Tooltip>
+                actorRole === 'super_admin' ? (
+                  <Tooltip title="Delete">
+                    <IconButton color="primary" onClick={confirmDialog.onTrue}>
+                      <Iconify icon="solar:trash-bin-trash-bold" />
+                    </IconButton>
+                  </Tooltip>
+                ) : null
               }
             />
 
@@ -246,7 +323,7 @@ export function UserListView() {
                   onSelectAllRows={(checked) =>
                     table.onSelectAllRows(
                       checked,
-                      dataFiltered.map((row) => row.id)
+                      dataFiltered.map((row) => String(row.id))
                     )
                   }
                 />
@@ -261,10 +338,12 @@ export function UserListView() {
                       <UserTableRow
                         key={row.id}
                         row={row}
-                        selected={table.selected.includes(row.id)}
-                        onSelectRow={() => table.onSelectRow(row.id)}
+                        actorRole={actorRole}
+                        selected={table.selected.includes(String(row.id))}
+                        onSelectRow={() => table.onSelectRow(String(row.id))}
                         onDeleteRow={() => handleDeleteRow(row.id)}
-                        editHref={paths.dashboard.user.edit(row.id)}
+                        onChangeStatus={(status) => handleChangeStatus(row, status)}
+                        editHref={paths.dashboard.user.edit(String(row.id))}
                       />
                     ))}
 
@@ -292,6 +371,18 @@ export function UserListView() {
       </DashboardContent>
 
       {renderConfirmDialog()}
+
+      <UserApproveDialog
+        open={approveDialog.value}
+        user={approveTarget}
+        churches={churches}
+        onClose={approveDialog.onFalse}
+        onConfirm={async (churchId) => {
+          if (!approveTarget) return;
+          await applyStatus(approveTarget, 'active', churchId);
+          approveDialog.onFalse();
+        }}
+      />
     </>
   );
 }
@@ -299,7 +390,7 @@ export function UserListView() {
 // ----------------------------------------------------------------------
 
 type ApplyFilterProps = {
-  inputData: IUserItem[];
+  inputData: OmAdminUser[];
   filters: IUserTableFilters;
   comparator: (a: any, b: any) => number;
 };
@@ -307,7 +398,8 @@ type ApplyFilterProps = {
 function applyFilter({ inputData, comparator, filters }: ApplyFilterProps) {
   const { name, status, role } = filters;
 
-  const stabilizedThis = inputData.map((el, index) => [el, index] as const);
+  const rows = inputData.map((u) => ({ ...u, name: userFullName(u) }));
+  const stabilizedThis = rows.map((el, index) => [el, index] as const);
 
   stabilizedThis.sort((a, b) => {
     const order = comparator(a[0], b[0]);
@@ -315,19 +407,25 @@ function applyFilter({ inputData, comparator, filters }: ApplyFilterProps) {
     return a[1] - b[1];
   });
 
-  inputData = stabilizedThis.map((el) => el[0]);
+  let out: OmAdminUser[] = stabilizedThis.map((el) => el[0]);
 
   if (name) {
-    inputData = inputData.filter((user) => user.name.toLowerCase().includes(name.toLowerCase()));
+    const q = name.toLowerCase();
+    out = out.filter(
+      (u) =>
+        userFullName(u).toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.church_name ?? '').toLowerCase().includes(q)
+    );
   }
 
   if (status !== 'all') {
-    inputData = inputData.filter((user) => user.status === status);
+    out = out.filter((u) => u.account_status === status);
   }
 
   if (role.length) {
-    inputData = inputData.filter((user) => role.includes(user.role));
+    out = out.filter((u) => role.includes(omRoleLabel(u.role)));
   }
 
-  return inputData;
+  return out;
 }

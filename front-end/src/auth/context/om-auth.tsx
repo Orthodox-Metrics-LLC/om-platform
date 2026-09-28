@@ -175,7 +175,7 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
       }
       const [res, imp] = await Promise.all([
         fetch('/api/auth/check', { credentials: 'include', headers: authHeaders() }),
-        fetch('/api/admin/impersonate/status', { credentials: 'include' }),
+        fetch('/api/om-admin/impersonate/status', { credentials: 'include' }),
       ]);
       const data = await res.json().catch(() => null);
       const impData = await imp.json().catch(() => null);
@@ -200,7 +200,7 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
    */
   const switchToUser = useCallback(
     async (userId: number) => {
-      const res = await fetch('/api/admin/impersonate', {
+      const res = await fetch('/api/om-admin/impersonate', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
@@ -217,7 +217,7 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
   );
 
   const returnToSelf = useCallback(async () => {
-    const res = await fetch('/api/admin/impersonate/return', {
+    const res = await fetch('/api/om-admin/impersonate/return', {
       method: 'POST',
       credentials: 'include',
     });

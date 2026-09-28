@@ -43,7 +43,7 @@ const nameOf = (p: LinkedProfile) => omDisplayName({ ...p, username: null });
 
 /**
  * super_admin only: the row of pinned accounts under the drawer avatar. Clicking
- * one switches the session via `/api/admin/impersonate`; the "+" pins another
+ * one switches the session via `/api/om-admin/impersonate`; the "+" pins another
  * account via `/api/user/profile/linked-profiles`.
  */
 export function AccountLinkedProfiles({ onSwitched }: { onSwitched?: () => void }) {
