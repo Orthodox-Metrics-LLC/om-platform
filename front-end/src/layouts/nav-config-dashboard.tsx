@@ -61,6 +61,30 @@ const ICONS = {
  * - `disabled`: An optional boolean to disable the item.
  * - `deepMatch`: An optional boolean to indicate if the item should match subpaths.
  */
+/**
+ * Default menu for every om_church_## (church roles). Only the parish card at the
+ * bottom of the sidebar (church image, name, signed-in user) varies per tenant.
+ */
+export const churchNavData: NavSectionProps['data'] = [
+  {
+    subheader: 'Parish Portal',
+    items: [
+      { title: 'Portal Home', path: paths.portal.root, icon: ICONS.dashboard, deepMatch: true },
+      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
+      { title: 'File', path: paths.dashboard.general.file, icon: ICONS.file },
+    ],
+  },
+  {
+    subheader: 'Applications',
+    items: [
+      { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },
+      { title: 'Mail', path: paths.dashboard.mail, icon: ICONS.mail },
+      { title: 'Chat', path: paths.dashboard.chat, icon: ICONS.chat },
+      { title: 'Calendar', path: paths.dashboard.calendar, icon: ICONS.calendar },
+    ],
+  },
+];
+
 export const navData: NavSectionProps['data'] = [
   /**
    * OM Parish Portal — migrated OM authenticated pages live here.

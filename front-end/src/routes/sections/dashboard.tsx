@@ -47,6 +47,7 @@ const UserEditPage = lazy(() => import('src/pages/dashboard/user/edit'));
 const AccountGeneralPage = lazy(() => import('src/pages/dashboard/user/account/general'));
 const AccountBillingPage = lazy(() => import('src/pages/dashboard/user/account/billing'));
 const AccountSocialsPage = lazy(() => import('src/pages/dashboard/user/account/socials'));
+const AccountAppearancePage = lazy(() => import('src/pages/dashboard/user/account/appearance'));
 const AccountNotificationsPage = lazy(
   () => import('src/pages/dashboard/user/account/notifications')
 );
@@ -137,6 +138,7 @@ export const dashboardRoutes: RouteObject[] = [
               { path: 'billing', element: <AccountBillingPage /> },
               { path: 'notifications', element: <AccountNotificationsPage /> },
               { path: 'socials', element: <AccountSocialsPage /> },
+              { path: 'appearance', element: <AccountAppearancePage /> },
               { path: 'change-password', element: <AccountChangePasswordPage /> },
             ],
           },

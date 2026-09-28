@@ -14,38 +14,71 @@ import { RouterLink } from 'src/routes/components';
 import { CONFIG } from 'src/global-config';
 
 import { useAuthContext } from 'src/auth/hooks';
+import { isChurchRole } from 'src/auth/context/om-auth';
+
+import { useParishAppearance } from './use-parish-appearance';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Bottom of the sidebar. Church roles see their parish card (church image +
+ * name banner) above the signed-in user; platform roles see just the user.
+ */
 export function NavUpgrade({ sx, ...other }: BoxProps) {
-  const { user } = useAuthContext();
+  const { user, authenticated } = useAuthContext();
+  const church = isChurchRole(user?.role);
+  const { appearance } = useParishAppearance(authenticated && church);
+
+  const renderParish = () =>
+    appearance && (
+      <Box component={RouterLink} href={`${paths.dashboard.user.account}/appearance`} sx={{ display: 'block', width: 1, mb: 3, textDecoration: 'none', color: 'inherit' }}>
+        {appearance.image_url && (
+          <Box
+            component="img"
+            alt={appearance.display_name}
+            src={appearance.image_url}
+            sx={{ width: 1, aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: 3, display: 'block', mb: 1.5 }}
+          />
+        )}
+        <Box
+          sx={{
+            px: 1.5,
+            py: 1.5,
+            borderRadius: 0.5,
+            color: 'common.white',
+            bgcolor: appearance.primary_color || '#2c5aa0',
+            fontFamily: '"Georgia", "Times New Roman", serif',
+            textTransform: 'uppercase',
+            textAlign: 'center',
+            lineHeight: 1.15,
+          }}
+        >
+          <Typography component="div" sx={{ fontFamily: 'inherit', fontWeight: 700, fontSize: 17, letterSpacing: 0.3 }}>
+            {appearance.display_name}
+          </Typography>
+          {(appearance.city || appearance.state) && (
+            <>
+              <Box sx={{ my: 0.75, mx: 'auto', width: '80%', borderTop: '1px solid', borderColor: 'rgba(255,255,255,0.6)' }} />
+              <Typography component="div" sx={{ fontFamily: 'inherit', fontSize: 14, letterSpacing: 0.3 }}>
+                {[appearance.city, appearance.state].filter(Boolean).join(', ')}
+              </Typography>
+            </>
+          )}
+        </Box>
+      </Box>
+    );
 
   return (
-    <Box
-      sx={[{ px: 2, py: 5, textAlign: 'center' }, ...(Array.isArray(sx) ? sx : [sx])]}
-      {...other}
-    >
+    <Box sx={[{ px: 2, py: 4, textAlign: 'center' }, ...(Array.isArray(sx) ? sx : [sx])]} {...other}>
+      {church && renderParish()}
+
       <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
         <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 48, height: 48 }}>
           {user?.displayName?.charAt(0).toUpperCase()}
         </Avatar>
-
         <Box sx={{ mt: 1.5, width: 1 }}>
-          <Typography
-            variant="subtitle2"
-            noWrap
-            sx={{ mb: 1, color: 'var(--layout-nav-text-primary-color)' }}
-          >
-            {user?.displayName}
-          </Typography>
-
-          <Typography
-            variant="body2"
-            noWrap
-            sx={{ color: 'var(--layout-nav-text-disabled-color)' }}
-          >
-            {user?.email}
-          </Typography>
+          <Typography variant="subtitle2" noWrap>{user?.displayName}</Typography>
+          <Typography variant="body2" noWrap sx={{ color: 'text.disabled', mt: 0.25 }}>{user?.email}</Typography>
         </Box>
       </Box>
     </Box>

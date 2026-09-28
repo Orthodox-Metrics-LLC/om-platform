@@ -15,7 +15,8 @@ import { allLangs } from 'src/locales';
 import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuthContext } from 'src/auth/hooks';
+import { isChurchRole } from 'src/auth/context/om-auth';
 
 import { NavMobile } from './nav-mobile';
 import { VerticalDivider } from './content';
@@ -30,10 +31,10 @@ import { SettingsButton } from '../components/settings-button';
 import { LanguagePopover } from '../components/language-popover';
 import { ContactsPopover } from '../components/contacts-popover';
 import { WorkspacesPopover } from '../components/workspaces-popover';
-import { navData as dashboardNavData } from '../nav-config-dashboard';
 import { dashboardLayoutVars, dashboardNavColorVars } from './css-vars';
 import { NotificationsDrawer } from '../components/notifications-drawer';
 import { MainSection, layoutClasses, HeaderSection, LayoutSection } from '../core';
+import { churchNavData, navData as dashboardNavData } from '../nav-config-dashboard';
 
 // ----------------------------------------------------------------------
 
@@ -59,7 +60,7 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   const theme = useTheme();
 
-  const { user } = useMockedUser();
+  const { user } = useAuthContext();
 
   const settings = useSettingsContext();
 
@@ -67,7 +68,8 @@ export function DashboardLayout({
 
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
-  const navData = slotProps?.nav?.data ?? dashboardNavData;
+  // Church roles get the parish default menu; platform roles keep the full template menu.
+  const navData = slotProps?.nav?.data ?? (isChurchRole(user?.role) ? churchNavData : dashboardNavData);
 
   const isNavMini = settings.state.navLayout === 'mini';
   const isNavHorizontal = settings.state.navLayout === 'horizontal';

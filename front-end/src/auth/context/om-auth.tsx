@@ -77,6 +77,15 @@ export function omRoleLabel(role?: string | null) {
   return (role && OM_ROLE_LABELS[role]) || role || 'Member';
 }
 
+/** Platform roles oversee every tenant; everyone else belongs to one om_church_##. */
+export const OM_PLATFORM_ROLES = ['super_admin', 'admin'] as const;
+export function isPlatformRole(role?: string | null) {
+  return !!role && (OM_PLATFORM_ROLES as readonly string[]).includes(role);
+}
+export function isChurchRole(role?: string | null) {
+  return !!role && !isPlatformRole(role);
+}
+
 export function omDisplayName(user: Pick<OmUser, 'display_name' | 'first_name' | 'last_name' | 'username' | 'email'>) {
   return (
     (user.display_name ?? [user.first_name, user.last_name].filter(Boolean).join(' ')) ||
