@@ -1,0 +1,174 @@
+import type { OmAsset } from './om-assets-api';
+import type { AssetMenuAction } from './asset-card';
+
+import { useState, useCallback } from 'react';
+import { useBoolean } from 'minimal-shared/hooks';
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
+
+import { fData } from 'src/utils/format-number';
+
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
+import { Iconify } from 'src/components/iconify';
+import { EmptyContent } from 'src/components/empty-content';
+import { ConfirmDialog } from 'src/components/custom-dialog';
+
+import { AssetCard } from './asset-card';
+import { AssetTable } from './asset-table';
+import { omAssetDirectUrl } from './om-assets-api';
+import { AssetCopyDialog } from './asset-copy-dialog';
+import { AssetBulkActions } from './asset-bulk-actions';
+import { AssetUploadDialog } from './asset-upload-dialog';
+import { AssetDetailsDrawer } from './asset-details-drawer';
+import { AssetManagerSidebar } from './asset-manager-sidebar';
+import { AssetManagerToolbar } from './asset-manager-toolbar';
+import { AssetWorkshopDialog } from './asset-workshop-dialog';
+import { useAssetManager, AssetManagerProvider } from './asset-manager-context';
+import { AssetSplitDialog, AssetTransformDialog } from './asset-transform-dialog';
+
+// ----------------------------------------------------------------------
+
+/** Media assets section: full Assets Library on /api/assets in Minimal UI. */
+export function AssetLibraryView() {
+  return (
+    <AssetManagerProvider>
+      <AssetLibraryContent />
+    </AssetManagerProvider>
+  );
+}
+
+function AssetLibraryContent() {
+  const am = useAssetManager();
+  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [current, setCurrent] = useState<OmAsset | null>(null);
+  const [editing, setEditing] = useState(false);
+  const details = useBoolean();
+  const uploadDialog = useBoolean();
+  const transformDialog = useBoolean();
+  const splitDialog = useBoolean();
+  const copyDialog = useBoolean();
+  const workshopDialog = useBoolean();
+  const confirmArchive = useBoolean();
+  const confirmDupes = useBoolean();
+  const [dropFiles, setDropFiles] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+
+  const open = useCallback((a: OmAsset, edit = false) => { setCurrent(a); setEditing(edit); details.onTrue(); }, [details]);
+
+  const onAction = useCallback(
+    (a: OmAsset, action: AssetMenuAction) => {
+      setCurrent(a);
+      switch (action) {
+        case 'open': open(a); break;
+        case 'edit': open(a, true); break;
+        case 'copy-url': navigator.clipboard.writeText(omAssetDirectUrl(a)).then(() => toast.success('URL copied')).catch(() => toast.error('Could not copy')); break;
+        case 'download': window.open(omAssetDirectUrl(a), '_blank'); break;
+        case 'transform': transformDialog.onTrue(); break;
+        case 'split': splitDialog.onTrue(); break;
+        case 'copy-to': copyDialog.onTrue(); break;
+        case 'workshop': workshopDialog.onTrue(); break;
+        case 'archive': confirmArchive.onTrue(); break;
+        default:
+      }
+    },
+    [open, transformDialog, splitDialog, copyDialog, workshopDialog, confirmArchive]
+  );
+
+  const visible: OmAsset[] =
+    am.navLocation === 'duplicates' ? am.duplicateGroups.flatMap((g) => g.assets)
+    : am.navLocation === 'similar' ? am.similarGroups.flatMap((g) => g.assets)
+    : am.assets;
+
+  const renderGroups = (groups: { key: string; title: string; subtitle?: string; assets: OmAsset[] }[]) =>
+    groups.map((g) => (
+      <Box key={g.key} sx={{ mb: 3 }}>
+        <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle2">{g.title}</Typography>
+          {g.subtitle && <Typography variant="caption" sx={{ color: 'text.disabled' }}>{g.subtitle}</Typography>}
+          <Label variant="soft">{g.assets.length}</Label>
+        </Box>
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)', lg: 'repeat(6, 1fr)' } }}>
+          {g.assets.map((a) => <AssetCard key={a.id} dense asset={a} selected={am.selected.has(a.id)} onSelect={() => am.toggleSelect(a.id)} onOpen={() => open(a)} onAction={(act) => onAction(a, act)} />)}
+        </Box>
+      </Box>
+    ));
+
+  const renderBody = () => {
+    if (am.error) return <EmptyContent filled title={am.error} sx={{ py: 10 }} />;
+    if (am.navLocation === 'duplicates') {
+      return am.duplicateGroups.length ? (
+        <>
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', flexGrow: 1 }}>{am.duplicateGroups.length} exact-duplicate groups (same SHA-256). Removing keeps one copy per group.</Typography>
+            <Button variant="soft" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={confirmDupes.onTrue}>Remove duplicates</Button>
+          </Box>
+          {renderGroups(am.duplicateGroups.map((g) => ({ key: g.sha256, title: g.assets[0]?.name ?? g.sha256.slice(0, 12), subtitle: `${g.sha256.slice(0, 12)}… · ${g.assets[0]?.file_size ? fData(g.assets[0].file_size) : ''}`, assets: g.assets })))}
+        </>
+      ) : <EmptyContent filled title="No duplicates" description="Every asset has a unique checksum." sx={{ py: 10 }} />;
+    }
+    if (am.navLocation === 'similar') {
+      return am.similarGroups.length
+        ? renderGroups(am.similarGroups.map((g) => ({ key: g.key, title: `${g.category.replace(/_/g, ' ')} · ${g.width}×${g.height}`, assets: g.assets })))
+        : <EmptyContent filled title="No similar groups" description="Assets are grouped when they share category and dimensions." sx={{ py: 10 }} />;
+    }
+    if (am.loading && !am.assets.length) return <LinearProgress />;
+    if (!visible.length) return <EmptyContent filled title="No assets match" description="Adjust the filters or upload new assets." action={<Button variant="contained" onClick={uploadDialog.onTrue} startIcon={<Iconify icon="eva:cloud-upload-fill" />}>Upload</Button>} sx={{ py: 10 }} />;
+    return (
+      <>
+        {view === 'grid' ? (
+          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)', xl: 'repeat(5, 1fr)' } }}>
+            {visible.map((a) => <AssetCard key={a.id} asset={a} selected={am.selected.has(a.id)} onSelect={() => am.toggleSelect(a.id)} onOpen={() => open(a)} onAction={(act) => onAction(a, act)} />)}
+          </Box>
+        ) : (
+          <Card><AssetTable assets={visible} selected={am.selected} onToggle={(id) => am.toggleSelect(id)} onToggleAll={(on) => am.selectMany(visible.map((a) => a.id), on)} onOpen={(a) => open(a)} onAction={onAction} /></Card>
+        )}
+        {am.hasMore && (
+          <Box sx={{ mt: 3, textAlign: 'center' }}>
+            <Button variant="outlined" color="inherit" loading={am.loadingMore} onClick={am.loadMore}>Load more ({am.assets.length} of {am.total})</Button>
+          </Box>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <Box
+      sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', position: 'relative' }}
+      onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true); } }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => { if (e.dataTransfer.files.length) { e.preventDefault(); setDragOver(false); setDropFiles(Array.from(e.dataTransfer.files)); uploadDialog.onTrue(); } }}
+    >
+      <Card sx={{ width: 264, flexShrink: 0, display: { xs: 'none', md: 'block' }, height: 'calc(100vh - 260px)', position: 'sticky', top: 96 }}>
+        <AssetManagerSidebar />
+      </Card>
+
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <AssetManagerToolbar view={view} onChangeView={setView} onUpload={() => { setDropFiles([]); uploadDialog.onTrue(); }} />
+        <Box sx={{ mt: 3 }}>
+          <AssetBulkActions />
+          {renderBody()}
+        </Box>
+      </Box>
+
+      {dragOver && (
+        <Box sx={{ position: 'absolute', inset: 0, zIndex: 10, borderRadius: 2, border: '2px dashed', borderColor: 'primary.main', bgcolor: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <Typography variant="h6" color="primary">Drop files to upload</Typography>
+        </Box>
+      )}
+
+      <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} />
+      <AssetUploadDialog open={uploadDialog.value} onClose={uploadDialog.onFalse} initialFiles={dropFiles} />
+      <AssetTransformDialog open={transformDialog.value} onClose={transformDialog.onFalse} asset={current} onDone={(a) => { if (a) { am.actions.replaceAsset(a); setCurrent(a); } am.reload(); }} />
+      <AssetSplitDialog open={splitDialog.value} onClose={splitDialog.onFalse} asset={current} onDone={() => { details.onFalse(); am.reload(); am.reloadMeta(); }} />
+      <AssetCopyDialog open={copyDialog.value} onClose={copyDialog.onFalse} asset={current} />
+      <AssetWorkshopDialog open={workshopDialog.value} onClose={workshopDialog.onFalse} assetIds={current ? [current.id] : []} />
+      <ConfirmDialog open={confirmArchive.value} onClose={confirmArchive.onFalse} title="Archive asset" content={<>Archive <strong>{current?.name}</strong>?</>} action={<Button variant="contained" color="error" onClick={() => { confirmArchive.onFalse(); details.onFalse(); if (current) am.actions.archive([current.id]).catch(() => {}); }}>Archive</Button>} />
+      <ConfirmDialog open={confirmDupes.value} onClose={confirmDupes.onFalse} title="Remove duplicates" content="Archive every duplicate copy, keeping the oldest asset of each group?" action={<Button variant="contained" color="error" onClick={() => { confirmDupes.onFalse(); am.actions.deleteDuplicates().catch(() => {}); }}>Remove</Button>} />
+    </Box>
+  );
+}

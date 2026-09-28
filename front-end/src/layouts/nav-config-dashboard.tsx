@@ -167,6 +167,7 @@ export const navData: NavSectionProps['data'] = [
         ],
       },
       { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },
+      { title: 'Asset Manager', path: paths.dashboard.assetManager, icon: ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Platform administrators' },
       {
         title: 'Mail',
         path: paths.dashboard.mail,

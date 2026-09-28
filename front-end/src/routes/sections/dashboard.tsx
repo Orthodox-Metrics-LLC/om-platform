@@ -70,6 +70,7 @@ const TourCreatePage = lazy(() => import('src/pages/dashboard/tour/new'));
 const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
 const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
+const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -200,6 +201,7 @@ export const dashboardRoutes: RouteObject[] = [
         ],
       },
       { path: 'file-manager', element: <FileManagerPage /> },
+      { path: 'asset-manager', element: <AssetManagerPage /> },
       { path: 'mail', element: <MailPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'calendar', element: <CalendarPage /> },
