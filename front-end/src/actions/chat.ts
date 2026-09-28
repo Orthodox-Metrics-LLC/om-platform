@@ -5,34 +5,58 @@ import { useMemo } from 'react';
 import { keyBy } from 'es-toolkit';
 import useSWR, { mutate } from 'swr';
 
-import axios, { fetcher, endpoints } from 'src/lib/axios';
+import { omApiFetch } from 'src/auth/context/om-auth';
 
 // ----------------------------------------------------------------------
 
-const enableServer = false;
+/**
+ * Chat data layer on OM's `/api/om/chat` (prod: server/src/routes/om/chat.js).
+ * The server shapes conversations/participants/messages into the template's
+ * IChat* types, so the Minimal chat UI runs unmodified. Reachability (who can
+ * message whom) is enforced server-side by role and church.
+ */
 
-const CHAT_ENDPOINT = endpoints.chat;
+const CHAT = '/api/om/chat';
+const CONTACTS_KEY = `${CHAT}/contacts`;
+const CONVERSATIONS_KEY = `${CHAT}/conversations`;
+const conversationKey = (id: string) => `${CHAT}/conversations/${id}`;
+
+async function omFetcher<T = any>(url: string): Promise<T> {
+  const res = await omApiFetch(url);
+  const json = await res.json().catch(() => null);
+  if (!res.ok || json?.success === false) throw new Error(json?.message || `Request failed (${res.status})`);
+  return json as T;
+}
+
+async function omSend<T = any>(url: string, method: string, body?: unknown): Promise<T> {
+  const res = await omApiFetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || json?.success === false) throw new Error(json?.message || `Request failed (${res.status})`);
+  return json as T;
+}
 
 const swrOptions: SWRConfiguration = {
-  revalidateIfStale: enableServer,
-  revalidateOnFocus: enableServer,
-  revalidateOnReconnect: enableServer,
+  revalidateIfStale: true,
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
+  refreshInterval: 8000,
 };
 
 // ----------------------------------------------------------------------
 
-type ContactsData = {
-  contacts: IChatParticipant[];
-};
+type ContactsData = { contacts: IChatParticipant[] };
 
 export function useGetContacts() {
-  const url = [CHAT_ENDPOINT, { params: { endpoint: 'contacts' } }];
-
-  const { data, isLoading, error, isValidating } = useSWR<ContactsData>(url, fetcher, {
+  const { data, isLoading, error, isValidating } = useSWR<ContactsData>(CONTACTS_KEY, omFetcher, {
     ...swrOptions,
+    refreshInterval: 60000,
   });
 
-  const memoizedValue = useMemo(
+  return useMemo(
     () => ({
       contacts: data?.contacts || [],
       contactsLoading: isLoading,
@@ -42,24 +66,16 @@ export function useGetContacts() {
     }),
     [data?.contacts, error, isLoading, isValidating]
   );
-
-  return memoizedValue;
 }
 
 // ----------------------------------------------------------------------
 
-type ConversationsData = {
-  conversations: IChatConversation[];
-};
+type ConversationsData = { conversations: IChatConversation[] };
 
 export function useGetConversations() {
-  const url = [CHAT_ENDPOINT, { params: { endpoint: 'conversations' } }];
+  const { data, isLoading, error, isValidating } = useSWR<ConversationsData>(CONVERSATIONS_KEY, omFetcher, swrOptions);
 
-  const { data, isLoading, error, isValidating } = useSWR<ConversationsData>(url, fetcher, {
-    ...swrOptions,
-  });
-
-  const memoizedValue = useMemo(() => {
+  return useMemo(() => {
     const byId = data?.conversations.length ? keyBy(data.conversations, (option) => option.id) : {};
     const allIds = Object.keys(byId);
 
@@ -71,26 +87,20 @@ export function useGetConversations() {
       conversationsEmpty: !isLoading && !isValidating && !allIds.length,
     };
   }, [data?.conversations, error, isLoading, isValidating]);
-
-  return memoizedValue;
 }
 
 // ----------------------------------------------------------------------
 
-type ConversationData = {
-  conversation: IChatConversation;
-};
+type ConversationData = { conversation: IChatConversation };
 
 export function useGetConversation(conversationId: string) {
-  const url = conversationId
-    ? [CHAT_ENDPOINT, { params: { conversationId: `${conversationId}`, endpoint: 'conversation' } }]
-    : '';
+  const { data, isLoading, error, isValidating } = useSWR<ConversationData>(
+    conversationId ? conversationKey(conversationId) : null,
+    omFetcher,
+    { ...swrOptions, refreshInterval: 4000 }
+  );
 
-  const { data, isLoading, error, isValidating } = useSWR<ConversationData>(url, fetcher, {
-    ...swrOptions,
-  });
-
-  const memoizedValue = useMemo(
+  return useMemo(
     () => ({
       conversation: data?.conversation,
       conversationLoading: isLoading,
@@ -100,114 +110,86 @@ export function useGetConversation(conversationId: string) {
     }),
     [data?.conversation, error, isLoading, isValidating]
   );
-
-  return memoizedValue;
 }
 
 // ----------------------------------------------------------------------
 
 export async function sendMessage(conversationId: string, messageData: IChatMessage) {
-  const conversationsUrl = [CHAT_ENDPOINT, { params: { endpoint: 'conversations' } }];
-
-  const conversationUrl = [CHAT_ENDPOINT, { params: { conversationId, endpoint: 'conversation' } }];
-
-  /**
-   * Work on server
-   */
-  if (enableServer) {
-    const data = { conversationId, messageData };
-    await axios.put(CHAT_ENDPOINT, data);
-  }
-
-  /**
-   * Work in local
-   */
+  // Optimistic append so the UI feels instant; the server copy replaces it on revalidate.
   mutate(
-    conversationUrl,
-    (currentData) => {
-      const currentConversation: IChatConversation = currentData.conversation;
-
-      const conversation = {
-        ...currentConversation,
-        messages: [...currentConversation.messages, messageData],
-      };
-
-      return { ...currentData, conversation };
-    },
+    conversationKey(conversationId),
+    (currentData: ConversationData | undefined) =>
+      currentData
+        ? { ...currentData, conversation: { ...currentData.conversation, messages: [...currentData.conversation.messages, messageData] } }
+        : currentData,
     false
   );
 
-  mutate(
-    conversationsUrl,
-    (currentData) => {
-      const currentConversations: IChatConversation[] = currentData.conversations;
+  await omSend(`${conversationKey(conversationId)}/messages`, 'POST', {
+    body: messageData.body,
+    attachments: messageData.attachments,
+  });
 
-      const conversations: IChatConversation[] = currentConversations.map(
-        (conversation: IChatConversation) =>
-          conversation.id === conversationId
-            ? { ...conversation, messages: [...conversation.messages, messageData] }
-            : conversation
-      );
-
-      return { ...currentData, conversations };
-    },
-    false
-  );
+  await Promise.all([mutate(conversationKey(conversationId)), mutate(CONVERSATIONS_KEY)]);
 }
 
 // ----------------------------------------------------------------------
 
+/**
+ * `conversationData` comes from the template's `initialConversation()` helper:
+ * participants include the current user; messages[0] is the first message.
+ */
 export async function createConversation(conversationData: IChatConversation) {
-  const url = [CHAT_ENDPOINT, { params: { endpoint: 'conversations' } }];
+  const me = conversationData.messages[0]?.senderId;
+  const participantIds = conversationData.participants
+    .map((p) => Number(p.id))
+    .filter((id) => Number.isInteger(id) && String(id) !== String(me));
 
-  /**
-   * Work on server
-   */
-  const data = { conversationData };
-  const res = await axios.post(CHAT_ENDPOINT, data);
+  const first = conversationData.messages[0];
+  const res = await omSend<ConversationData>(CONVERSATIONS_KEY, 'POST', {
+    participant_ids: participantIds,
+    message: first?.body ?? '',
+    attachments: first?.attachments ?? [],
+  });
 
-  /**
-   * Work in local
-   */
-  mutate(
-    url,
-    (currentData) => {
-      const currentConversations: IChatConversation[] = currentData.conversations;
-
-      const conversations: IChatConversation[] = [...currentConversations, conversationData];
-
-      return { ...currentData, conversations };
-    },
-    false
-  );
-
-  return res.data;
+  await mutate(CONVERSATIONS_KEY);
+  await mutate(conversationKey(res.conversation.id), res, false);
+  return res;
 }
 
 // ----------------------------------------------------------------------
 
 export async function clickConversation(conversationId: string) {
-  /**
-   * Work on server
-   */
-  if (enableServer) {
-    await axios.get(CHAT_ENDPOINT, { params: { conversationId, endpoint: 'mark-as-seen' } });
-  }
-
-  /**
-   * Work in local
-   */
   mutate(
-    [CHAT_ENDPOINT, { params: { endpoint: 'conversations' } }],
-    (currentData) => {
-      const currentConversations: IChatConversation[] = currentData.conversations;
-
-      const conversations = currentConversations.map((conversation: IChatConversation) =>
-        conversation.id === conversationId ? { ...conversation, unreadCount: 0 } : conversation
-      );
-
-      return { ...currentData, conversations };
-    },
+    CONVERSATIONS_KEY,
+    (currentData: ConversationsData | undefined) =>
+      currentData
+        ? {
+            ...currentData,
+            conversations: currentData.conversations.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0 } : c)),
+          }
+        : currentData,
     false
   );
+  await omSend(`${conversationKey(conversationId)}/read`, 'PUT').catch(() => {});
+}
+
+// ----------------------------------------------------------------------
+
+/** Upload chat attachments through the tenant-aware media store. */
+export async function uploadChatAttachments(files: File[]) {
+  const form = new FormData();
+  files.forEach((f) => form.append('files', f));
+  const res = await omApiFetch('/api/om/social/media?usage=post', { method: 'POST', body: form });
+  const json = await res.json().catch(() => null);
+  if (!res.ok || json?.success === false) throw new Error(json?.message || 'Upload failed');
+  return (json.files as { url: string; kind: string; mime_type: string; size: number }[]).map((f, i) => ({
+    name: files[i]?.name ?? 'file',
+    size: f.size,
+    type: f.mime_type,
+    path: f.url,
+    preview: f.url,
+    createdAt: new Date().toISOString(),
+    modifiedAt: new Date().toISOString(),
+  }));
 }

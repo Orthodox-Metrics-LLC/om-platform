@@ -11,11 +11,12 @@ import { useRouter } from 'src/routes/hooks';
 
 import { today } from 'src/utils/format-time';
 
-import { sendMessage, createConversation } from 'src/actions/chat';
+import { sendMessage, createConversation, uploadChatAttachments } from 'src/actions/chat';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuthContext } from 'src/auth/hooks';
 
 import { initialConversation } from './utils/initial-conversation';
 
@@ -36,7 +37,7 @@ export function ChatMessageInput({
 }: Props) {
   const router = useRouter();
 
-  const { user } = useMockedUser();
+  const { user } = useAuthContext();
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -69,6 +70,29 @@ export function ChatMessageInput({
     }
   }, []);
 
+  // Attachments upload immediately (tenant-aware store) and send as their own message.
+  const handleFiles = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files ?? []);
+      event.target.value = '';
+      if (!files.length) return;
+      try {
+        const attachments = await uploadChatAttachments(files);
+        const attachmentMessage = { ...messageData, id: `${Date.now()}`, body: '', attachments, contentType: attachments.every((a) => a.type.startsWith('image/')) ? 'image' : 'text' };
+        if (selectedConversationId) {
+          await sendMessage(selectedConversationId, attachmentMessage);
+        } else {
+          const res = await createConversation({ ...conversationData, messages: [attachmentMessage] });
+          router.push(`${paths.dashboard.chat}?id=${res.conversation.id}`);
+          onAddRecipients([]);
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Upload failed');
+      }
+    },
+    [conversationData, messageData, onAddRecipients, router, selectedConversationId]
+  );
+
   const handleChangeMessage = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(event.target.value);
   }, []);
@@ -89,7 +113,7 @@ export function ChatMessageInput({
           onAddRecipients([]);
         }
       } catch (error) {
-        console.error(error);
+        toast.error(error instanceof Error ? error.message : 'Message not sent');
       } finally {
         setMessage('');
       }
@@ -135,7 +159,7 @@ export function ChatMessageInput({
         ]}
       />
 
-      <input type="file" ref={fileRef} style={{ display: 'none' }} />
+      <input type="file" multiple accept="image/*,video/mp4,video/webm,video/quicktime" ref={fileRef} style={{ display: 'none' }} onChange={handleFiles} />
     </>
   );
 }

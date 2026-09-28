@@ -21,12 +21,12 @@ import { inputBaseClasses } from '@mui/material/InputBase';
 import { Iconify } from 'src/components/iconify';
 import { CustomPopover } from 'src/components/custom-popover';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export function ChatNavAccount() {
-  const { user } = useMockedUser();
+  const { user } = useAuthContext();
 
   const menuActions = usePopover();
 
