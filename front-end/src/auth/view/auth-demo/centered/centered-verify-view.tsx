@@ -1,98 +1,102 @@
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 
 import { paths } from 'src/routes/paths';
+import { useRouter, useSearchParams } from 'src/routes/hooks';
 
 import { EmailInboxIcon } from 'src/assets/icons';
 
-import { Form, Field, schemaUtils } from 'src/components/hook-form';
-
 import { FormHead } from '../../../components/form-head';
-import { FormResendCode } from '../../../components/form-resend-code';
-import { FormReturnLink } from '../../../components/form-return-link';
 
 // ----------------------------------------------------------------------
 
-export type VerifySchemaType = z.infer<typeof VerifySchema>;
-
-export const VerifySchema = z.object({
-  code: z
-    .string()
-    .min(1, { error: 'Code is required!' })
-    .min(6, { error: 'Code must be at least 6 characters!' }),
-  email: schemaUtils.email(),
-});
-
-// ----------------------------------------------------------------------
-
+/**
+ * Post-reset confirmation for OM's real forgot-password flow.
+ *
+ * `POST /api/auth/forgot-password` emails a temporary password (the backend
+ * always reports success to avoid user enumeration) — there is no 6-digit
+ * code to verify, so the template's code field is replaced with the OM
+ * instructions: sign in with the temporary password, then the forced
+ * change-password step takes over. "Resend" re-issues the request.
+ */
 export function CenteredVerifyView() {
-  const defaultValues: VerifySchemaType = {
-    code: '',
-    email: '',
-  };
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email') ?? '';
 
-  const methods = useForm({
-    resolver: zodResolver(VerifySchema),
-    defaultValues,
-  });
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
 
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
-
-  const onSubmit = handleSubmit(async (data) => {
+  const handleResend = async () => {
+    if (!email) return;
+    setResending(true);
+    setResendError(null);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.info('DATA', data);
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.message || `Request failed (${res.status})`);
+      }
+      setResent(true);
     } catch (error) {
-      console.error(error);
+      setResendError(error instanceof Error ? error.message : 'Could not resend. Try again.');
+    } finally {
+      setResending(false);
     }
-  });
-
-  const renderForm = () => (
-    <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
-      <Field.Text
-        name="email"
-        label="Email address"
-        placeholder="example@gmail.com"
-        slotProps={{ inputLabel: { shrink: true } }}
-      />
-
-      <Field.Code name="code" />
-
-      <Button
-        fullWidth
-        size="large"
-        type="submit"
-        variant="contained"
-        loading={isSubmitting}
-        loadingIndicator="Verify..."
-      >
-        Verify
-      </Button>
-    </Box>
-  );
+  };
 
   return (
     <>
       <FormHead
         icon={<EmailInboxIcon />}
         title="Please check your email!"
-        description={`We've emailed a 6-digit confirmation code. \nPlease enter the code in the box below to verify your email.`}
+        description={
+          email
+            ? `We've emailed a temporary password to ${email}. \nSign in with it and you'll be prompted to set a new password.`
+            : `We've emailed a temporary password. \nSign in with it and you'll be prompted to set a new password.`
+        }
       />
 
-      <Form methods={methods} onSubmit={onSubmit}>
-        {renderForm()}
-      </Form>
+      <Box sx={{ gap: 3, display: 'flex', flexDirection: 'column' }}>
+        {resent && <Alert severity="success">A new temporary password was sent.</Alert>}
+        {resendError && <Alert severity="error">{resendError}</Alert>}
 
-      <FormResendCode onResendCode={() => {}} value={0} disabled={false} />
+        <Button
+          fullWidth
+          size="large"
+          color="inherit"
+          variant="contained"
+          onClick={() => router.push(paths.signIn)}
+        >
+          Return to sign in
+        </Button>
+      </Box>
 
-      <FormReturnLink href={paths.authDemo.centered.signIn} />
+      {email ? (
+        <Box sx={{ mt: 3, typography: 'body2', alignSelf: 'center', textAlign: 'center' }}>
+          {"Didn't receive it? "}
+          <Link
+            variant="subtitle2"
+            onClick={handleResend}
+            sx={{
+              cursor: 'pointer',
+              ...(resending && { color: 'text.disabled', pointerEvents: 'none' }),
+            }}
+          >
+            {resending ? 'Sending…' : 'Resend'}
+          </Link>
+        </Box>
+      ) : null}
     </>
   );
 }

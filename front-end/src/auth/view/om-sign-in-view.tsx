@@ -78,6 +78,10 @@ export function OmSignInView() {
     return <SignedInPanel />;
   }
 
+  if (window.location.hostname === 'omdev.orthodoxmetrics.com') {
+    return <OrganizationSignIn />;
+  }
+
   return (
     <>
       <FormHead
@@ -106,7 +110,8 @@ export function OmSignInView() {
             <Link
               variant="body2"
               color="inherit"
-              href="https://orthodoxmetrics.com/auth/forgot-password"
+              component={RouterLink}
+              href={paths.authDemo.centered.resetPassword}
               sx={{ alignSelf: 'flex-end' }}
             >
               Forgot password?
@@ -147,6 +152,32 @@ export function OmSignInView() {
           </Button>
         </Stack>
       </Form>
+
+      <EnrollmentPrompt />
+    </>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+function OrganizationSignIn() {
+  const onSignIn = () => {
+    const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+    const next = returnTo && returnTo.startsWith('/') ? returnTo : '/dashboard';
+    window.location.assign(`/api/auth/oidc/omdev/start?next=${encodeURIComponent(next)}`);
+  };
+
+  return (
+    <>
+      <FormHead
+        title="Sign in to Orthodox Metrics"
+        description="Use your organization account. Sign-in is handled by Keycloak and Active Directory."
+        sx={{ textAlign: { xs: 'center', md: 'left' } }}
+      />
+
+      <Button fullWidth size="large" color="inherit" variant="contained" onClick={onSignIn}>
+        Sign in
+      </Button>
 
       <EnrollmentPrompt />
     </>
