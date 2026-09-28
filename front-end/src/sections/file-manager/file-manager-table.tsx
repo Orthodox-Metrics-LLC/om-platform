@@ -1,5 +1,5 @@
 import type { BoxProps } from '@mui/material/Box';
-import type { IFile } from 'src/types/file';
+import type { OmFileItem } from './om-files-api';
 import type { UseTableReturn, TableHeadCellProps } from 'src/components/table';
 
 import Box from '@mui/material/Box';
@@ -37,16 +37,14 @@ const TABLE_HEAD: TableHeadCellProps[] = [
 type Props = BoxProps & {
   table: UseTableReturn;
   notFound: boolean;
-  dataFiltered: IFile[];
+  dataFiltered: OmFileItem[];
   onOpenConfirm: () => void;
-  onDeleteRow: (id: string) => void;
 };
 
 export function FileManagerTable({
   sx,
   table,
   notFound,
-  onDeleteRow,
   dataFiltered,
   onOpenConfirm,
   ...other
@@ -148,7 +146,6 @@ export function FileManagerTable({
                     row={row}
                     selected={selected.includes(row.id)}
                     onSelectRow={() => onSelectRow(row.id)}
-                    onDeleteRow={() => onDeleteRow(row.id)}
                   />
                 ))}
 

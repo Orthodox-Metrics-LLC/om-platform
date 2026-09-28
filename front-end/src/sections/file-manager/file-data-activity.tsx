@@ -28,12 +28,14 @@ type Props = CardProps & {
     }[];
     options?: ChartOptions;
   };
+  /** Notified when the user picks another series (e.g. a year) so the caller can reload data. */
+  onSelectSeries?: (name: string) => void;
 };
 
-export function FileDataActivity({ title, subheader, chart, sx, ...other }: Props) {
+export function FileDataActivity({ title, subheader, chart, onSelectSeries, sx, ...other }: Props) {
   const theme = useTheme();
 
-  const [selectedSeries, setSelectedSeries] = useState('Yearly');
+  const [selectedSeries, setSelectedSeries] = useState(chart.series[0]?.name ?? 'Yearly');
 
   const currentSeries = chart.series.find((i) => i.name === selectedSeries);
 
@@ -56,7 +58,8 @@ export function FileDataActivity({ title, subheader, chart, sx, ...other }: Prop
 
   const handleChangeSeries = useCallback((newValue: string) => {
     setSelectedSeries(newValue);
-  }, []);
+    onSelectSeries?.(newValue);
+  }, [onSelectSeries]);
 
   return (
     <Card sx={sx} {...other}>

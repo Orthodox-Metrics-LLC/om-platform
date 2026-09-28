@@ -14,6 +14,7 @@ import { Chart, useChart } from 'src/components/chart';
 
 type Props = CardProps & {
   total: number;
+  used?: number;
   data: {
     name: string;
     usedStorage: number;
@@ -27,7 +28,7 @@ type Props = CardProps & {
   };
 };
 
-export function FileStorageOverview({ data, total, chart, sx, ...other }: Props) {
+export function FileStorageOverview({ data, total, used, chart, sx, ...other }: Props) {
   const theme = useTheme();
 
   const chartColors = chart.colors ?? [theme.palette.secondary.main, theme.palette.secondary.light];
@@ -55,7 +56,7 @@ export function FileStorageOverview({ data, total, chart, sx, ...other }: Props)
           name: { offsetY: 8 },
           value: { offsetY: -36 },
           total: {
-            label: `Used of ${fData(total)} / ${fData(total * 2)}`,
+            label: `Used ${fData(used ?? data.reduce((n, d) => n + d.usedStorage, 0))} of ${fData(total)}`,
             color: theme.vars.palette.text.disabled,
             fontSize: theme.typography.caption.fontSize as string,
             fontWeight: theme.typography.caption.fontWeight,
