@@ -1,7 +1,7 @@
 import type { CardProps } from '@mui/material/Card';
-import type { IUserProfileFollower } from 'src/types/user';
+import type { OmFollowUser } from './om-social-api';
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,34 +10,62 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
+
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+
+import { useAuthContext } from 'src/auth/hooks';
+import { omRoleLabel } from 'src/auth/context/om-auth';
+
+import { omSocialApi } from './om-social-api';
 
 // ----------------------------------------------------------------------
 
 type Props = {
-  followers: IUserProfileFollower[];
+  userId: number;
+  mode: 'followers' | 'following';
 };
 
-export function ProfileFollowers({ followers }: Props) {
-  const _mockFollowed = followers.slice(4, 8).map((i) => i.id);
+export function ProfileFollowers({ userId, mode }: Props) {
+  const { user } = useAuthContext();
+  const [people, setPeople] = useState<OmFollowUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<number | null>(null);
 
-  const [followed, setFollowed] = useState<string[]>(_mockFollowed);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setPeople(mode === 'followers' ? await omSocialApi.followers(userId) : await omSocialApi.following(userId));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not load');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, mode]);
 
-  const handleClick = useCallback(
-    (item: string) => {
-      const selected = followed.includes(item)
-        ? followed.filter((value) => value !== item)
-        : [...followed, item];
+  useEffect(() => {
+    load();
+  }, [load]);
 
-      setFollowed(selected);
-    },
-    [followed]
-  );
+  const toggle = async (p: OmFollowUser) => {
+    setBusy(p.id);
+    try {
+      if (p.viewer_follows) await omSocialApi.unfollow(p.id);
+      else await omSocialApi.follow(p.id);
+      setPeople((prev) => prev.map((x) => (x.id === p.id ? { ...x, viewer_follows: !p.viewer_follows } : x)));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Action failed');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   return (
     <>
       <Typography variant="h4" sx={{ my: 5 }}>
-        Followers
+        {mode === 'followers' ? 'Followers' : 'Following'}
       </Typography>
 
       <Box
@@ -47,15 +75,22 @@ export function ProfileFollowers({ followers }: Props) {
           gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
         }}
       >
-        {followers.map((follower) => (
+        {people.map((p) => (
           <CardItem
-            key={follower.id}
-            follower={follower}
-            selected={followed.includes(follower.id)}
-            onSelected={() => handleClick(follower.id)}
+            key={p.id}
+            person={p}
+            isSelf={Number(user?.id) === p.id}
+            busy={busy === p.id}
+            onToggle={() => toggle(p)}
           />
         ))}
       </Box>
+
+      {!loading && !people.length && (
+        <Typography variant="body2" sx={{ color: 'text.disabled', textAlign: 'center', py: 6 }}>
+          {mode === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+        </Typography>
+      )}
     </>
   );
 }
@@ -63,64 +98,58 @@ export function ProfileFollowers({ followers }: Props) {
 // ----------------------------------------------------------------------
 
 type CardItemProps = CardProps & {
-  selected: boolean;
-  onSelected: () => void;
-  follower: IUserProfileFollower;
+  person: OmFollowUser;
+  isSelf: boolean;
+  busy: boolean;
+  onToggle: () => void;
 };
 
-function CardItem({ follower, selected, onSelected, sx, ...other }: CardItemProps) {
+function CardItem({ person, isSelf, busy, onToggle, sx, ...other }: CardItemProps) {
   return (
     <Card
-      sx={[
-        (theme) => ({
-          display: 'flex',
-          alignItems: 'center',
-          p: theme.spacing(3, 2, 3, 3),
-        }),
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      sx={[(theme) => ({ display: 'flex', alignItems: 'center', p: theme.spacing(3, 2, 3, 3) }), ...(Array.isArray(sx) ? sx : [sx])]}
       {...other}
     >
       <Avatar
-        alt={follower?.name}
-        src={follower?.avatarUrl}
-        sx={{ width: 48, height: 48, mr: 2 }}
-      />
+        component={RouterLink}
+        href={`${paths.dashboard.user.profile}?user=${person.id}`}
+        alt={person.name}
+        src={person.avatar_url ?? undefined}
+        sx={{ width: 48, height: 48, mr: 2, textDecoration: 'none' }}
+      >
+        {person.name.charAt(0).toUpperCase()}
+      </Avatar>
 
       <ListItemText
-        primary={follower?.name}
+        primary={person.name}
         secondary={
           <>
-            <Iconify icon="mingcute:location-fill" width={16} sx={{ flexShrink: 0, mr: 0.5 }} />
-            {follower?.country}
+            <Iconify icon="solar:user-id-bold" width={16} sx={{ flexShrink: 0, mr: 0.5 }} />
+            {[omRoleLabel(person.role), person.church_name].filter(Boolean).join(' · ')}
           </>
         }
         slotProps={{
           primary: { noWrap: true },
           secondary: {
             noWrap: true,
-            sx: {
-              mt: 0.5,
-              display: 'flex',
-              alignItems: 'center',
-              typography: 'caption',
-              color: 'text.disabled',
-            },
+            sx: { mt: 0.5, display: 'flex', alignItems: 'center', typography: 'caption', color: 'text.disabled' },
           },
         }}
       />
-      <Button
-        size="small"
-        variant={selected ? 'text' : 'outlined'}
-        color={selected ? 'success' : 'inherit'}
-        startIcon={
-          selected ? <Iconify width={18} icon="eva:checkmark-fill" sx={{ mr: -0.75 }} /> : null
-        }
-        onClick={onSelected}
-        sx={{ flexShrink: 0, ml: 1.5 }}
-      >
-        {selected ? 'Followed' : 'Follow'}
-      </Button>
+
+      {!isSelf && (
+        <Button
+          size="small"
+          loading={busy}
+          variant={person.viewer_follows ? 'text' : 'outlined'}
+          color={person.viewer_follows ? 'success' : 'inherit'}
+          startIcon={person.viewer_follows ? <Iconify width={18} icon="eva:checkmark-fill" sx={{ mr: -0.75 }} /> : null}
+          onClick={onToggle}
+          sx={{ flexShrink: 0, ml: 1.5 }}
+        >
+          {person.viewer_follows ? 'Following' : 'Follow'}
+        </Button>
+      )}
     </Card>
   );
 }

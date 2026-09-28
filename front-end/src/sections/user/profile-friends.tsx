@@ -1,6 +1,7 @@
-import type { IUserProfileFriend } from 'src/types/user';
+import type { OmFriendUser } from './om-social-api';
 
 import { usePopover } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -13,36 +14,53 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 
-import { _socials } from 'src/_mock';
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomPopover } from 'src/components/custom-popover';
 import { SearchNotFound } from 'src/components/search-not-found';
 
+import { omApiFetch, omRoleLabel } from 'src/auth/context/om-auth';
+
+import { omSocialApi } from './om-social-api';
+
 // ----------------------------------------------------------------------
 
 type Props = {
+  userId: number;
+  isSelf: boolean;
   searchFriends: string;
-  friends: IUserProfileFriend[];
   onSearchFriends: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-export function ProfileFriends({ friends, searchFriends, onSearchFriends }: Props) {
-  const dataFiltered = applyFilter({ inputData: friends, query: searchFriends });
+export function ProfileFriends({ userId, isSelf, searchFriends, onSearchFriends }: Props) {
+  const [friends, setFriends] = useState<OmFriendUser[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setFriends(await omSocialApi.friends(userId));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not load friends');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const dataFiltered = applyFilter({ inputData: friends, query: searchFriends });
   const notFound = !dataFiltered.length && !!searchFriends;
 
   return (
     <>
-      <Box
-        sx={{
-          my: 5,
-          gap: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexDirection: { xs: 'column', sm: 'row' },
-        }}
-      >
+      <Box sx={{ my: 5, gap: 2, display: 'flex', justifyContent: 'space-between', flexDirection: { xs: 'column', sm: 'row' } }}>
         <Typography variant="h4">Friends</Typography>
 
         <TextField
@@ -65,21 +83,17 @@ export function ProfileFriends({ friends, searchFriends, onSearchFriends }: Prop
       {notFound ? (
         <SearchNotFound query={searchFriends} sx={{ py: 10 }} />
       ) : (
-        <Box
-          sx={{
-            gap: 3,
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(1, 1fr)',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
-            },
-          }}
-        >
+        <Box sx={{ gap: 3, display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
           {dataFiltered.map((item) => (
-            <FriendCard key={item.id} item={item} />
+            <FriendCard key={item.id} item={item} canRemove={isSelf} onRemoved={load} />
           ))}
         </Box>
+      )}
+
+      {!loading && !friends.length && !searchFriends && (
+        <Typography variant="body2" sx={{ color: 'text.disabled', textAlign: 'center', py: 6 }}>
+          {isSelf ? 'No friends yet — find people under Contacts › Discover.' : 'No friends to show.'}
+        </Typography>
       )}
     </>
   );
@@ -87,101 +101,77 @@ export function ProfileFriends({ friends, searchFriends, onSearchFriends }: Prop
 
 // ----------------------------------------------------------------------
 
-type FriendCardProps = {
-  item: IUserProfileFriend;
-};
-
-function FriendCard({ item }: FriendCardProps) {
+function FriendCard({ item, canRemove, onRemoved }: { item: OmFriendUser; canRemove: boolean; onRemoved: () => void }) {
   const menuActions = usePopover();
 
-  const handleDelete = () => {
+  const handleRemove = async () => {
     menuActions.onClose();
-    console.info('DELETE', item.name);
+    try {
+      const res = await omApiFetch(`/api/social/friends/${item.id}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || json?.success === false) throw new Error(json?.message || 'Could not remove');
+      toast.success(`${item.name} removed from friends`);
+      onRemoved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not remove');
+    }
   };
-
-  const handleEdit = () => {
-    menuActions.onClose();
-    console.info('EDIT', item.name);
-  };
-
-  const renderMenuActions = () => (
-    <CustomPopover
-      open={menuActions.open}
-      anchorEl={menuActions.anchorEl}
-      onClose={menuActions.onClose}
-      slotProps={{ arrow: { placement: 'right-top' } }}
-    >
-      <MenuList>
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem>
-
-        <MenuItem onClick={handleEdit}>
-          <Iconify icon="solar:pen-bold" />
-          Edit
-        </MenuItem>
-      </MenuList>
-    </CustomPopover>
-  );
 
   return (
     <>
-      <Card
-        sx={{
-          py: 5,
-          display: 'flex',
-          position: 'relative',
-          alignItems: 'center',
-          flexDirection: 'column',
-        }}
-      >
-        <Avatar alt={item.name} src={item.avatarUrl} sx={{ width: 64, height: 64, mb: 3 }} />
+      <Card sx={{ py: 5, display: 'flex', position: 'relative', alignItems: 'center', flexDirection: 'column' }}>
+        <Avatar alt={item.name} src={item.avatar_url ?? undefined} sx={{ width: 64, height: 64, mb: 3 }}>
+          {item.name.charAt(0).toUpperCase()}
+        </Avatar>
 
-        <Link variant="subtitle1" sx={{ color: 'text.primary' }}>
+        <Link component={RouterLink} href={`${paths.dashboard.user.profile}?user=${item.id}`} variant="subtitle1" sx={{ color: 'text.primary' }}>
           {item.name}
         </Link>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, mt: 0.5 }}>
-          {item.role}
+          {item.job_title || omRoleLabel(item.role)}
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {_socials.map((social) => (
-            <IconButton key={social.label}>
-              {social.value === 'twitter' && <Iconify icon="socials:twitter" />}
-              {social.value === 'facebook' && <Iconify icon="socials:facebook" />}
-              {social.value === 'instagram' && <Iconify icon="socials:instagram" />}
-              {social.value === 'linkedin' && <Iconify icon="socials:linkedin" />}
-            </IconButton>
-          ))}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Label variant="soft" color={item.role === 'admin' || item.role === 'super_admin' ? 'info' : 'default'}>
+            {omRoleLabel(item.role)}
+          </Label>
+          {item.church_name && (
+            <Label variant="soft" color="default">
+              {item.church_name}
+            </Label>
+          )}
         </Box>
 
-        <IconButton
-          color={menuActions.open ? 'inherit' : 'default'}
-          onClick={menuActions.onOpen}
-          sx={{ top: 8, right: 8, position: 'absolute' }}
-        >
-          <Iconify icon="eva:more-vertical-fill" />
-        </IconButton>
+        {canRemove && (
+          <IconButton color={menuActions.open ? 'inherit' : 'default'} onClick={menuActions.onOpen} sx={{ top: 8, right: 8, position: 'absolute' }}>
+            <Iconify icon="eva:more-vertical-fill" />
+          </IconButton>
+        )}
       </Card>
 
-      {renderMenuActions()}
+      <CustomPopover open={menuActions.open} anchorEl={menuActions.anchorEl} onClose={menuActions.onClose} slotProps={{ arrow: { placement: 'right-top' } }}>
+        <MenuList>
+          <MenuItem component={RouterLink} href={`${paths.dashboard.user.profile}?user=${item.id}`} onClick={menuActions.onClose}>
+            <Iconify icon="solar:user-id-bold" />
+            View profile
+          </MenuItem>
+          <MenuItem onClick={handleRemove} sx={{ color: 'error.main' }}>
+            <Iconify icon="solar:trash-bin-trash-bold" />
+            Remove friend
+          </MenuItem>
+        </MenuList>
+      </CustomPopover>
     </>
   );
 }
 
 // ----------------------------------------------------------------------
 
-type ApplyFilterProps = {
-  query: string;
-  inputData: IUserProfileFriend[];
-};
-
-function applyFilter({ inputData, query }: ApplyFilterProps) {
+function applyFilter({ inputData, query }: { inputData: OmFriendUser[]; query: string }) {
   if (!query) return inputData;
-
-  return inputData.filter(({ name, role }) =>
-    [name, role].some((field) => field?.toLowerCase().includes(query.toLowerCase()))
+  const q = query.toLowerCase();
+  return inputData.filter(
+    (f) => f.name.toLowerCase().includes(q) || omRoleLabel(f.role).toLowerCase().includes(q) || (f.church_name ?? '').toLowerCase().includes(q)
   );
 }
