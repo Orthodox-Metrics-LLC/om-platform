@@ -13,6 +13,8 @@ import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
+import { omApiFetch } from 'src/auth/context/om-auth';
+
 // ----------------------------------------------------------------------
 
 export type ChangePassWordSchemaType = z.infer<typeof ChangePassWordSchema>;
@@ -21,9 +23,11 @@ export const ChangePassWordSchema = z
   .object({
     oldPassword: z
       .string()
-      .min(1, { error: 'Password is required!' })
-      .min(6, { error: 'Password must be at least 6 characters!' }),
-    newPassword: z.string().min(1, { error: 'New password is required!' }),
+      .min(1, { error: 'Password is required!' }),
+    newPassword: z
+      .string()
+      .min(1, { error: 'New password is required!' })
+      .min(8, { error: 'Password must be at least 8 characters!' }),
     confirmNewPassword: z.string().min(1, { error: 'Confirm password is required!' }),
   })
   .refine((val) => val.oldPassword !== val.newPassword, {
@@ -60,12 +64,29 @@ export function AccountChangePassword() {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // OM: PUT /api/user/profile/password — verifies the current password,
+      // stores the new hash and revokes every other session.
+      const res = await omApiFetch('/api/user/profile/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: data.oldPassword,
+          newPassword: data.newPassword,
+          confirmPassword: data.confirmNewPassword,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) throw new Error(json?.message || `Failed (${res.status})`);
+
       reset();
-      toast.success('Update success!');
-      console.info('DATA', data);
+      const revoked = Number(json.sessions_revoked ?? 0);
+      toast.success(
+        revoked > 0
+          ? `Password updated — ${revoked} other session${revoked === 1 ? '' : 's'} signed out`
+          : 'Password updated'
+      );
     } catch (error) {
-      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Update failed');
     }
   });
 
@@ -117,7 +138,7 @@ export function AccountChangePassword() {
           }}
           helperText={
             <Box component="span" sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
-              <Iconify icon="solar:info-circle-bold" width={16} /> Password must be minimum 6+
+              <Iconify icon="solar:info-circle-bold" width={16} /> Password must be at least 8 characters
             </Box>
           }
         />

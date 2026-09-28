@@ -8,14 +8,17 @@ import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 
+import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
+
 import { CONFIG } from 'src/global-config';
 
-import { useMockedUser } from 'src/auth/hooks';
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
 export function NavUpgrade({ sx, ...other }: BoxProps) {
-  const { user } = useMockedUser();
+  const { user } = useAuthContext();
 
   return (
     <Box
@@ -92,13 +95,17 @@ export function UpgradeBlock({ sx, ...other }: BoxProps) {
           repeat: Infinity,
           repeatDelay: 0,
         }}
-        alt="Small Rocket"
-        src={`${CONFIG.assetsDir}/assets/illustrations/illustration-rocket-small.webp`}
+        alt="Orthodox Metrics"
+        src={`${CONFIG.assetsDir}/logo/om-mark-light.png`}
         sx={{
-          right: 0,
-          width: 112,
-          height: 112,
+          right: 12,
+          top: 28,
+          width: 104,
+          height: 'auto',
+          opacity: 0.95,
           position: 'absolute',
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.24))',
         }}
       />
 
@@ -111,7 +118,7 @@ export function UpgradeBlock({ sx, ...other }: BoxProps) {
         }}
       >
         <Box component="span" sx={{ typography: 'h5', color: 'common.white' }}>
-          35% OFF
+          Orthodox Metrics
         </Box>
 
         <Box
@@ -119,15 +126,22 @@ export function UpgradeBlock({ sx, ...other }: BoxProps) {
           sx={{
             mb: 2,
             mt: 0.5,
+            pr: 12,
             color: 'common.white',
             typography: 'subtitle2',
           }}
         >
-          Power up Productivity!
+          Preserve your parish&apos;s sacred records
         </Box>
 
-        <Button variant="contained" size="small" color="warning">
-          Upgrade to Pro
+        <Button
+          component={RouterLink}
+          href={paths.capabilities}
+          variant="contained"
+          size="small"
+          color="warning"
+        >
+          Explore capabilities
         </Button>
       </Box>
     </Box>

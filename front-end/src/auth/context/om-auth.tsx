@@ -31,19 +31,59 @@ export type OmUser = {
   display_name: string | null;
   role: string;
   church_id: number | null;
+  church_name?: string | null;
+  avatar_url?: string | null;
+  profile_visibility?: 'public' | 'friends' | 'private';
   last_login?: string | null;
   must_change_password?: boolean;
   onboarding_request_id?: string | null;
+};
+
+export type OmImpersonation = {
+  impersonating: boolean;
+  originalAdmin: { email: string } | null;
 };
 
 type OmAuthState = {
   user: OmUser | null;
   loading: boolean;
   authenticated: boolean;
+  impersonation: OmImpersonation;
   signIn: (email: string, password: string) => Promise<OmUser>;
   signOut: () => Promise<void>;
   checkSession: () => Promise<void>;
+  /** super_admin only — swap the session to another account (server enforces the role). */
+  switchToUser: (userId: number) => Promise<void>;
+  /** Return from an impersonated session to the original admin account. */
+  returnToSelf: () => Promise<void>;
 };
+
+export const OM_ROLE_LABELS: Record<string, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Administrator',
+  church_admin: 'Church Admin',
+  manager: 'Church Admin',
+  priest: 'Priest',
+  deacon: 'Deacon',
+  editor: 'Editor',
+  moderator: 'Editor',
+  user: 'Member',
+  viewer: 'Viewer',
+  guest: 'Guest',
+  readonly_user: 'Read-only',
+};
+
+export function omRoleLabel(role?: string | null) {
+  return (role && OM_ROLE_LABELS[role]) || role || 'Member';
+}
+
+export function omDisplayName(user: Pick<OmUser, 'display_name' | 'first_name' | 'last_name' | 'username' | 'email'>) {
+  return (
+    (user.display_name ?? [user.first_name, user.last_name].filter(Boolean).join(' ')) ||
+    user.username ||
+    user.email
+  );
+}
 
 const OmAuthContext = createContext<OmAuthState | undefined>(undefined);
 
@@ -116,9 +156,12 @@ function userFromKeycloak(identity: {
   };
 }
 
+const NO_IMPERSONATION: OmImpersonation = { impersonating: false, originalAdmin: null };
+
 export function OmAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<OmUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonation, setImpersonation] = useState<OmImpersonation>(NO_IMPERSONATION);
 
   const checkSession = useCallback(async () => {
     try {
@@ -130,18 +173,60 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
       }
-      const res = await fetch('/api/auth/check', {
-        credentials: 'include',
-        headers: authHeaders(),
-      });
+      const [res, imp] = await Promise.all([
+        fetch('/api/auth/check', { credentials: 'include', headers: authHeaders() }),
+        fetch('/api/admin/impersonate/status', { credentials: 'include' }),
+      ]);
       const data = await res.json().catch(() => null);
+      const impData = await imp.json().catch(() => null);
       setUser(data?.authenticated && data.user ? data.user : null);
+      setImpersonation(
+        impData?.impersonating
+          ? { impersonating: true, originalAdmin: impData.originalAdmin ?? null }
+          : NO_IMPERSONATION
+      );
     } catch {
       setUser(null);
+      setImpersonation(NO_IMPERSONATION);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  /**
+   * Impersonation is session-based on the OM backend, but `/api/auth/check`
+   * prefers the Bearer token (which still names the original admin). Dropping
+   * the token makes every request fall through to the swapped session user.
+   */
+  const switchToUser = useCallback(
+    async (userId: number) => {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || data?.message || `Switch failed (${res.status})`);
+      }
+      writeToken(null);
+      await checkSession();
+    },
+    [checkSession]
+  );
+
+  const returnToSelf = useCallback(async () => {
+    const res = await fetch('/api/admin/impersonate/return', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || data?.message || `Return failed (${res.status})`);
+    }
+    await checkSession();
+  }, [checkSession]);
 
   useEffect(() => {
     checkSession();
@@ -187,11 +272,22 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
     }
     writeToken(null);
     setUser(null);
+    setImpersonation(NO_IMPERSONATION);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, authenticated: !!user, signIn, signOut, checkSession }),
-    [user, loading, signIn, signOut, checkSession]
+    () => ({
+      user,
+      loading,
+      authenticated: !!user,
+      impersonation,
+      signIn,
+      signOut,
+      checkSession,
+      switchToUser,
+      returnToSelf,
+    }),
+    [user, loading, impersonation, signIn, signOut, checkSession, switchToUser, returnToSelf]
   );
 
   /**
@@ -212,11 +308,8 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
         ? {
             ...user,
             // The template's UI reads these names off the user object.
-            displayName:
-              (user.display_name ?? [user.first_name, user.last_name].filter(Boolean).join(' ')) ||
-              user.username ||
-              user.email,
-            photoURL: null,
+            displayName: omDisplayName(user),
+            photoURL: user.avatar_url ?? null,
             role: user.role,
           }
         : null,

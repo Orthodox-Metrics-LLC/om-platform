@@ -3,33 +3,54 @@ import type { Theme, Components } from '@mui/material/styles';
 
 import resourcesToBackend from 'i18next-resources-to-backend';
 
-// MUI Core Locales
-import {
-  frFR as frFRCore,
-  viVN as viVNCore,
-  zhCN as zhCNCore,
-  arSA as arSACore,
-} from '@mui/material/locale';
 // MUI Date Pickers Locales
 import {
   enUS as enUSDate,
-  frFR as frFRDate,
-  viVN as viVNDate,
+  elGR as elGRDate,
+  ruRU as ruRUDate,
+  bgBG as bgBGDate,
+  roRO as roRODate,
   zhCN as zhCNDate,
+  koKR as koKRDate,
+  jaJP as jaJPDate,
 } from '@mui/x-date-pickers/locales';
+// MUI Core Locales
+import {
+  elGR as elGRCore,
+  ruRU as ruRUCore,
+  bgBG as bgBGCore,
+  srRS as srRSCore,
+  roRO as roROCore,
+  amET as amETCore,
+  arSA as arSACore,
+  zhCN as zhCNCore,
+  koKR as koKRCore,
+  jaJP as jaJPCore,
+} from '@mui/material/locale';
 // MUI Data Grid Locales
 import {
   enUS as enUSDataGrid,
-  frFR as frFRDataGrid,
-  viVN as viVNDataGrid,
-  zhCN as zhCNDataGrid,
+  elGR as elGRDataGrid,
+  ruRU as ruRUDataGrid,
+  bgBG as bgBGDataGrid,
+  roRO as roRODataGrid,
   arSD as arSDDataGrid,
+  zhCN as zhCNDataGrid,
+  koKR as koKRDataGrid,
+  jaJP as jaJPDataGrid,
 } from '@mui/x-data-grid/locales';
 
 // ----------------------------------------------------------------------
 
 // Supported languages
-export const supportedLngs = ['en', 'fr', 'vi', 'cn', 'ar'] as const;
+/**
+ * Languages of the Orthodox world served by OM. English (US) is the only fully
+ * translated UI; the others switch flag, number/date formatting and MUI component
+ * locales, and fall back to English strings until their `langs/<code>` bundle exists.
+ */
+export const supportedLngs = [
+  'en', 'el', 'ru', 'bg', 'sr', 'ro', 'ka', 'am', 'ar', 'cn', 'ko', 'ja',
+] as const;
 export type LangCode = (typeof supportedLngs)[number];
 
 // Fallback and default namespace
@@ -63,32 +84,81 @@ export const allLangs: LangOption[] = [
   {
     value: 'en',
     label: 'English',
-    countryCode: 'GB',
+    countryCode: 'US',
     adapterLocale: 'en',
     numberFormat: { code: 'en-US', currency: 'USD' },
+    systemValue: { components: { ...enUSDate.components, ...enUSDataGrid.components } },
+  },
+  {
+    value: 'el',
+    label: 'Greek',
+    countryCode: 'GR',
+    adapterLocale: 'el',
+    numberFormat: { code: 'el-GR', currency: 'EUR' },
     systemValue: {
-      components: { ...enUSDate.components, ...enUSDataGrid.components },
+      components: { ...elGRCore.components, ...elGRDate.components, ...elGRDataGrid.components },
     },
   },
   {
-    value: 'fr',
-    label: 'French',
-    countryCode: 'FR',
-    adapterLocale: 'fr',
-    numberFormat: { code: 'fr-Fr', currency: 'EUR' },
+    value: 'ru',
+    label: 'Russian',
+    countryCode: 'RU',
+    adapterLocale: 'ru',
+    numberFormat: { code: 'ru-RU', currency: 'RUB' },
     systemValue: {
-      components: { ...frFRCore.components, ...frFRDate.components, ...frFRDataGrid.components },
+      components: { ...ruRUCore.components, ...ruRUDate.components, ...ruRUDataGrid.components },
     },
   },
   {
-    value: 'vi',
-    label: 'Vietnamese',
-    countryCode: 'VN',
-    adapterLocale: 'vi',
-    numberFormat: { code: 'vi-VN', currency: 'VND' },
+    value: 'bg',
+    label: 'Bulgarian',
+    countryCode: 'BG',
+    adapterLocale: 'bg',
+    numberFormat: { code: 'bg-BG', currency: 'BGN' },
     systemValue: {
-      components: { ...viVNCore.components, ...viVNDate.components, ...viVNDataGrid.components },
+      components: { ...bgBGCore.components, ...bgBGDate.components, ...bgBGDataGrid.components },
     },
+  },
+  {
+    value: 'sr',
+    label: 'Serbian',
+    countryCode: 'RS',
+    adapterLocale: 'sr',
+    numberFormat: { code: 'sr-RS', currency: 'RSD' },
+    systemValue: { components: { ...srRSCore.components } },
+  },
+  {
+    value: 'ro',
+    label: 'Romanian',
+    countryCode: 'RO',
+    adapterLocale: 'ro',
+    numberFormat: { code: 'ro-RO', currency: 'RON' },
+    systemValue: {
+      components: { ...roROCore.components, ...roRODate.components, ...roRODataGrid.components },
+    },
+  },
+  {
+    value: 'ka',
+    label: 'Georgian',
+    countryCode: 'GE',
+    adapterLocale: 'ka',
+    numberFormat: { code: 'ka-GE', currency: 'GEL' },
+  },
+  {
+    value: 'am',
+    label: 'Amharic',
+    countryCode: 'ET',
+    adapterLocale: 'am',
+    numberFormat: { code: 'am-ET', currency: 'ETB' },
+    systemValue: { components: { ...amETCore.components } },
+  },
+  {
+    value: 'ar',
+    label: 'Arabic',
+    countryCode: 'SA',
+    adapterLocale: 'ar-sa',
+    numberFormat: { code: 'ar-SA', currency: 'SAR' },
+    systemValue: { components: { ...arSACore.components, ...arSDDataGrid.components } },
   },
   {
     value: 'cn',
@@ -101,21 +171,35 @@ export const allLangs: LangOption[] = [
     },
   },
   {
-    value: 'ar',
-    label: 'Arabic',
-    countryCode: 'SA',
-    adapterLocale: 'ar-sa',
-    numberFormat: { code: 'ar-SA', currency: 'SAR' },
+    value: 'ko',
+    label: 'Korean',
+    countryCode: 'KR',
+    adapterLocale: 'ko',
+    numberFormat: { code: 'ko-KR', currency: 'KRW' },
     systemValue: {
-      components: { ...arSACore.components, ...arSDDataGrid.components },
+      components: { ...koKRCore.components, ...koKRDate.components, ...koKRDataGrid.components },
+    },
+  },
+  {
+    value: 'ja',
+    label: 'Japanese',
+    countryCode: 'JP',
+    adapterLocale: 'ja',
+    numberFormat: { code: 'ja-JP', currency: 'JPY' },
+    systemValue: {
+      components: { ...jaJPCore.components, ...jaJPDate.components, ...jaJPDataGrid.components },
     },
   },
 ];
 
 // ----------------------------------------------------------------------
 
-export const i18nResourceLoader = resourcesToBackend(
-  (lang: LangCode, namespace: string) => import(`./langs/${lang}/${namespace}.json`)
+/**
+ * Languages without a `langs/<code>` bundle yet resolve to the English bundle so
+ * switching never leaves untranslated keys or a failed import behind.
+ */
+export const i18nResourceLoader = resourcesToBackend((lang: LangCode, namespace: string) =>
+  import(`./langs/${lang}/${namespace}.json`).catch(() => import(`./langs/en/${namespace}.json`))
 );
 
 export function i18nOptions(lang = fallbackLng, namespace = defaultNS): InitOptions {
