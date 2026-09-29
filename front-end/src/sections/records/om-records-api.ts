@@ -102,6 +102,9 @@ export type ChartsSummary = {
   baptismAge: { range: string; count: number }[];
   typeDistribution: { name: string; value: number }[];
   seasonalPatterns: { month: string; baptism: number; marriage: number; funeral: number }[];
+  /** true register totals (soft-deleted excluded) incl. undated rows */
+  totals?: Record<string, { total: number; undated: number }>;
+  clergyByYear?: { year: number; name: string; count: number }[];
 };
 
 // ---- transport ----
