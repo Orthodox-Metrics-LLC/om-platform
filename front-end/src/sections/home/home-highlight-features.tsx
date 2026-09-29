@@ -91,29 +91,35 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 // ----------------------------------------------------------------------
 
 /**
- * All seven language screenshots are normalized to a 3:2 aspect ratio
+ * All twelve church dashboards are normalized to a 3:2 aspect ratio
  * (padded, never cropped, in the source export) so they line up at the
  * same height and width across the row regardless of each dashboard's
- * original crop.
+ * original crop. Ordered largest to smallest by church population:
+ * Russian through Korean.
  */
 const ITEMS = [
   {
     title: 'Multilingual interface',
     subtitle:
-      'The whole dashboard in Greek, English, Russian, Romanian, Georgian, Arabic, and Chinese — including full right-to-left layout.',
+      'One dashboard for every church — Russian, Ethiopian, Romanian, Greek, Serbian, Bulgarian, Georgian, Arabic, American, Chinese, Japanese, and Korean — including full right-to-left layout.',
     icon: 'solar:global-bold-duotone',
     images: [
-      { src: 'dashboard-greek.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
-      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English' },
       { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Russian' },
+      { src: 'dashboard-ethiopian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Amharic for the Ethiopian Orthodox Church' },
       { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
+      { src: 'dashboard-greek.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
+      { src: 'dashboard-serbian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Serbian' },
+      { src: 'dashboard-bulgarian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Bulgarian' },
       { src: 'dashboard-georgian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Georgian' },
       {
         src: 'dashboard-arabic.webp',
         ratio: 1.5,
         alt: 'The Orthodox Metrics dashboard in Arabic, laid out right-to-left',
       },
+      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English for the Orthodox Church in America' },
       { src: 'dashboard-chinese.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Chinese' },
+      { src: 'dashboard-japanese.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Japanese' },
+      { src: 'dashboard-korean.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Korean' },
     ],
   },
 ] as const;
