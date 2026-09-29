@@ -19,7 +19,7 @@ import { Iconify } from 'src/components/iconify';
 // ----------------------------------------------------------------------
 
 export function ComingSoonView() {
-  const countdown = useCountdownDate(new Date('2026-08-20 20:30'));
+  const countdown = useCountdownDate(new Date('2026-12-31 00:00'));
 
   return (
     <Container>

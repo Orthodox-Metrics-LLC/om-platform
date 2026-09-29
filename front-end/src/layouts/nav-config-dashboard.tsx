@@ -66,6 +66,24 @@ const ICONS = {
  * bottom of the sidebar (church image, name, signed-in user) varies per tenant.
  */
 export const churchNavData: NavSectionProps['data'] = [
+  /**
+   * MyOM — the signed-in user's own profile (My profile). Pinned above Parish Portal for every role.
+   */
+  {
+    subheader: 'MyOM',
+    items: [
+      {
+        title: 'MyOM',
+        path: paths.dashboard.user.root,
+        icon: ICONS.label,
+        info: (
+          <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
+            NEW
+          </Label>
+        ),
+      },
+    ],
+  },
   {
     subheader: 'Parish Portal',
     items: [
@@ -96,6 +114,24 @@ export const churchNavData: NavSectionProps['data'] = [
 ];
 
 export const navData: NavSectionProps['data'] = [
+  /**
+   * MyOM — the signed-in user's own profile (My profile). Pinned above Parish Portal for every role.
+   */
+  {
+    subheader: 'MyOM',
+    items: [
+      {
+        title: 'MyOM',
+        path: paths.dashboard.user.root,
+        icon: ICONS.label,
+        info: (
+          <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
+            NEW
+          </Label>
+        ),
+      },
+    ],
+  },
   /**
    * OM Parish Portal — migrated OM authenticated pages live here.
    */

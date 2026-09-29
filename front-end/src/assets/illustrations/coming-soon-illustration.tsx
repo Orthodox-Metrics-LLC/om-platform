@@ -13,7 +13,7 @@ function ComingSoonIllustration({ sx, ...other }: BoxProps) {
     <Box
       component="img"
       alt="Coming soon"
-      src={`${CONFIG.assetsDir}/assets/illustrations/illustration-maintenance.png`}
+      src={`${CONFIG.assetsDir}/assets/illustrations/illustration-coming-soon.png`}
       sx={[
         { width: 1, maxWidth: 400, mx: 'auto', display: 'block' },
         ...(Array.isArray(sx) ? sx : [sx]),
