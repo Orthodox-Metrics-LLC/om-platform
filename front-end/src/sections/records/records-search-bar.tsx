@@ -25,7 +25,7 @@ import { parishSearchApi } from './om-records-api';
 
 // ----------------------------------------------------------------------
 
-const SUGGESTIONS = ['Baptisms in 1985', 'Marriages by Fr. James Parsells', 'Funerals this year', 'Records modified this week', 'Duplicate baptism records', 'Baptisms with missing birthplace'];
+const SUGGESTIONS = ['Baptisms in the 1980s', 'Marriages by Fr. James Parsells', 'Funerals last 5 years', 'Baptisms with missing birthplace', 'Records modified this month', 'Duplicate baptism records', 'Petrowsky'];
 
 type Props = {
   churchId: number;
@@ -71,7 +71,7 @@ export function RecordsSearchBar({ churchId, defaultTypes, onResult, onOpenAdvan
   const run = async (a: ParishSearchAst) => {
     setBusy('run');
     try {
-      const exec = await parishSearchApi.execute(a);
+      const exec = await parishSearchApi.executeAll(a);
       if (exec.unsupported?.message) toast.warning(exec.unsupported.message);
       onResult(exec, query.trim());
     } catch (e) {
@@ -97,7 +97,7 @@ export function RecordsSearchBar({ churchId, defaultTypes, onResult, onOpenAdvan
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && parse()}
-          placeholder='Search your parish records in plain language — e.g. "baptisms in 1985 by Fr. James" or "duplicate marriage records"'
+          placeholder='Search in plain language — a name, "baptisms in the 1980s", "funerals since 2020 without a burial location", "records modified this week"…'
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} /></InputAdornment>, endAdornment: query ? <InputAdornment position="end"><Button size="small" color="inherit" onClick={() => { setQuery(''); setChips([]); setAst(null); setConfidence(null); }}>Clear</Button></InputAdornment> : null } }}
         />
         <Button variant="contained" loading={busy === 'parse' || busy === 'run'} onClick={() => parse()} disabled={!query.trim()} sx={{ flexShrink: 0 }}>Search</Button>

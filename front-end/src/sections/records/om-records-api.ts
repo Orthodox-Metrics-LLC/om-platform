@@ -139,6 +139,21 @@ export const parishSearchApi = {
   parse: (body: { query: string; churchId: number; clarificationAnswers?: Record<string, string> }) =>
     call<{ data: { ast: ParishSearchAst | null; interpretation: InterpretationChip[]; clarifications: Clarification[]; confidence: number; exportIntent: { format: string } | null; rawQuery: string; churchId: number } }>(`${S}/parse`, jsonInit('POST', body)).then((r) => r.data),
   execute: (ast: ParishSearchAst) => call<{ data: SearchExecution }>(`${S}/execute`, jsonInit('POST', { ast })).then((r) => r.data),
+  /** The server caps a page at 100 rows; fetch successive pages (up to `maxRows`) for the client-side grid. */
+  executeAll: async (ast: ParishSearchAst, maxRows = 1000): Promise<SearchExecution> => {
+    const page = 100;
+    const first = await parishSearchApi.execute({ ...ast, limit: page, offset: 0 });
+    if (first.mode !== 'union' && first.mode !== 'related') return first;
+    const rows = [...first.rows];
+    let offset = page;
+    while (rows.length < Math.min(first.total, maxRows) && offset < maxRows) {
+      const next = await parishSearchApi.execute({ ...ast, limit: page, offset });
+      if (!next.rows.length) break;
+      rows.push(...next.rows);
+      offset += page;
+    }
+    return { ...first, rows, limit: rows.length, offset: 0 };
+  },
   count: (ast: ParishSearchAst) => call<{ data: { total: number } }>(`${S}/count`, jsonInit('POST', { ast })).then((r) => r.data.total),
   export: async (body: { ast: ParishSearchAst; format: 'xlsx' | 'csv' | 'xml' | 'pdf'; includeQuerySummary?: boolean }) => {
     const res = await omApiFetch(`${S}/export`, jsonInit('POST', body));
@@ -171,7 +186,7 @@ export const parishSearchApi = {
 
 /** Minimal AST for "all records of a type in this church" (list export, bulk actions). */
 export function recordsAst(churchId: number, types: RecordType[], extra?: Partial<ParishSearchAst>): ParishSearchAst {
-  return { version: 1, scope: { churchId, recordTypes: types }, operation: { type: 'records' }, filters: { operator: 'and', conditions: [] }, textSearch: null, sort: [{ field: 'canonical_event_date', direction: 'desc' }], limit: 5000, offset: 0, ...extra };
+  return { version: 1, scope: { churchId, recordTypes: types }, operation: { type: 'records' }, filters: { operator: 'and', conditions: [] }, textSearch: null, sort: [{ field: 'canonical_event_date', direction: 'desc' }], limit: 100, offset: 0, ...extra };
 }
 
 const CS = '/api/certificates';

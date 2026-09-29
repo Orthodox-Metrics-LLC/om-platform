@@ -85,6 +85,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
       if (clergyFilter) list = list.filter((x) => x.clergy === clergyFilter);
       setRows(list);
       setTotal(r.totalRecords);
+      setStatusOptions((prev) => [...new Set([...prev, ...r.records.map((x) => x.status).filter(Boolean)])]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not load records');
     } finally {
@@ -99,7 +100,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
     Promise.all(RECORD_TYPES.map((t) => omRecordsApi.list(t.value, { churchId, limit: 1 }).then((r) => [t.value, r.totalRecords] as const).catch(() => [t.value, 0] as const)))
       .then((pairs) => setCounts(Object.fromEntries(pairs)));
     omRecordsApi.dropdownOptions(type, 'clergy', churchId).then((v) => setClergyOptions(v.map((s) => s.trim()).filter(Boolean))).catch(() => setClergyOptions([]));
-    omRecordsApi.dropdownOptions(type, 'status', churchId).then((v) => setStatusOptions([...new Set([...RECORD_STATUSES, ...v.map((s) => s.trim()).filter(Boolean)])])).catch(() => {});
+
   }, [churchId, type]);
 
   const handleDelete = async () => {
@@ -250,7 +251,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
 
       <RecordsExportDialog open={exportDialog.value} onClose={exportDialog.onFalse} ast={exportAst()} count={selectedIds.length || (mode.kind === 'search' ? mode.total : total)} />
       <RecordsSavedSearchesDrawer open={savedDrawer.value} onClose={savedDrawer.onFalse} churchId={churchId} currentAst={mode.kind === 'list' ? null : mode.ast} onRun={(r) => { setMode({ kind: 'search', ast: r.ast, rows: r.rows, total: r.total, label: r.name, durationMs: 0 }); savedDrawer.onFalse(); }} />
-      <RecordsAdvancedSearchDrawer open={advancedDrawer.value} onClose={advancedDrawer.onFalse} churchId={churchId} defaultTypes={[type]} clergyOptions={clergyOptions} onRun={async (ast, label) => { try { const exec = await parishSearchApi.execute(ast); if (exec.mode === 'duplicate_detection') setMode({ kind: 'duplicates', ast }); else setMode({ kind: 'search', ast, rows: exec.rows, total: exec.total, label, durationMs: exec.durationMs }); advancedDrawer.onFalse(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Search failed'); } }} />
+      <RecordsAdvancedSearchDrawer open={advancedDrawer.value} onClose={advancedDrawer.onFalse} churchId={churchId} defaultTypes={[type]} clergyOptions={clergyOptions} onRun={async (ast, label) => { try { const exec = await parishSearchApi.executeAll(ast); if (exec.mode === 'duplicate_detection') setMode({ kind: 'duplicates', ast }); else setMode({ kind: 'search', ast, rows: exec.rows, total: exec.total, label, durationMs: exec.durationMs }); advancedDrawer.onFalse(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Search failed'); } }} />
 
       <ConfirmDialog open={confirmDelete.value} onClose={confirmDelete.onFalse} title="Delete record" content={<>Delete <strong>{deleteTarget?.title}</strong>? The record is soft-deleted and can be restored from search.</>} action={<Button variant="contained" color="error" onClick={handleDelete}>Delete</Button>} />
     </>

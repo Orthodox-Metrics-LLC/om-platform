@@ -33,6 +33,10 @@ import { parishSearchApi } from './om-records-api';
 
 const CLASS_COLOR: Record<string, 'error' | 'warning' | 'info' | 'default'> = { 'Exact duplicate': 'error', 'Strong duplicate candidate': 'warning', 'Possible duplicate': 'info', 'Possible person match': 'info', 'Not enough evidence': 'default' };
 
+const pct = (c: number) => `${Math.round(c > 1 ? c : c * 100)}%`;
+const META = /^(?:id|church_id|source_scan_id|seed_run_id|ocr_confidence|verified_by|verified_at|status|notes|deleted_at|deleted_by|deletion_reason|created_at|updated_at|.*_display|entry_type)$/;
+const human = (fields: string[]) => fields.filter((f) => !META.test(f)).map((f) => f.replace(/_/g, ' '));
+
 /** Duplicate detection results with review / merge (keep one, soft-delete the rest) / not-duplicates / restore. */
 export function RecordsDuplicatesPanel({ churchId, ast, canManage, onBack }: { churchId: number; ast: ParishSearchAst; canManage: boolean; onBack: () => void }) {
   const [groups, setGroups] = useState<DuplicateGroup[] | null>(null);
@@ -88,7 +92,7 @@ export function RecordsDuplicatesPanel({ churchId, ast, canManage, onBack }: { c
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
               <Label variant="soft" color={CLASS_COLOR[g.classification] || 'default'}>{g.classification}</Label>
               <Label variant="outlined" sx={{ textTransform: 'capitalize' }}>{g.recordType.replace('_', ' ')}</Label>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{Math.round(g.confidence * 100)}% · matched {g.matchedFields.join(', ') || '—'}{g.differingFields.length ? ` · differs ${g.differingFields.join(', ')}` : ''}</Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{pct(g.confidence)} · matched {human(g.matchedFields).join(', ') || '—'}{human(g.differingFields).length ? ` · differs ${human(g.differingFields).join(', ')}` : ''}</Typography>
               <Box sx={{ flexGrow: 1 }} />
               {g.reviewStatus !== 'unreviewed' && <Label variant="soft" color={g.reviewStatus === 'not_a_duplicate' ? 'success' : 'info'} sx={{ textTransform: 'capitalize' }}>{g.reviewStatus.replace(/_/g, ' ')}</Label>}
             </Box>
