@@ -22,8 +22,8 @@ import { Iconify } from 'src/components/iconify';
 import { Form } from 'src/components/hook-form/form-provider';
 import { RHFTextField } from 'src/components/hook-form/rhf-text-field';
 
-import { useOmAuth } from '../context/om-auth';
 import { FormHead } from '../components/form-head';
+import { useOmAuth, isChurchRole } from '../context/om-auth';
 
 // ----------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ export function OmSignInView() {
        * returns the user where they were headed. AuthGuard sets that param.
        */
       const returnTo = new URLSearchParams(window.location.search).get('returnTo');
-      router.push(returnTo && returnTo.startsWith('/') ? returnTo : paths.dashboard.root);
+      router.push(landingPath(signedIn.role, returnTo));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Sign in failed.');
     }
@@ -159,6 +159,22 @@ export function OmSignInView() {
 }
 
 // ----------------------------------------------------------------------
+
+/**
+ * Template demo areas that are not part of the parish experience. A stale
+ * ?returnTo= into one of these (e.g. after a session expiry) must not strand a
+ * church user on a mock page.
+ */
+const PLATFORM_ONLY_PREFIXES = ['/dashboard/order', '/dashboard/product', '/dashboard/ecommerce', '/dashboard/banking', '/dashboard/booking', '/dashboard/course', '/dashboard/blog', '/dashboard/job', '/dashboard/tour', '/dashboard/kanban', '/dashboard/params', '/dashboard/asset-manager', '/dashboard/user/list', '/dashboard/user/new', '/dashboard/user/cards'];
+
+function landingPath(role: string | null | undefined, returnTo: string | null) {
+  const church = isChurchRole(role);
+  const home = church ? paths.portal.root : paths.dashboard.root;
+  if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) return home;
+  if (church && PLATFORM_ONLY_PREFIXES.some((p) => returnTo === p || returnTo.startsWith(`${p}/`) || returnTo.startsWith(`${p}?`))) return home;
+  if (returnTo === '/dashboard' && church) return home;
+  return returnTo;
+}
 
 function OrganizationSignIn() {
   const onSignIn = () => {
