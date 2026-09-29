@@ -104,7 +104,8 @@ export type ChartsSummary = {
   seasonalPatterns: { month: string; baptism: number; marriage: number; funeral: number }[];
   /** true register totals (soft-deleted excluded) incl. undated rows */
   totals?: Record<string, { total: number; undated: number }>;
-  clergyByYear?: { year: number; name: string; count: number }[];
+  clergyByYear?: { year: number; type: RecordType; name: string; count: number }[];
+  recentEvents?: { type: RecordType; id: number; name: string; date: string; clergy: string | null; place: string | null }[];
 };
 
 // ---- transport ----

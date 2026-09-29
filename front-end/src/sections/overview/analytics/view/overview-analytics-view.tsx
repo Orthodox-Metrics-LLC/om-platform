@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import CardHeader from '@mui/material/CardHeader';
@@ -13,12 +14,16 @@ import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { paths } from 'src/routes/paths';
+import { RouterLink } from 'src/routes/components';
 
+import { fDate } from 'src/utils/format-time';
 import { fNumber } from 'src/utils/format-number';
 
 import { CONFIG } from 'src/global-config';
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { Label } from 'src/components/label';
+import { Iconify } from 'src/components/iconify';
 import { EmptyContent } from 'src/components/empty-content';
 
 import { omRecordsApi } from 'src/sections/records/om-records-api';
@@ -111,11 +116,13 @@ export function OverviewAnalyticsView() {
 
     // clergy active in range: distinct names with at least one record in the window
     const clergyIn = (lo: number, hi: number) => clergyByYear.filter((c) => c.year >= lo && c.year <= hi);
-    const clergyRows = range === 'all' ? data.byPriest : Object.entries(clergyIn(from, thisYear).reduce<Record<string, number>>((acc, c) => { acc[c.name] = (acc[c.name] ?? 0) + c.count; return acc; }, {})).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-    const clergyPrev = new Set(clergyIn(prevFrom, from - 1).map((c) => c.name)).size;
-    const clergyYears = range === 'all' ? [...new Set(byYear.map((y) => Math.floor(y.year / 10) * 10))].sort() : Array.from({ length: n }, (_, i) => from + i);
-    const clergySeries = clergyYears.map((yr) => new Set(clergyByYear.filter((c) => (range === 'all' ? Math.floor(c.year / 10) * 10 === yr : c.year === yr)).map((c) => c.name)).size);
-    const clergyWidget = { total: clergyRows.length, percent: range === 'all' ? 0 : pctChange(clergyRows.length, clergyPrev), categories: clergyYears.map((y) => (range === 'all' ? `${y}s` : String(y))), series: clergySeries };
+    // Clergy activity in range, with a per-sacrament breakdown for the tooltip
+    const clergyAgg = clergyIn(range === 'all' ? 0 : from, thisYear).reduce<Record<string, { name: string; count: number; baptism: number; marriage: number; funeral: number }>>((acc, c) => {
+      const row = acc[c.name] ?? (acc[c.name] = { name: c.name, count: 0, baptism: 0, marriage: 0, funeral: 0 });
+      row.count += c.count; row[c.type as Kind] = (row[c.type as Kind] ?? 0) + c.count;
+      return acc;
+    }, {});
+    const clergyRows = Object.values(clergyAgg).sort((a, b) => b.count - a.count);
 
     // charts
     const yearSeries = range === '1'
@@ -130,7 +137,7 @@ export function OverviewAnalyticsView() {
     const undated = KINDS.reduce((s, k) => s + (totals[k.kind]?.undated ?? 0), 0);
     const rangeLabel = RANGES.find((r) => r.value === range)!.label;
 
-    return { widget, clergyWidget, clergyRows, yearSeries, dist, monthsWindow, registerTotal, undated, firstYear, thisYear, rangeLabel, from };
+    return { widget, clergyRows, yearSeries, dist, monthsWindow, registerTotal, undated, firstYear, thisYear, rangeLabel, from };
   }, [data, range]);
 
   if (platform && !churchId) return <FileManagerChurchPicker heading="Analytics" basePath={paths.dashboard.general.analytics} />;
@@ -163,7 +170,27 @@ export function OverviewAnalyticsView() {
           </Grid>
         ); })}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsWidgetSummary title={`Clergy on record · ${range === 'all' ? 'all years' : view.rangeLabel.toLowerCase()}`} percent={view.clergyWidget.percent} total={view.clergyWidget.total} color="error" icon={icon('ic-cross-clergy')} chart={{ categories: view.clergyWidget.categories, series: view.clergyWidget.series }} />
+          <Card sx={{ p: 2.5, height: 1, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+              <Box sx={{ width: 36, height: 36 }}>{icon('ic-cross-clergy')}</Box>
+              <Box>
+                <Typography variant="subtitle2">Recent sacraments</Typography>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }}>Latest entries in the register</Typography>
+              </Box>
+            </Box>
+            <Stack spacing={1} sx={{ flexGrow: 1 }}>
+              {(data.recentEvents ?? []).slice(0, 6).map((e) => (
+                <Box key={`${e.type}-${e.id}`} component={RouterLink} href={`${paths.dashboard.records.details(e.type, e.id)}${platform ? `?church=${churchId}` : ''}`} sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'inherit', textDecoration: 'none', '&:hover .name': { textDecoration: 'underline' } }}>
+                  <Label variant="soft" color={e.type === 'baptism' ? 'primary' : e.type === 'marriage' ? 'secondary' : 'warning'} sx={{ minWidth: 64, justifyContent: 'center', textTransform: 'capitalize' }}>{e.type}</Label>
+                  <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                    <Typography className="name" variant="body2" noWrap>{e.name || '—'}</Typography>
+                    <Typography variant="caption" noWrap sx={{ color: 'text.disabled', display: 'block' }}>{fDate(e.date)}{e.clergy ? ` · ${e.clergy}` : ''}</Typography>
+                  </Box>
+                </Box>
+              ))}
+              {!(data.recentEvents ?? []).length && <Typography variant="body2" sx={{ color: 'text.disabled' }}>No dated sacraments yet.</Typography>}
+            </Stack>
+          </Card>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
@@ -189,11 +216,25 @@ export function OverviewAnalyticsView() {
             <Stack spacing={2} sx={{ p: 3 }}>
               {view.clergyRows.slice(0, 10).map((p) => {
                 const max = view.clergyRows[0]?.count || 1;
-                return (
-                  <Box key={p.name}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}><Typography variant="body2" noWrap sx={{ maxWidth: '75%' }}>{p.name}</Typography><Typography variant="subtitle2">{fNumber(p.count)}</Typography></Box>
-                    <LinearProgress variant="determinate" value={(p.count / max) * 100} sx={{ height: 6, borderRadius: 1 }} />
+                const breakdown = (
+                  <Box sx={{ p: 0.5 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 0.75 }}>{p.name}</Typography>
+                    {KINDS.map((k) => (
+                      <Box key={k.kind} sx={{ display: 'flex', justifyContent: 'space-between', gap: 3, typography: 'body2' }}>
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}><Iconify icon={k.kind === 'baptism' ? 'custom:cross-bold' : k.kind === 'marriage' ? 'solar:heart-bold' : 'solar:calendar-date-bold'} width={14} />{k.title}</Box>
+                        <b>{fNumber(p[k.kind])}</b>
+                      </Box>
+                    ))}
+                    <Box sx={{ mt: 0.75, pt: 0.75, borderTop: '1px dashed rgba(255,255,255,0.3)', display: 'flex', justifyContent: 'space-between', typography: 'body2' }}><span>Total</span><b>{fNumber(p.count)}</b></Box>
                   </Box>
+                );
+                return (
+                  <Tooltip key={p.name} title={breakdown} placement="left" arrow>
+                    <Box sx={{ cursor: 'help' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}><Typography variant="body2" noWrap sx={{ maxWidth: '75%' }}>{p.name}</Typography><Typography variant="subtitle2">{fNumber(p.count)}</Typography></Box>
+                      <LinearProgress variant="determinate" value={(p.count / max) * 100} sx={{ height: 6, borderRadius: 1 }} />
+                    </Box>
+                  </Tooltip>
                 );
               })}
               {!view.clergyRows.length && <Typography variant="body2" sx={{ color: 'text.disabled' }}>No clergy recorded in this range.</Typography>}
