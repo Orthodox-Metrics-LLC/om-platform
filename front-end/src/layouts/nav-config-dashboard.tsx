@@ -94,7 +94,7 @@ export const churchNavData: NavSectionProps['data'] = [
         children: [
           { title: 'Overview', path: paths.portal.root },
           { title: 'Records', path: paths.dashboard.records.root, deepMatch: true },
-          { title: 'Certificates', path: paths.dashboard.records.certificates },
+          { title: 'Certificates', path: paths.dashboard.records.certificates, deepMatch: true },
           { title: 'Sacramental calendar', path: paths.dashboard.records.sacramentalCalendar },
         ],
       },

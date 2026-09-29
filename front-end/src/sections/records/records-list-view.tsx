@@ -149,7 +149,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
     { field: 'actions', type: 'actions', headerName: ' ', width: 64, align: 'right', getActions: (p) => [
       <CustomGridActionsCellItem key="view" showInMenu label="View" icon={<Iconify icon="solar:eye-bold" />} href={`${paths.dashboard.records.details(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />,
       ...(canManage ? [<CustomGridActionsCellItem key="edit" showInMenu label="Edit" icon={<Iconify icon="solar:pen-bold" />} href={`${paths.dashboard.records.edit(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />] : []),
-      <CustomGridActionsCellItem key="cert" showInMenu label="Certificate" icon={<Iconify icon="solar:verified-check-bold" />} href={`${paths.dashboard.records.certificates}?type=${type}&record=${p.row.id}${platform && churchId ? `&church=${churchId}` : ''}`} />,
+      ...(type !== 'funeral' ? [<CustomGridActionsCellItem key="cert" showInMenu label="Certificate" icon={<Iconify icon="solar:verified-check-bold" />} href={`${paths.dashboard.records.certificates}?type=${type}&record=${p.row.id}${platform && churchId ? `&church=${churchId}` : ''}`} />] : []),
       ...(canManage ? [<CustomGridActionsCellItem key="del" showInMenu label="Delete" icon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={() => { setDeleteTarget(p.row); confirmDelete.onTrue(); }} style={{ color: "var(--palette-error-main)" }} />] : []),
     ] },
   ], [type, platform, churchId, canManage, confirmDelete]);
@@ -218,7 +218,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
           )}
         </ToolbarLeftPanel>
         <ToolbarRightPanel>
-          {!!selectedIds.length && selectedTypes.length <= 1 && (
+          {!!selectedIds.length && selectedTypes.length <= 1 && (selectedTypes[0] ?? type) !== 'funeral' && (
             <Button size="small" variant="soft" startIcon={<Iconify icon="solar:verified-check-bold" />} component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${selectedTypes[0] ?? type}&records=${selectedIds.join(',')}${platform ? `&church=${churchId}` : ''}`}>Certificates ({selectedIds.length})</Button>
           )}
           <Button size="small" startIcon={<Iconify icon="solar:export-bold" />} onClick={exportDialog.onTrue}>Export{selectedIds.length ? ` (${selectedIds.length})` : ''}</Button>

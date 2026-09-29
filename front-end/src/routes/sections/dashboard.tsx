@@ -78,6 +78,8 @@ const RecordNewPage = lazy(() => import('src/pages/dashboard/records/new'));
 const RecordDetailsPage = lazy(() => import('src/pages/dashboard/records/details'));
 const RecordEditPage = lazy(() => import('src/pages/dashboard/records/edit'));
 const RecordsCertificatesPage = lazy(() => import('src/pages/dashboard/records/certificates'));
+const CertificateTemplatesPage = lazy(() => import('src/pages/dashboard/records/certificate-templates'));
+const CertificateDesignerPage = lazy(() => import('src/pages/dashboard/records/certificate-designer'));
 const SacramentalCalendarPage = lazy(() => import('src/pages/dashboard/records/sacramental-calendar'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
@@ -216,6 +218,8 @@ export const dashboardRoutes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/dashboard/records/baptism" replace /> },
           { path: 'certificates', element: <RecordsCertificatesPage /> },
+          { path: 'certificates/templates', element: <CertificateTemplatesPage /> },
+          { path: 'certificates/designer/:id', element: <CertificateDesignerPage /> },
           { path: 'sacramental-calendar', element: <SacramentalCalendarPage /> },
           { path: ':type', element: <RecordsListPage /> },
           { path: ':type/new', element: <RecordNewPage /> },

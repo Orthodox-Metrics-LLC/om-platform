@@ -89,7 +89,7 @@ export function RecordDetailsView({ type }: { type: RecordType }) {
           action={
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Button variant="outlined" color="inherit" startIcon={<Iconify icon="solar:export-bold" />} onClick={() => setExportOpen(true)}>Export</Button>
-              <Button variant="outlined" color="inherit" component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${type}&record=${record.id}${platform ? `&church=${churchId}` : ''}`} startIcon={<Iconify icon="solar:verified-check-bold" />}>Certificate</Button>
+              {type !== 'funeral' && <Button variant="outlined" color="inherit" component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${type}&record=${record.id}${platform ? `&church=${churchId}` : ''}`} startIcon={<Iconify icon="solar:verified-check-bold" />}>Certificate</Button>}
               {canManage && <Button variant="contained" component={RouterLink} href={`${paths.dashboard.records.edit(type, record.id)}${suffix}`} startIcon={<Iconify icon="solar:pen-bold" />}>Edit</Button>}
             </Box>
           }

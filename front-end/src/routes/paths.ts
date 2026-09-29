@@ -138,6 +138,8 @@ export const paths = {
       details: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}`,
       edit: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}/edit`,
       certificates: `${ROOTS.DASHBOARD}/records/certificates`,
+      certificateTemplates: `${ROOTS.DASHBOARD}/records/certificates/templates`,
+      certificateDesigner: (id: string) => `${ROOTS.DASHBOARD}/records/certificates/designer/${id}`,
       sacramentalCalendar: `${ROOTS.DASHBOARD}/records/sacramental-calendar`,
     },
     permission: `${ROOTS.DASHBOARD}/permission`,
