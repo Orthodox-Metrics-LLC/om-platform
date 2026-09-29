@@ -1,7 +1,7 @@
 import type { IInvoiceItem } from 'src/types/invoice';
 
 import { sumBy } from 'es-toolkit';
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 import { inputBaseClasses } from '@mui/material/InputBase';
 
-import { INVOICE_SERVICE_OPTIONS } from 'src/_mock';
+import { omInvoiceApi } from 'src/actions/invoice';
 
 import { Field } from 'src/components/hook-form';
 import { Iconify } from 'src/components/iconify';
@@ -25,8 +25,8 @@ import { InvoiceTotalSummary } from './invoice-total-summary';
 export const defaultItem: Omit<IInvoiceItem, 'id'> = {
   title: '',
   description: '',
-  service: INVOICE_SERVICE_OPTIONS[0].name,
-  price: INVOICE_SERVICE_OPTIONS[0].price,
+  service: 'Records Entry',
+  price: 35,
   quantity: 1,
   total: 0,
 };
@@ -40,8 +40,18 @@ const getFieldNames = (index: number): Record<keyof typeof defaultItem, string> 
   total: `items[${index}].total`,
 });
 
+/** Service catalogue = services already used on OM invoices + sensible defaults (server-provided). */
+function useServiceOptions() {
+  const [options, setOptions] = useState<{ service: string; price: number }[]>([]);
+  useEffect(() => {
+    omInvoiceApi.services().then(setOptions).catch(() => setOptions([]));
+  }, []);
+  return options;
+}
+
 export function InvoiceCreateEditDetails() {
   const { control, setValue, getValues } = useFormContext();
+  const serviceOptions = useServiceOptions();
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
@@ -52,7 +62,8 @@ export function InvoiceCreateEditDetails() {
 
   const subtotal = sumBy(items, (item: IInvoiceItem) => item.quantity * item.price);
   const subtotalWithTax = subtotal + subtotal * (taxes / 100);
-  const totalAmount = subtotalWithTax - discount - shipping;
+  // `shipping` carries "amount already paid" on OM invoices; balance due = total - paid.
+  const totalAmount = subtotalWithTax - discount;
 
   useEffect(() => {
     setValue('subtotal', subtotal);
@@ -70,6 +81,7 @@ export function InvoiceCreateEditDetails() {
           <InvoiceItem
             key={item.id}
             fieldNames={getFieldNames(index)}
+            serviceOptions={serviceOptions}
             onRemoveItem={() => remove(index)}
           />
         ))}
@@ -106,7 +118,7 @@ export function InvoiceCreateEditDetails() {
         >
           <Field.Text
             size="small"
-            label="Shipping($)"
+            label="Amount paid($)"
             name="shipping"
             type="number"
             sx={{ maxWidth: { md: 120 } }}
@@ -149,9 +161,10 @@ export function InvoiceCreateEditDetails() {
 type InvoiceItemProps = {
   onRemoveItem: () => void;
   fieldNames: Record<keyof typeof defaultItem, string>;
+  serviceOptions: { service: string; price: number }[];
 };
 
-export function InvoiceItem({ onRemoveItem, fieldNames }: InvoiceItemProps) {
+export function InvoiceItem({ onRemoveItem, fieldNames, serviceOptions }: InvoiceItemProps) {
   const { getValues, setValue } = useFormContext();
 
   const priceInput = getValues(fieldNames.price);
@@ -165,11 +178,11 @@ export function InvoiceItem({ onRemoveItem, fieldNames }: InvoiceItemProps) {
 
   const handleSelectService = useCallback(
     (option: string) => {
-      const selectedService = INVOICE_SERVICE_OPTIONS.find((service) => service.name === option);
+      const selectedService = serviceOptions.find((service) => service.service === option);
 
-      setValue(fieldNames.price, selectedService?.price);
+      if (selectedService?.price) setValue(fieldNames.price, selectedService.price);
     },
-    [fieldNames.price, setValue]
+    [fieldNames.price, setValue, serviceOptions]
   );
 
   const handleClearService = useCallback(() => {
@@ -228,13 +241,13 @@ export function InvoiceItem({ onRemoveItem, fieldNames }: InvoiceItemProps) {
 
           <Divider sx={{ borderStyle: 'dashed' }} />
 
-          {INVOICE_SERVICE_OPTIONS.map((service) => (
+          {serviceOptions.map((service) => (
             <MenuItem
-              key={service.id}
-              value={service.name}
-              onClick={() => handleSelectService(service.name)}
+              key={service.service}
+              value={service.service}
+              onClick={() => handleSelectService(service.service)}
             >
-              {service.name}
+              {service.service}
             </MenuItem>
           ))}
         </Field.Select>

@@ -100,6 +100,7 @@ export const churchNavData: NavSectionProps['data'] = [
       },
       { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
       { title: 'File', path: paths.dashboard.general.file, icon: ICONS.file },
+      { title: 'Invoices', path: paths.dashboard.invoice.root, icon: ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
     ],
   },
   {

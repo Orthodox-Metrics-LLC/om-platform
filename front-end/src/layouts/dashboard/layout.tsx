@@ -74,9 +74,10 @@ export function DashboardLayout({
   const isNavHorizontal = settings.state.navLayout === 'horizontal';
   const isNavVertical = isNavMini || settings.state.navLayout === 'vertical';
 
-  // Documented semantics: no `allowedRoles` → everyone; otherwise only the listed roles.
+  // NavList hides an item when this returns true: no `allowedRoles` → visible to everyone;
+  // otherwise hidden unless the user's role is listed.
   const canDisplayItemByRole = (allowedRoles: NavItemProps['allowedRoles']): boolean =>
-    !allowedRoles || allowedRoles.includes(user?.role);
+    !!allowedRoles && !allowedRoles.includes(user?.role);
 
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = {

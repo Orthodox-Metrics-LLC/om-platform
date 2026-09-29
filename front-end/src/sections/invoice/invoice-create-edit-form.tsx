@@ -14,8 +14,9 @@ import { useRouter } from 'src/routes/hooks';
 
 import { today, fIsAfter } from 'src/utils/format-time';
 
-import { _addressBooks } from 'src/_mock';
+import { omInvoiceApi, refreshInvoices, type InvoicePayload } from 'src/actions/invoice';
 
+import { toast } from 'src/components/snackbar';
 import { Form, schemaUtils } from 'src/components/hook-form';
 
 import { InvoiceCreateEditAddress } from './invoice-create-edit-address';
@@ -72,14 +73,14 @@ export function InvoiceCreateEditForm({ currentInvoice }: Props) {
   const loadingSend = useBoolean();
 
   const defaultValues: InvoiceCreateSchemaType = {
-    invoiceNumber: 'INV-1990',
+    invoiceNumber: '',
     createDate: today(),
     dueDate: null,
     taxes: 0,
     shipping: 0,
     status: 'draft',
     discount: 0,
-    invoiceFrom: _addressBooks[0],
+    invoiceFrom: null,
     invoiceTo: null,
     subtotal: 0,
     totalAmount: 0,
@@ -99,35 +100,39 @@ export function InvoiceCreateEditForm({ currentInvoice }: Props) {
     formState: { isSubmitting },
   } = methods;
 
-  const handleSaveAsDraft = handleSubmit(async (data) => {
-    loadingSave.onTrue();
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      reset();
-      loadingSave.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
-    } catch (error) {
-      console.error(error);
-      loadingSave.onFalse();
-    }
+  const toPayload = (data: InvoiceCreateSchemaType, status: string): InvoicePayload => ({
+    invoiceNumber: data.invoiceNumber || undefined,
+    churchId: Number((data.invoiceTo as any)?.churchId || data.invoiceTo?.id) || undefined,
+    invoiceTo: data.invoiceTo as any,
+    createDate: data.createDate,
+    dueDate: data.dueDate,
+    status,
+    taxRate: data.taxes,
+    discount: data.discount,
+    amountPaid: data.shipping || 0,
+    items: data.items.map((it) => ({ title: it.title, description: it.description, service: it.service, quantity: it.quantity, price: it.price })),
   });
 
-  const handleCreateAndSend = handleSubmit(async (data) => {
-    loadingSend.onTrue();
-
+  const save = async (data: InvoiceCreateSchemaType, status: string, loading: typeof loadingSave) => {
+    loading.onTrue();
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const payload = toPayload(data, status);
+      const saved = currentInvoice ? await omInvoiceApi.update(currentInvoice.id, payload) : await omInvoiceApi.create(payload);
+      await refreshInvoices();
+      toast.success(status === 'draft' ? 'Draft saved' : currentInvoice ? 'Invoice updated and sent' : `Invoice ${saved.invoiceNumber} sent to ${saved.invoiceTo?.name}`);
       reset();
-      loadingSend.onFalse();
-      router.push(paths.dashboard.invoice.root);
-      console.info('DATA', JSON.stringify(data, null, 2));
+      router.push(paths.dashboard.invoice.details(saved.id));
     } catch (error) {
-      console.error(error);
-      loadingSend.onFalse();
+      toast.error(error instanceof Error ? error.message : 'Could not save invoice');
+    } finally {
+      loading.onFalse();
     }
-  });
+  };
+
+  const handleSaveAsDraft = handleSubmit((data) => save(data, currentInvoice && currentInvoice.status !== 'draft' ? currentInvoice.status : 'draft', loadingSave));
+
+  // Paid invoices keep their status; otherwise create/update sends it to the church.
+  const handleCreateAndSend = handleSubmit((data) => save(data, currentInvoice?.status === 'paid' ? 'paid' : 'sent', loadingSend));
 
   return (
     <Form methods={methods}>
@@ -152,7 +157,7 @@ export function InvoiceCreateEditForm({ currentInvoice }: Props) {
           loading={loadingSave.value && isSubmitting}
           onClick={handleSaveAsDraft}
         >
-          Save as draft
+          {currentInvoice && currentInvoice.status !== 'draft' ? 'Save changes' : 'Save as draft'}
         </Button>
 
         <Button

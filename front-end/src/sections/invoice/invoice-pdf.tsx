@@ -165,12 +165,12 @@ function InvoicePdfDocument({ invoice, currentStatus }: InvoicePdfDocumentProps)
       <View style={{ width: '75%' }}>
         <Text style={[styles.text2Bold, styles.mb4]}>NOTES</Text>
         <Text style={[styles.text2]}>
-          We appreciate your business. Should you need us to add VAT or extra notes let us know!
+          Thank you for partnering with Orthodox Metrics. Please make checks payable to Orthodox Metrics LLC, or pay online by card.
         </Text>
       </View>
       <View style={{ width: '25%', textAlign: 'right' }}>
         <Text style={[styles.text2Bold, styles.mb4]}>Have a question?</Text>
-        <Text style={[styles.text2]}>support@abcapp.com</Text>
+        <Text style={[styles.text2]}>info@orthodoxmetrics.com</Text>
       </View>
     </View>
   );
@@ -181,14 +181,14 @@ function InvoicePdfDocument({ invoice, currentStatus }: InvoicePdfDocumentProps)
         <Text style={[styles.text1Bold, styles.mb4]}>Invoice from</Text>
         <Text style={[styles.text2]}>{invoiceFrom?.name}</Text>
         <Text style={[styles.text2]}>{invoiceFrom?.fullAddress}</Text>
-        <Text style={[styles.text2]}>{invoiceFrom?.phoneNumber}</Text>
+        <Text style={[styles.text2]}>{invoiceFrom?.phoneNumber || (invoiceFrom as any)?.email}</Text>
       </View>
 
       <View style={{ width: '50%' }}>
         <Text style={[styles.text1Bold, styles.mb4]}>Invoice to</Text>
         <Text style={[styles.text2]}>{invoiceTo?.name}</Text>
         <Text style={[styles.text2]}>{invoiceTo?.fullAddress}</Text>
-        <Text style={[styles.text2]}>{invoiceTo?.phoneNumber}</Text>
+        <Text style={[styles.text2]}>{invoiceTo?.phoneNumber || (invoiceTo as any)?.email}</Text>
       </View>
     </View>
   );
@@ -255,7 +255,7 @@ function InvoicePdfDocument({ invoice, currentStatus }: InvoicePdfDocumentProps)
 
           {[
             { name: 'Subtotal', value: subtotal },
-            { name: 'Shipping', value: -(shipping ?? 0) },
+            { name: 'Amount paid', value: -(shipping ?? 0) },
             { name: 'Discount', value: -(discount ?? 0) },
             { name: 'Taxes', value: taxes },
             { name: 'Total', value: totalAmount, styles: styles.h4 },

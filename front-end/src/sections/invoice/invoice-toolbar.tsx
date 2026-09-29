@@ -14,6 +14,11 @@ import DialogActions from '@mui/material/DialogActions';
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
 
+import { fCurrency } from 'src/utils/format-number';
+
+import { omInvoiceApi, refreshInvoice, type OmInvoice, refreshInvoices } from 'src/actions/invoice';
+
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 
 import { InvoicePDFViewer, InvoicePDFDownload } from './invoice-pdf';
@@ -22,13 +27,49 @@ import { InvoicePDFViewer, InvoicePDFDownload } from './invoice-pdf';
 
 type Props = {
   invoice?: IInvoice;
+  canManage?: boolean;
+  canPay?: boolean;
+  stripeEnabled?: boolean;
   currentStatus: string;
   statusOptions: { value: string; label: string }[];
   onChangeStatus: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-export function InvoiceToolbar({ invoice, currentStatus, statusOptions, onChangeStatus }: Props) {
+export function InvoiceToolbar({ invoice, currentStatus, statusOptions, onChangeStatus, canManage = false, canPay = false, stripeEnabled = false }: Props) {
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
+  const paying = useBoolean();
+  const sending = useBoolean();
+
+  const handlePay = async () => {
+    if (!invoice) return;
+    paying.onTrue();
+    try {
+      const r = await omInvoiceApi.payWithStripe(invoice.id);
+      window.location.assign(r.url); // Stripe Checkout (hosted, card)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not start payment');
+      paying.onFalse();
+    }
+  };
+
+  const handleSend = async () => {
+    if (!invoice) return;
+    sending.onTrue();
+    try {
+      await omInvoiceApi.send(invoice.id);
+      toast.success(`Invoice ${invoice.invoiceNumber} sent — the parish has been notified`);
+      refreshInvoice(invoice.id); refreshInvoices();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not send');
+    } finally {
+      sending.onFalse();
+    }
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}${paths.dashboard.invoice.details(`${invoice?.id}`)}`;
+    try { await navigator.clipboard.writeText(url); toast.success('Link copied'); } catch { toast.info(url); }
+  };
 
   const renderDownloadButton = () =>
     invoice ? <InvoicePDFDownload invoice={invoice} currentStatus={currentStatus} /> : null;
@@ -67,14 +108,16 @@ export function InvoiceToolbar({ invoice, currentStatus, statusOptions, onChange
             display: 'flex',
           }}
         >
-          <Tooltip title="Edit">
-            <IconButton
-              component={RouterLink}
-              href={paths.dashboard.invoice.edit(`${invoice?.id}`)}
-            >
-              <Iconify icon="solar:pen-bold" />
-            </IconButton>
-          </Tooltip>
+          {canManage && currentStatus !== 'paid' && (
+            <Tooltip title="Edit">
+              <IconButton
+                component={RouterLink}
+                href={paths.dashboard.invoice.edit(`${invoice?.id}`)}
+              >
+                <Iconify icon="solar:pen-bold" />
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Tooltip title="View">
             <IconButton onClick={onOpen}>
@@ -85,22 +128,38 @@ export function InvoiceToolbar({ invoice, currentStatus, statusOptions, onChange
           {renderDownloadButton()}
 
           <Tooltip title="Print">
-            <IconButton>
+            <IconButton onClick={() => window.print()}>
               <Iconify icon="solar:printer-minimalistic-bold" />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Send">
-            <IconButton>
-              <Iconify icon="custom:send-fill" />
-            </IconButton>
-          </Tooltip>
+          {canManage && ['draft', 'pending', 'overdue'].includes(currentStatus) && (
+            <Tooltip title={currentStatus === 'draft' ? 'Send to the church' : 'Re-send notification'}>
+              <IconButton onClick={handleSend} disabled={sending.value}>
+                <Iconify icon="custom:send-fill" />
+              </IconButton>
+            </Tooltip>
+          )}
 
-          <Tooltip title="Share">
-            <IconButton>
+          <Tooltip title="Copy link">
+            <IconButton onClick={handleShare}>
               <Iconify icon="solar:share-bold" />
             </IconButton>
           </Tooltip>
+
+          {canPay && (
+            <Button
+              variant="contained"
+              color="primary"
+              loading={paying.value}
+              disabled={!stripeEnabled}
+              onClick={handlePay}
+              startIcon={<Iconify icon="solar:wad-of-money-bold" />}
+              sx={{ ml: 'auto' }}
+            >
+              Pay {fCurrency((invoice as OmInvoice)?.balanceDue ?? invoice?.totalAmount)} by card
+            </Button>
+          )}
         </Box>
 
         <TextField
@@ -109,7 +168,8 @@ export function InvoiceToolbar({ invoice, currentStatus, statusOptions, onChange
           label="Status"
           value={currentStatus}
           onChange={onChangeStatus}
-          sx={{ maxWidth: 160 }}
+          disabled={!canManage || currentStatus === 'paid'}
+          sx={{ maxWidth: 180 }}
           slotProps={{
             htmlInput: { id: 'status-select' },
             inputLabel: { htmlFor: 'status-select' },

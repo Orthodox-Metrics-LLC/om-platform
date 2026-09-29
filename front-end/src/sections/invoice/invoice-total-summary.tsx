@@ -64,9 +64,9 @@ export function InvoiceTotalSummary({
 
       <Box sx={rowStyles}>
         <Box component="span" sx={labelStyles}>
-          Shipping
+          Amount paid
         </Box>
-        <Box component="span" sx={[{ ...valueStyles }, !!shipping && { color: 'error.main' }]}>
+        <Box component="span" sx={[{ ...valueStyles }, !!shipping && { color: 'success.main' }]}>
           {shipping ? `- ${fCurrency(shipping)}` : '-'}
         </Box>
       </Box>
@@ -96,6 +96,15 @@ export function InvoiceTotalSummary({
           {fCurrency(totalAmount) || '-'}
         </Box>
       </Box>
+
+      {!!shipping && (
+        <Box sx={[rowStyles, { typography: 'subtitle1' }]}>
+          <Box component="span">Balance due</Box>
+          <Box component="span" sx={valueStyles}>
+            {fCurrency((totalAmount ?? 0) - shipping) || '-'}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

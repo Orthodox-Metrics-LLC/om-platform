@@ -31,6 +31,7 @@ type Props = {
   row: IInvoice;
   selected: boolean;
   editHref: string;
+  canManage?: boolean;
   detailsHref: string;
   onSelectRow: () => void;
   onDeleteRow: () => void;
@@ -40,6 +41,7 @@ export function InvoiceTableRow({
   row,
   selected,
   editHref,
+  canManage = true,
   onSelectRow,
   onDeleteRow,
   detailsHref,
@@ -62,25 +64,30 @@ export function InvoiceTableRow({
           </MenuItem>
         </li>
 
-        <li>
-          <MenuItem component={RouterLink} href={editHref} onClick={menuActions.onClose}>
-            <Iconify icon="solar:pen-bold" />
-            Edit
-          </MenuItem>
-        </li>
+        {canManage && row.status !== 'paid' && (
+          <li>
+            <MenuItem component={RouterLink} href={editHref} onClick={menuActions.onClose}>
+              <Iconify icon="solar:pen-bold" />
+              Edit
+            </MenuItem>
+          </li>
+        )}
 
-        <Divider sx={{ borderStyle: 'dashed' }} />
-
-        <MenuItem
-          onClick={() => {
-            confirmDialog.onTrue();
-            menuActions.onClose();
-          }}
-          sx={{ color: 'error.main' }}
-        >
-          <Iconify icon="solar:trash-bin-trash-bold" />
-          Delete
-        </MenuItem>
+        {canManage && ['draft', 'cancelled'].includes(row.status) && (
+          <>
+            <Divider sx={{ borderStyle: 'dashed' }} />
+            <MenuItem
+              onClick={() => {
+                confirmDialog.onTrue();
+                menuActions.onClose();
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <Iconify icon="solar:trash-bin-trash-bold" />
+              Delete
+            </MenuItem>
+          </>
+        )}
       </MenuList>
     </CustomPopover>
   );
@@ -90,7 +97,7 @@ export function InvoiceTableRow({
       open={confirmDialog.value}
       onClose={confirmDialog.onFalse}
       title="Delete"
-      content="Are you sure want to delete?"
+      content={<>Delete invoice <strong>{row.invoiceNumber}</strong>? This cannot be undone.</>}
       action={
         <Button variant="contained" color="error" onClick={onDeleteRow}>
           Delete

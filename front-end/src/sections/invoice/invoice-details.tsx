@@ -16,9 +16,10 @@ import Typography from '@mui/material/Typography';
 import { fDate } from 'src/utils/format-time';
 import { fCurrency } from 'src/utils/format-number';
 
-import { INVOICE_STATUS_OPTIONS } from 'src/_mock';
+import { omInvoiceApi, refreshInvoice, type OmInvoice, refreshInvoices } from 'src/actions/invoice';
 
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Scrollbar } from 'src/components/scrollbar';
 
 import { InvoiceToolbar } from './invoice-toolbar';
@@ -28,14 +29,40 @@ import { InvoiceTotalSummary } from './invoice-total-summary';
 
 type Props = {
   invoice?: IInvoice;
+  canManage?: boolean;
+  canPay?: boolean;
+  stripeEnabled?: boolean;
 };
 
-export function InvoiceDetails({ invoice }: Props) {
-  const [currentStatus, setCurrentStatus] = useState(invoice?.status);
+// Status transitions available to platform admins (server enforces the rules).
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'pending', label: 'Sent / pending' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 
-  const handleChangeStatus = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentStatus(event.target.value);
-  }, []);
+export function InvoiceDetails({ invoice, canManage = false, canPay = false, stripeEnabled = false }: Props) {
+  const [currentStatus, setCurrentStatus] = useState(invoice?.status);
+  const om = invoice as OmInvoice | undefined;
+
+  const handleChangeStatus = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!invoice) return;
+    const next = event.target.value;
+    const prev = currentStatus;
+    setCurrentStatus(next);
+    try {
+      if (next === 'pending') await omInvoiceApi.send(invoice.id);
+      else if (next === 'paid') await omInvoiceApi.markPaid(invoice.id, { method: 'check' });
+      else if (next === 'cancelled') await omInvoiceApi.cancel(invoice.id);
+      else if (next === 'draft') await omInvoiceApi.update(invoice.id, { status: 'draft', taxRate: 0, taxes: invoice.taxes, discount: invoice.discount, items: invoice.items, churchId: (invoice as OmInvoice).churchId, createDate: invoice.createDate, dueDate: invoice.dueDate, invoiceNumber: invoice.invoiceNumber });
+      toast.success(next === 'pending' ? 'Invoice sent to the church' : next === 'paid' ? 'Marked as paid (check)' : `Status set to ${next}`);
+      refreshInvoice(invoice.id); refreshInvoices();
+    } catch (e) {
+      setCurrentStatus(prev);
+      toast.error(e instanceof Error ? e.message : 'Could not change status');
+    }
+  }, [invoice, currentStatus]);
 
   const renderFooter = () => (
     <Box
@@ -52,8 +79,9 @@ export function InvoiceDetails({ invoice }: Props) {
           NOTES
         </Typography>
         <Typography variant="body2">
-          We appreciate your business. Should you need us to add VAT or extra notes let us know!
+          {om?.notes || 'Thank you for partnering with Orthodox Metrics. Please make checks payable to Orthodox Metrics LLC, or pay online by card.'}
         </Typography>
+        {om?.paymentTerms && <Typography variant="body2" sx={{ mt: 0.5 }}>{om.paymentTerms}</Typography>}
       </div>
 
       <Box sx={{ flexGrow: { md: 1 }, textAlign: { md: 'right' } }}>
@@ -109,7 +137,10 @@ export function InvoiceDetails({ invoice }: Props) {
         invoice={invoice}
         currentStatus={currentStatus || ''}
         onChangeStatus={handleChangeStatus}
-        statusOptions={INVOICE_STATUS_OPTIONS}
+        statusOptions={STATUS_OPTIONS}
+        canManage={canManage}
+        canPay={canPay}
+        stripeEnabled={stripeEnabled}
       />
 
       <Card sx={{ pt: 5, px: 5 }}>
@@ -152,7 +183,7 @@ export function InvoiceDetails({ invoice }: Props) {
             <br />
             {invoice?.invoiceFrom.fullAddress}
             <br />
-            Phone: {invoice?.invoiceFrom.phoneNumber}
+            {invoice?.invoiceFrom.phoneNumber ? `Phone: ${invoice.invoiceFrom.phoneNumber}` : (invoice?.invoiceFrom as any)?.email || ''}
             <br />
           </Stack>
 
@@ -164,7 +195,7 @@ export function InvoiceDetails({ invoice }: Props) {
             <br />
             {invoice?.invoiceTo.fullAddress}
             <br />
-            Phone: {invoice?.invoiceTo.phoneNumber}
+            {invoice?.invoiceTo.phoneNumber ? `Phone: ${invoice.invoiceTo.phoneNumber}` : (invoice?.invoiceTo as any)?.email || ''}
             <br />
           </Stack>
 

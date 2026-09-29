@@ -2,9 +2,9 @@ import type { TableHeadCellProps } from 'src/components/table';
 import type { IInvoice, IInvoiceTableFilters } from 'src/types/invoice';
 
 import { sumBy } from 'es-toolkit';
-import { useState, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean, useSetState } from 'minimal-shared/hooks';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -24,8 +24,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { fIsAfter, fIsBetween } from 'src/utils/format-time';
 
+import { useGetInvoices } from 'src/actions/invoice';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _invoices, INVOICE_SERVICE_OPTIONS } from 'src/_mock';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -71,7 +71,11 @@ export function InvoiceListView() {
 
   const confirmDialog = useBoolean();
 
-  const [tableData, setTableData] = useState<IInvoice[]>(_invoices);
+  // Real invoices: platform admins see every church; church roles see their parish only.
+  const { invoices, canManage, invoicesLoading } = useGetInvoices();
+  const [tableData, setTableData] = useState<IInvoice[]>([]);
+  useEffect(() => { setTableData(invoices); }, [invoices]);
+  const serviceOptions = useMemo(() => [...new Set(tableData.flatMap((inv) => inv.items.map((it) => it.service)))].sort(), [tableData]);
 
   const filters = useSetState<IInvoiceTableFilters>({
     name: '',
@@ -206,21 +210,23 @@ export function InvoiceListView() {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          heading={canManage ? 'Invoices' : 'Invoices from Orthodox Metrics'}
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
             { name: 'Invoice', href: paths.dashboard.invoice.root },
             { name: 'List' },
           ]}
           action={
-            <Button
-              component={RouterLink}
-              href={paths.dashboard.invoice.new}
-              variant="contained"
-              startIcon={<Iconify icon="mingcute:add-line" />}
-            >
-              Add invoice
-            </Button>
+            canManage && (
+              <Button
+                component={RouterLink}
+                href={paths.dashboard.invoice.new}
+                variant="contained"
+                startIcon={<Iconify icon="mingcute:add-line" />}
+              >
+                New invoice
+              </Button>
+            )
           }
           sx={{ mb: { xs: 3, md: 5 } }}
         />
@@ -313,7 +319,7 @@ export function InvoiceListView() {
             filters={filters}
             dateError={dateError}
             onResetPage={table.onResetPage}
-            options={{ services: INVOICE_SERVICE_OPTIONS.map((option) => option.name) }}
+            options={{ services: serviceOptions }}
           />
 
           {canReset && (
@@ -395,6 +401,7 @@ export function InvoiceListView() {
                         selected={table.selected.includes(row.id)}
                         onSelectRow={() => table.onSelectRow(row.id)}
                         onDeleteRow={() => handleDeleteRow(row.id)}
+                        canManage={canManage}
                         editHref={paths.dashboard.invoice.edit(row.id)}
                         detailsHref={paths.dashboard.invoice.details(row.id)}
                       />
@@ -405,7 +412,7 @@ export function InvoiceListView() {
                     emptyRows={emptyRows(table.page, table.rowsPerPage, dataFiltered.length)}
                   />
 
-                  <TableNoData notFound={notFound} />
+                  <TableNoData notFound={notFound && !invoicesLoading} />
                 </TableBody>
               </Table>
             </Scrollbar>

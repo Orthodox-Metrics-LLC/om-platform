@@ -52,6 +52,7 @@ const TYPE_MAP: Record<string, string> = {
   file_shared: 'file',
   chat_message: 'chat',
   invoice_created: 'payment',
+  invoice_received: 'payment',
   invoice_overdue: 'payment',
   invoice_paid: 'order',
 };
@@ -79,7 +80,9 @@ function toDrawerItem(row: OmNotificationRow): OmNotification {
   const html =
     row.sender_name && body.startsWith(escapeHtml(row.sender_name))
       ? `<p>${sender}${body.slice(escapeHtml(row.sender_name).length)}</p>`
-      : `<p>${body}</p>`;
+      : type === 'payment' || type === 'order'
+        ? `<p><strong>${escapeHtml(row.title || '')}</strong> ${body}</p>` // billing: lead with the invoice title
+        : `<p>${body}</p>`;
   return {
     id: String(row.id),
     type,

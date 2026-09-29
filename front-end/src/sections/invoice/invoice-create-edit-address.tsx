@@ -1,5 +1,6 @@
 import type { InvoiceCreateSchemaType } from './invoice-create-edit-form';
 
+import { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useBoolean } from 'minimal-shared/hooks';
 
@@ -11,7 +12,9 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { _addressBooks } from 'src/_mock';
+import { paths } from 'src/routes/paths';
+
+import { omInvoiceApi, type InvoiceAddress } from 'src/actions/invoice';
 
 import { Iconify } from 'src/components/iconify';
 
@@ -35,6 +38,16 @@ export function InvoiceCreateEditAddress() {
 
   const { invoiceFrom, invoiceTo } = values;
 
+  // Issuer (Orthodox Metrics LLC) + every provisioned church, from the server address book.
+  const [book, setBook] = useState<{ from: InvoiceAddress[]; to: InvoiceAddress[] }>({ from: [], to: [] });
+  useEffect(() => {
+    omInvoiceApi.addressBook().then((b) => {
+      setBook(b);
+      if (!invoiceFrom && b.from[0]) setValue('invoiceFrom', b.from[0]);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <Stack
@@ -53,15 +66,17 @@ export function InvoiceCreateEditAddress() {
               From:
             </Typography>
 
-            <IconButton onClick={addressForm.onTrue}>
-              <Iconify icon="solar:pen-bold" />
-            </IconButton>
+            {book.from.length > 1 && (
+              <IconButton onClick={addressForm.onTrue}>
+                <Iconify icon="solar:pen-bold" />
+              </IconButton>
+            )}
           </Box>
 
           <Stack spacing={1}>
             <Typography variant="subtitle2">{invoiceFrom?.name}</Typography>
             <Typography variant="body2">{invoiceFrom?.fullAddress}</Typography>
-            <Typography variant="body2"> {invoiceFrom?.phoneNumber}</Typography>
+            <Typography variant="body2"> {invoiceFrom?.phoneNumber || (invoiceFrom as InvoiceAddress | null)?.email}</Typography>
           </Stack>
         </Stack>
 
@@ -80,7 +95,7 @@ export function InvoiceCreateEditAddress() {
             <Stack spacing={1}>
               <Typography variant="subtitle2">{invoiceTo?.name}</Typography>
               <Typography variant="body2">{invoiceTo?.fullAddress}</Typography>
-              <Typography variant="body2"> {invoiceTo?.phoneNumber}</Typography>
+              <Typography variant="body2"> {invoiceTo?.phoneNumber || (invoiceTo as InvoiceAddress)?.email}</Typography>
             </Stack>
           ) : (
             <Typography variant="caption" sx={{ color: 'error.main' }}>
@@ -91,37 +106,29 @@ export function InvoiceCreateEditAddress() {
       </Stack>
 
       <AddressListDialog
-        title="Customers"
+        title="Issuer"
         open={addressForm.value}
         onClose={addressForm.onFalse}
         selected={(selectedId: string) => invoiceFrom?.id === selectedId}
         onSelect={(address) => setValue('invoiceFrom', address)}
-        list={_addressBooks}
-        action={
-          <Button
-            size="small"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            sx={{ alignSelf: 'flex-end' }}
-          >
-            Add
-          </Button>
-        }
+        list={book.from}
       />
 
       <AddressListDialog
-        title="Customers"
+        title="Churches"
         open={addressTo.value}
         onClose={addressTo.onFalse}
         selected={(selectedId: string) => invoiceTo?.id === selectedId}
-        onSelect={(address) => setValue('invoiceTo', address)}
-        list={_addressBooks}
+        onSelect={(address) => setValue('invoiceTo', address, { shouldValidate: true })}
+        list={book.to}
         action={
           <Button
             size="small"
+            href={paths.dashboard.user.list}
             startIcon={<Iconify icon="mingcute:add-line" />}
             sx={{ alignSelf: 'flex-end' }}
           >
-            Add
+            Manage churches
           </Button>
         }
       />
