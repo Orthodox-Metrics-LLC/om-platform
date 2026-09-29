@@ -44,6 +44,8 @@ import { recordsAst, omRecordsApi, RECORD_TYPES, RECORD_STATUSES, parishSearchAp
 
 export const STATUS_COLOR: Record<string, 'default' | 'success' | 'warning' | 'info' | 'error'> = { Recorded: 'default', Verified: 'success', 'Awaiting Clergy': 'warning', active: 'info', verified: 'success', pending: 'warning', needs_review: 'warning', archived: 'default', deleted: 'error' };
 
+const FILTER_LABEL = 'Filtered';
+
 type Mode = { kind: 'list' } | { kind: 'search'; ast: ParishSearchAst; rows: SearchResultRow[]; total: number; label: string; durationMs: number } | { kind: 'duplicates'; ast: ParishSearchAst };
 
 /** Sacramental records — Minimal product list re-plumbed onto OM's record APIs. */
@@ -80,10 +82,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
     setLoading(true);
     try {
       const r = await omRecordsApi.list(type, { churchId, page: pagination.page + 1, limit: pagination.pageSize, search: quick, sortField: sort.field, sortDirection: sort.dir });
-      let list = r.records;
-      if (status) list = list.filter((x) => x.status === status);
-      if (clergyFilter) list = list.filter((x) => x.clergy === clergyFilter);
-      setRows(list);
+      setRows(r.records);
       setTotal(r.totalRecords);
       setStatusOptions((prev) => [...new Set([...prev, ...r.records.map((x) => x.status).filter(Boolean)])]);
     } catch (e) {
@@ -91,9 +90,23 @@ export function RecordsListView({ type }: { type: RecordType }) {
     } finally {
       setLoading(false);
     }
-  }, [churchId, type, pagination, sort, quick, status, clergyFilter]);
+  }, [churchId, type, pagination, sort, quick]);
 
-  useEffect(() => { if (mode.kind === 'list') load(); }, [load, mode.kind]);
+  useEffect(() => { if (mode.kind === 'list' && !status && !clergyFilter) load(); }, [load, mode.kind, status, clergyFilter]);
+
+  // Status / clergy filters run through the governed search so they apply to the whole register, not one page.
+  useEffect(() => {
+    if (!churchId || (!status && !clergyFilter)) { if (mode.kind === 'search' && mode.label === FILTER_LABEL) setMode({ kind: 'list' }); return; }
+    const conditions: any[] = [];
+    if (status) conditions.push({ field: 'status', operator: 'equals', value: status });
+    if (clergyFilter) conditions.push({ field: 'clergy', operator: 'equals', value: clergyFilter });
+    setLoading(true);
+    parishSearchApi.executeAll(recordsAst(churchId, [type], { filters: { operator: 'and', conditions }, textSearch: quick || null }))
+      .then((exec) => setMode({ kind: 'search', ast: exec.ast, rows: exec.rows, total: exec.total, label: FILTER_LABEL, durationMs: exec.durationMs }))
+      .catch((e) => toast.error(e instanceof Error ? e.message : 'Filter failed'))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [churchId, type, status, clergyFilter, quick]);
 
   useEffect(() => {
     if (!churchId) return;
@@ -110,6 +123,15 @@ export function RecordsListView({ type }: { type: RecordType }) {
       toast.success('Record deleted (recoverable from search → restore)');
       setDeleteTarget(null); confirmDelete.onFalse(); load();
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Delete failed'); }
+  };
+
+  const restoreRow = async (row: SearchResultRow) => {
+    if (!churchId) return;
+    try {
+      await parishSearchApi.restore({ churchId, recordType: row.recordType, recordIds: [Number(row.sourceRecordId)] });
+      toast.success(`${row.primaryName} restored`);
+      if (mode.kind === 'search') { const exec = await parishSearchApi.executeAll(mode.ast); setMode({ ...mode, rows: exec.rows, total: exec.total }); }
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Restore failed'); }
   };
 
   const columns = useMemo<GridColDef[]>(() => [
@@ -145,16 +167,26 @@ export function RecordsListView({ type }: { type: RecordType }) {
     { field: 'clergy', headerName: 'Clergy', width: 200 },
     { field: 'location', headerName: 'Location', width: 180 },
     { field: 'status', headerName: 'Status', width: 120, renderCell: (p) => <Label variant="soft" color={STATUS_COLOR[p.row.status || ''] || 'default'} sx={{ textTransform: 'capitalize' }}>{String(p.row.status || '—').replace(/_/g, ' ')}</Label> },
+    ...(mode.kind === 'search' && mode.rows.some((r) => r.deletedAt) ? [{ field: 'deletedAt', headerName: 'Deleted', width: 200, renderCell: (p: any) => p.row.deletedAt ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="caption" sx={{ color: 'text.disabled' }}>{fDate(p.row.deletedAt)}</Typography>
+        {canManage && <Button size="small" variant="soft" onClick={() => restoreRow(p.row)}>Restore</Button>}
+      </Box>
+    ) : null } as GridColDef] : []),
     ...(mode.kind === 'search' && mode.rows.some((r) => r.activityType) ? [{ field: 'activityAt', headerName: 'Activity', width: 220, renderCell: (p: any) => `${p.row.activityType ?? ''} ${p.row.activityAtDisplay ?? ''}`.trim() } as GridColDef] : []),
     ...(mode.kind === 'search' && mode.rows.some((r) => r.issue) ? [{ field: 'issue', headerName: 'Data quality', width: 260, renderCell: (p: any) => `${p.row.issue ?? ''}${p.row.field ? ` (${p.row.field})` : ''}` } as GridColDef] : []),
-  ], [mode, platform, churchId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [mode, platform, churchId, canManage]);
 
   if (platform && !churchId) return <FileManagerChurchPicker heading="Records" basePath={paths.dashboard.records.list(type)} />;
   if (!churchId) return <DashboardContent><EmptyContent filled title="Your account is not assigned to a church" sx={{ py: 10 }} /></DashboardContent>;
 
-  const selectedIds = [...selected.ids].map(Number);
+  // list rows use numeric ids; search rows use "type:id"
+  const selectedKeys = [...selected.ids].map(String);
+  const selectedIds = selectedKeys.map((k) => Number(k.includes(':') ? k.split(':')[1] : k)).filter(Number.isFinite);
+  const selectedTypes = [...new Set(selectedKeys.filter((k) => k.includes(':')).map((k) => k.split(':')[0] as RecordType))];
   const exportAst = (): ParishSearchAst => {
-    if (mode.kind !== 'list') return mode.ast;
+    if (mode.kind !== 'list') return selectedIds.length && mode.kind === 'search' ? { ...mode.ast, scope: { ...mode.ast.scope, recordTypes: selectedTypes.length ? selectedTypes : mode.ast.scope.recordTypes }, filters: { operator: 'and', conditions: [...mode.ast.filters.conditions, { field: 'source_record_id', operator: 'in', value: selectedIds }] } } : mode.ast;
     const conditions: any[] = [];
     if (selectedIds.length) conditions.push({ field: 'source_record_id', operator: 'in', value: selectedIds });
     if (status) conditions.push({ field: 'status', operator: 'equals', value: status });
@@ -162,29 +194,32 @@ export function RecordsListView({ type }: { type: RecordType }) {
     return recordsAst(churchId, [type], { filters: { operator: 'and', conditions }, textSearch: quick || null });
   };
 
-  const gridRows = mode.kind === 'search' ? mode.rows.map((r, i) => ({ ...r, id: `${r.recordType}-${r.sourceRecordId}-${i}` })) : rows;
+  const gridRows = mode.kind === 'search' ? mode.rows.map((r) => ({ ...r, id: `${r.recordType}:${r.sourceRecordId}` })) : rows;
 
   const renderToolbar = () => (
     <Toolbar>
       <ToolbarContainer>
         <ToolbarLeftPanel>
-          {mode.kind === 'list' ? (
+          {mode.kind === 'list' || (mode.kind === 'search' && mode.label === FILTER_LABEL) ? (
             <>
               <TextField size="small" value={quick} onChange={(e) => { setQuick(e.target.value); setPagination((p) => ({ ...p, page: 0 })); }} placeholder={`Filter ${meta.plural.toLowerCase()}…`} slotProps={{ input: { startAdornment: <Iconify icon="eva:search-fill" sx={{ mr: 1, color: 'text.disabled' }} /> } }} sx={{ minWidth: 220 }} />
               <TextField select size="small" label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 140 }}><MenuItem value="">All</MenuItem>{statusOptions.map((s) => <MenuItem key={s} value={s} sx={{ textTransform: 'capitalize' }}>{s.replace(/_/g, ' ')}</MenuItem>)}</TextField>
               <TextField select size="small" label={type === 'marriage' ? 'Celebrant' : 'Clergy'} value={clergyFilter} onChange={(e) => setClergyFilter(e.target.value)} sx={{ minWidth: 200 }}><MenuItem value="">All</MenuItem>{clergyOptions.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}</TextField>
+              {mode.kind === 'search' && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>{mode.total} matching · <Button size="small" color="inherit" onClick={() => { setStatus(''); setClergyFilter(''); setMode({ kind: 'list' }); }}>Clear filters</Button></Typography>
+              )}
             </>
           ) : (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Label variant="soft" color="info">Search results</Label>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>{mode.kind === 'search' ? `${mode.total} match${mode.total === 1 ? '' : 'es'} · ${mode.label}${mode.durationMs ? ` · ${mode.durationMs} ms` : ''}` : 'Duplicate detection'}</Typography>
-              <Button size="small" color="inherit" startIcon={<Iconify icon="mingcute:close-line" />} onClick={() => setMode({ kind: 'list' })}>Back to list</Button>
+              <Button size="small" color="inherit" startIcon={<Iconify icon="mingcute:close-line" />} onClick={() => { setStatus(''); setClergyFilter(''); setMode({ kind: 'list' }); }}>Back to list</Button>
             </Box>
           )}
         </ToolbarLeftPanel>
         <ToolbarRightPanel>
-          {!!selectedIds.length && (
-            <Button size="small" variant="soft" startIcon={<Iconify icon="solar:verified-check-bold" />} component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${type}&records=${selectedIds.join(',')}${platform ? `&church=${churchId}` : ''}`}>Certificates ({selectedIds.length})</Button>
+          {!!selectedIds.length && selectedTypes.length <= 1 && (
+            <Button size="small" variant="soft" startIcon={<Iconify icon="solar:verified-check-bold" />} component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${selectedTypes[0] ?? type}&records=${selectedIds.join(',')}${platform ? `&church=${churchId}` : ''}`}>Certificates ({selectedIds.length})</Button>
           )}
           <Button size="small" startIcon={<Iconify icon="solar:export-bold" />} onClick={exportDialog.onTrue}>Export{selectedIds.length ? ` (${selectedIds.length})` : ''}</Button>
           <CustomToolbarColumnsButton />
@@ -227,7 +262,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
           <Card sx={{ minHeight: 640, flexGrow: { md: 1 }, display: { md: 'flex' }, height: { xs: 800, md: '1px' }, flexDirection: { md: 'column' } }}>
             <DataGrid
               {...toolbarOptions.settings}
-              checkboxSelection={mode.kind === 'list'}
+              checkboxSelection
               disableRowSelectionOnClick
               rows={gridRows}
               columns={mode.kind === 'search' ? searchColumns : columns}

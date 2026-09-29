@@ -72,6 +72,8 @@ export interface ParishSearchAst {
   offset?: number;
   mode?: string;
   export?: { format: string } | null;
+  /** true → live + deleted rows; 'only' → deleted rows only (restore workflow) */
+  includeDeleted?: boolean | 'only';
 }
 export type InterpretationChip = { id: string; label: string; value: string; field: string; editable?: boolean };
 export type Clarification = { id: string; message: string; options: Array<{ id: string; label: string }>; default?: string };
@@ -176,7 +178,7 @@ export const parishSearchApi = {
   createSaved: (body: { churchId: number; name: string; description?: string; queryAst: ParishSearchAst; visibility?: SavedSearch['visibility']; pinned?: boolean }) => call<{ data: SavedSearch }>(`${S}/saved-searches`, jsonInit('POST', body)).then((r) => r.data),
   updateSaved: (id: number, patch: Partial<SavedSearch> & { churchId: number }) => call<{ data: SavedSearch }>(`${S}/saved-searches/${id}`, jsonInit('PATCH', patch)).then((r) => r.data),
   deleteSaved: (id: number, churchId: number) => call(`${S}/saved-searches/${id}${q({ churchId })}`, { method: 'DELETE' }),
-  runSaved: (id: number, churchId: number) => call<{ data: { rows: SearchResultRow[]; total: number; ast: ParishSearchAst; mode: string; name: string } }>(`${S}/saved-searches/${id}/run`, jsonInit('POST', { churchId, limit: 200 })).then((r) => r.data),
+  runSaved: (id: number, churchId: number) => call<{ data: { rows: SearchResultRow[]; total: number; ast: ParishSearchAst; mode: string; name: string } }>(`${S}/saved-searches/${id}/run`, jsonInit('POST', { churchId, limit: 100 })).then((r) => r.data),
   reviewDuplicate: (signature: string, body: Record<string, unknown>) => call(`${S}/duplicate-reviews/${signature}`, jsonInit('PUT', body)),
   previewRemoval: (signature: string, body: { churchId: number; recordType: string; survivorId: number; removeIds: number[] }) => call<{ data: any }>(`${S}/duplicate-groups/${signature}/preview-removal`, jsonInit('POST', body)).then((r) => r.data),
   resolveDuplicates: (signature: string, body: { churchId: number; recordType: string; keepRecordId: number; removeRecordIds: number[]; reviewNotes?: string; reason: 'confirmed_duplicate' }) => call<{ data: { keepRecordId: number; removedRecordIds: number[]; message: string } }>(`${S}/duplicate-groups/${signature}/resolve`, jsonInit('POST', body)).then((r) => r.data),

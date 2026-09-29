@@ -81,9 +81,13 @@ export function RecordsSearchBar({ churchId, defaultTypes, onResult, onOpenAdvan
     }
   };
 
+  // Only chips that map to a filter or the free-text term can be removed; scope/sort/mode chips are informational.
+  const removable = (chip: InterpretationChip) => chip.editable !== false && (chip.field === 'textSearch' || !/^(scope|sort|operation|activity|rules|workflowIntent|export|aggregates|relationships)/.test(chip.field));
   const removeChip = (chip: InterpretationChip) => {
     if (!ast) return;
-    const next: ParishSearchAst = { ...ast, filters: { ...ast.filters, conditions: ast.filters.conditions.filter((c: any) => c.field !== chip.field) } };
+    const next: ParishSearchAst = chip.field === 'textSearch'
+      ? { ...ast, textSearch: null }
+      : { ...ast, filters: { ...ast.filters, conditions: ast.filters.conditions.filter((c: any) => c.field !== chip.field) } };
     setChips((p) => p.filter((c) => c.id !== chip.id));
     setAst(next);
     run(next);
@@ -108,7 +112,7 @@ export function RecordsSearchBar({ churchId, defaultTypes, onResult, onOpenAdvan
         {chips.length ? (
           <>
             <Typography variant="caption" sx={{ color: 'text.disabled', mr: 0.5 }}>Interpreted as{confidence != null ? ` (${Math.round(confidence * 100)}%)` : ''}:</Typography>
-            {chips.map((c) => <Chip key={c.id} size="small" color="info" variant="soft" label={`${c.label}: ${c.value}`} onDelete={c.editable === false ? undefined : () => removeChip(c)} />)}
+            {chips.map((c) => <Chip key={c.id} size="small" color="info" variant="soft" label={`${c.label}: ${c.value}`} onDelete={removable(c) ? () => removeChip(c) : undefined} />)}
           </>
         ) : (
           <>

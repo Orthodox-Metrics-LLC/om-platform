@@ -49,7 +49,12 @@ export function RecordsSavedSearchesDrawer({ open, onClose, churchId, currentAst
   };
   const run = async (s: SavedSearch) => {
     setBusy(`run-${s.id}`);
-    try { const r = await parishSearchApi.runSaved(s.id, churchId); onRun({ ...r, name: s.name }); load(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not run'); } finally { setBusy(null); }
+    try {
+      const r = await parishSearchApi.runSaved(s.id, churchId);
+      // runSaved returns one page (server cap 100) — fetch the rest for the grid
+      const full = r.total > r.rows.length ? await parishSearchApi.executeAll(r.ast) : null;
+      onRun({ ...r, rows: full?.rows ?? r.rows, name: s.name }); load();
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not run'); } finally { setBusy(null); }
   };
   const pin = (s: SavedSearch) => parishSearchApi.updateSaved(s.id, { churchId, pinned: !s.pinned }).then(load).catch((e) => toast.error(e.message));
   const remove = (s: SavedSearch) => parishSearchApi.deleteSaved(s.id, churchId).then(() => { toast.success('Deleted'); load(); }).catch((e) => toast.error(e.message));

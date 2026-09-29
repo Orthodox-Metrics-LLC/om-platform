@@ -49,6 +49,18 @@ const OPERATORS = [
   { value: 'is_empty', label: 'is empty' }, { value: 'is_not_empty', label: 'is not empty' },
 ];
 type Cond = { field: string; operator: string; value: string; value2: string };
+// Server-supported data-quality rules (services/parishRecordsSearch/dataQualityService.js)
+const DQ_RULES = [
+  { value: 'missing_required_date', label: 'Missing sacrament date', on: true },
+  { value: 'invalid_date', label: 'Invalid / unparseable date', on: true },
+  { value: 'event_date_in_future', label: 'Event date in the future', on: true },
+  { value: 'birth_after_reception', label: 'Birth date after baptism', on: true },
+  { value: 'death_after_burial', label: 'Death date after burial', on: true },
+  { value: 'implausible_year', label: 'Implausible year', on: true },
+  { value: 'ambiguous_date', label: 'Ambiguous date (raw value)', on: false },
+  { value: 'inconsistent_raw_date_format', label: 'Inconsistent raw date formats', on: false },
+  { value: 'raw_value_differs_from_normalized_value', label: 'Raw value differs from stored value', on: false },
+];
 const emptyCond = (): Cond => ({ field: 'primary_name', operator: 'contains', value: '', value2: '' });
 
 /** Advanced search: filters builder, record activity, duplicate detection, data-quality checks. */
@@ -62,7 +74,8 @@ export function RecordsAdvancedSearchDrawer({ open, onClose, churchId, defaultTy
   const [clergy, setClergy] = useState('');
   const [yearFrom, setYearFrom] = useState('');
   const [yearTo, setYearTo] = useState('');
-  const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [deleted, setDeleted] = useState<'none' | 'include' | 'only'>('none');
+  const [dqRules, setDqRules] = useState<string[]>(DQ_RULES.filter((r) => r.on).map((r) => r.value));
   const [activity, setActivity] = useState({ eventTypes: ['any_activity'] as string[], amount: '7', unit: 'days' });
   const [dup, setDup] = useState({ matchLevel: 'standard' as 'strict' | 'standard' | 'loose', mode: 'record_duplicates' as 'record_duplicates' | 'possible_people' | 'both', ocrOnly: false });
   const [busy, setBusy] = useState(false);
@@ -80,8 +93,7 @@ export function RecordsAdvancedSearchDrawer({ open, onClose, churchId, defaultTy
       if (status) conditions.push({ field: 'status', operator: 'equals', value: status });
       if (clergy) conditions.push({ field: 'clergy', operator: 'contains', value: clergy });
       if (yearFrom || yearTo) conditions.push({ field: 'canonical_event_date', operator: 'between', value: [`${yearFrom || '1000'}-01-01`, `${yearTo || '2999'}-12-31`] });
-      if (includeDeleted) conditions.push({ field: 'status', operator: 'in', value: ['deleted', 'active', 'pending', 'needs_review', 'verified', 'archived'] });
-      return { ast: recordsAst(churchId, types, { filters: { operator: logic, conditions }, textSearch: text.trim() || null }), label: `Advanced filters (${conditions.length})` };
+      return { ast: recordsAst(churchId, types, { filters: { operator: logic, conditions }, textSearch: text.trim() || null, ...(deleted !== 'none' ? { includeDeleted: deleted === 'only' ? 'only' : true } : {}) }), label: deleted === 'only' ? `Deleted records (${conditions.length} filters)` : `Advanced filters (${conditions.length})` };
     }
     if (tab === 'activity') {
       return { ast: recordsAst(churchId, types, { operation: { type: 'record_activity' }, mode: 'record_activity', activity: { eventTypes: activity.eventTypes, relativeWindow: { amount: Number(activity.amount) || 7, unit: activity.unit } }, sort: [{ field: 'canonical_event_date', direction: 'desc' }] }), label: `Activity in the last ${activity.amount} ${activity.unit}` };
@@ -89,7 +101,7 @@ export function RecordsAdvancedSearchDrawer({ open, onClose, churchId, defaultTy
     if (tab === 'duplicates') {
       return { ast: recordsAst(churchId, types, { operation: { type: 'duplicate_detection', mode: dup.mode, matchLevel: dup.matchLevel, minimumGroupSize: 2, source: dup.ocrOnly ? 'ocr' : null }, mode: 'duplicate_detection' }), label: `Duplicate detection (${dup.matchLevel})` };
     }
-    return { ast: recordsAst(churchId, types, { operation: { type: 'data_quality' }, mode: 'data_quality' }), label: 'Data quality review' };
+    return { ast: recordsAst(churchId, types, { operation: { type: 'data_quality' }, mode: 'data_quality', rules: dqRules.map((rule) => ({ rule })) }), label: `Data quality (${dqRules.length} rules)` };
   };
 
   const run = async () => { setBusy(true); try { const { ast, label } = buildAst(); await onRun(ast, label); } finally { setBusy(false); } };
@@ -136,7 +148,11 @@ export function RecordsAdvancedSearchDrawer({ open, onClose, churchId, defaultTy
                 </Box>
               ))}
               <Button size="small" color="inherit" startIcon={<Iconify icon="mingcute:add-line" />} onClick={() => setConds((p) => [...p, emptyCond()])} sx={{ alignSelf: 'flex-start' }}>Add condition</Button>
-              <FormControlLabel control={<Checkbox size="small" checked={includeDeleted} onChange={(e) => setIncludeDeleted(e.target.checked)} />} label="Include deleted records (for restore)" />
+              <TextField select size="small" label="Deleted records" value={deleted} onChange={(e) => setDeleted(e.target.value as any)}>
+                <MenuItem value="none">Hide deleted (default)</MenuItem>
+                <MenuItem value="include">Include deleted</MenuItem>
+                <MenuItem value="only">Deleted only — for restore</MenuItem>
+              </TextField>
             </>
           )}
 
@@ -160,14 +176,21 @@ export function RecordsAdvancedSearchDrawer({ open, onClose, churchId, defaultTy
             </>
           )}
 
-          {tab === 'quality' && <Typography variant="body2" sx={{ color: 'text.secondary' }}>Lists records with missing or suspicious values (empty dates, unknown clergy, malformed names) with an explanation for each so they can be corrected.</Typography>}
+          {tab === 'quality' && (
+            <>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>Lists records that break a rule, with an explanation for each so they can be corrected.</Typography>
+              {DQ_RULES.map((r) => (
+                <FormControlLabel key={r.value} control={<Checkbox size="small" checked={dqRules.includes(r.value)} onChange={(e) => setDqRules((p) => (e.target.checked ? [...p, r.value] : p.filter((x) => x !== r.value)))} />} label={r.label} />
+              ))}
+            </>
+          )}
         </Box>
       </Scrollbar>
 
       <Divider />
       <Box sx={{ p: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
         <Button variant="outlined" color="inherit" onClick={onClose}>Cancel</Button>
-        <Button variant="contained" loading={busy} onClick={run} startIcon={<Iconify icon="eva:search-fill" />}>Run search</Button>
+        <Button variant="contained" loading={busy} disabled={tab === 'quality' && !dqRules.length} onClick={run} startIcon={<Iconify icon="eva:search-fill" />}>Run search</Button>
       </Box>
     </Drawer>
   );
