@@ -14,7 +14,7 @@ const icon = (name: string) => (
   <SvgColor src={`${CONFIG.assetsDir}/assets/icons/navbar/${name}.svg`} />
 );
 
-const ICONS = {
+export const NAV_ICONS = {
   job: icon('ic-job'),
   blog: icon('ic-blog'),
   chat: icon('ic-chat'),
@@ -75,7 +75,7 @@ export const churchNavData: NavSectionProps['data'] = [
       {
         title: 'MyOM',
         path: paths.dashboard.user.root,
-        icon: ICONS.label,
+        icon: NAV_ICONS.label,
         info: (
           <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
             NEW
@@ -90,7 +90,7 @@ export const churchNavData: NavSectionProps['data'] = [
       {
         title: 'Portal Home',
         path: paths.portal.root,
-        icon: ICONS.dashboard,
+        icon: NAV_ICONS.dashboard,
         children: [
           { title: 'Overview', path: paths.portal.root },
           { title: 'Records', path: paths.dashboard.records.root, deepMatch: true },
@@ -98,18 +98,18 @@ export const churchNavData: NavSectionProps['data'] = [
           { title: 'Sacramental calendar', path: paths.dashboard.records.sacramentalCalendar },
         ],
       },
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
-      { title: 'File', path: paths.dashboard.general.file, icon: ICONS.file },
-      { title: 'Invoices', path: paths.dashboard.invoice.root, icon: ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
+      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: NAV_ICONS.analytics },
+      { title: 'File', path: paths.dashboard.general.file, icon: NAV_ICONS.file },
+      { title: 'Invoices', path: paths.dashboard.invoice.root, icon: NAV_ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
     ],
   },
   {
     subheader: 'Applications',
     items: [
-      { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },
-      { title: 'Mail', path: paths.dashboard.mail, icon: ICONS.mail },
-      { title: 'Chat', path: paths.dashboard.chat, icon: ICONS.chat },
-      { title: 'Calendar', path: paths.dashboard.calendar, icon: ICONS.calendar },
+      { title: 'File manager', path: paths.dashboard.fileManager, icon: NAV_ICONS.folder },
+      { title: 'Mail', path: paths.dashboard.mail, icon: NAV_ICONS.mail },
+      { title: 'Chat', path: paths.dashboard.chat, icon: NAV_ICONS.chat },
+      { title: 'Calendar', path: paths.dashboard.calendar, icon: NAV_ICONS.calendar },
     ],
   },
 ];
@@ -124,7 +124,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'MyOM',
         path: paths.dashboard.user.root,
-        icon: ICONS.label,
+        icon: NAV_ICONS.label,
         info: (
           <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
             NEW
@@ -139,19 +139,19 @@ export const navData: NavSectionProps['data'] = [
   {
     subheader: 'Parish Portal',
     items: [
-      { title: 'Portal Home', path: paths.portal.root, icon: ICONS.dashboard, deepMatch: true },
+      { title: 'Portal Home', path: paths.portal.root, icon: NAV_ICONS.dashboard, deepMatch: true },
     ],
   },
   {
     subheader: 'Overview',
     items: [
-      { title: 'App', path: paths.dashboard.root, icon: ICONS.dashboard },
-      { title: 'Ecommerce', path: paths.dashboard.general.ecommerce, icon: ICONS.ecommerce },
-      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: ICONS.analytics },
-      { title: 'Banking', path: paths.dashboard.general.banking, icon: ICONS.banking },
-      { title: 'Booking', path: paths.dashboard.general.booking, icon: ICONS.booking },
-      { title: 'File', path: paths.dashboard.general.file, icon: ICONS.file },
-      { title: 'Course', path: paths.dashboard.general.course, icon: ICONS.course },
+      { title: 'App', path: paths.dashboard.root, icon: NAV_ICONS.dashboard },
+      { title: 'Ecommerce', path: paths.dashboard.general.ecommerce, icon: NAV_ICONS.ecommerce },
+      { title: 'Analytics', path: paths.dashboard.general.analytics, icon: NAV_ICONS.analytics },
+      { title: 'Banking', path: paths.dashboard.general.banking, icon: NAV_ICONS.banking },
+      { title: 'Booking', path: paths.dashboard.general.booking, icon: NAV_ICONS.booking },
+      { title: 'File', path: paths.dashboard.general.file, icon: NAV_ICONS.file },
+      { title: 'Course', path: paths.dashboard.general.course, icon: NAV_ICONS.course },
     ],
   },
   /**
@@ -163,7 +163,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'User',
         path: paths.dashboard.user.root,
-        icon: ICONS.user,
+        icon: NAV_ICONS.user,
         children: [
           { title: 'Profile', path: paths.dashboard.user.root },
           { title: 'Cards', path: paths.dashboard.user.cards },
@@ -176,7 +176,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Product',
         path: paths.dashboard.product.root,
-        icon: ICONS.product,
+        icon: NAV_ICONS.product,
         children: [
           { title: 'List', path: paths.dashboard.product.root },
           { title: 'Details', path: paths.dashboard.product.demo.details },
@@ -187,7 +187,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Order',
         path: paths.dashboard.order.root,
-        icon: ICONS.order,
+        icon: NAV_ICONS.order,
         children: [
           { title: 'List', path: paths.dashboard.order.root },
           { title: 'Details', path: paths.dashboard.order.demo.details },
@@ -196,7 +196,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Invoice',
         path: paths.dashboard.invoice.root,
-        icon: ICONS.invoice,
+        icon: NAV_ICONS.invoice,
         children: [
           { title: 'List', path: paths.dashboard.invoice.root },
           { title: 'Details', path: paths.dashboard.invoice.demo.details },
@@ -207,7 +207,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Blog',
         path: paths.dashboard.post.root,
-        icon: ICONS.blog,
+        icon: NAV_ICONS.blog,
         children: [
           { title: 'List', path: paths.dashboard.post.root },
           { title: 'Details', path: paths.dashboard.post.demo.details },
@@ -218,7 +218,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Job',
         path: paths.dashboard.job.root,
-        icon: ICONS.job,
+        icon: NAV_ICONS.job,
         children: [
           { title: 'List', path: paths.dashboard.job.root },
           { title: 'Details', path: paths.dashboard.job.demo.details },
@@ -229,7 +229,7 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Tour',
         path: paths.dashboard.tour.root,
-        icon: ICONS.tour,
+        icon: NAV_ICONS.tour,
         children: [
           { title: 'List', path: paths.dashboard.tour.root },
           { title: 'Details', path: paths.dashboard.tour.demo.details },
@@ -237,21 +237,22 @@ export const navData: NavSectionProps['data'] = [
           { title: 'Edit', path: paths.dashboard.tour.demo.edit },
         ],
       },
-      { title: 'File manager', path: paths.dashboard.fileManager, icon: ICONS.folder },
-      { title: 'Asset Manager', path: paths.dashboard.assetManager, icon: ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Platform administrators' },
+      { title: 'File manager', path: paths.dashboard.fileManager, icon: NAV_ICONS.folder },
+      { title: 'Asset Manager', path: paths.dashboard.assetManager, icon: NAV_ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Platform administrators' },
+      { title: 'Menu editor', path: paths.dashboard.menuEditor, icon: NAV_ICONS.menuItem, allowedRoles: ['super_admin', 'admin'], caption: 'Role menu templates' },
       {
         title: 'Mail',
         path: paths.dashboard.mail,
-        icon: ICONS.mail,
+        icon: NAV_ICONS.mail,
         info: (
           <Label color="error" variant="inverted">
             +32
           </Label>
         ),
       },
-      { title: 'Chat', path: paths.dashboard.chat, icon: ICONS.chat },
-      { title: 'Calendar', path: paths.dashboard.calendar, icon: ICONS.calendar },
-      { title: 'Kanban', path: paths.dashboard.kanban, icon: ICONS.kanban },
+      { title: 'Chat', path: paths.dashboard.chat, icon: NAV_ICONS.chat },
+      { title: 'Calendar', path: paths.dashboard.calendar, icon: NAV_ICONS.calendar },
+      { title: 'Kanban', path: paths.dashboard.kanban, icon: NAV_ICONS.kanban },
     ],
   },
   /**
@@ -277,14 +278,14 @@ export const navData: NavSectionProps['data'] = [
          */
         title: 'Permission',
         path: paths.dashboard.permission,
-        icon: ICONS.lock,
+        icon: NAV_ICONS.lock,
         allowedRoles: ['admin', 'manager'],
         caption: 'Only admin can see this item.',
       },
       {
         title: 'Level',
         path: '#/dashboard/menu-level',
-        icon: ICONS.menuItem,
+        icon: NAV_ICONS.menuItem,
         children: [
           {
             title: 'Level 1a',
@@ -313,13 +314,13 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Disabled',
         path: '#disabled',
-        icon: ICONS.disabled,
+        icon: NAV_ICONS.disabled,
         disabled: true,
       },
       {
         title: 'Label',
         path: '#label',
-        icon: ICONS.label,
+        icon: NAV_ICONS.label,
         info: (
           <Label
             color="info"
@@ -333,28 +334,28 @@ export const navData: NavSectionProps['data'] = [
       {
         title: 'Caption',
         path: '#caption',
-        icon: ICONS.menuItem,
+        icon: NAV_ICONS.menuItem,
         caption:
           'Quisque malesuada placerat nisl. In hac habitasse platea dictumst. Cras id dui. Pellentesque commodo eros a enim. Morbi mollis tellus ac sapien.',
       },
       {
         title: 'Params',
         path: '/dashboard/params?id=e99f09a7-dd88-49d5-b1c8-1daf80c2d7b1',
-        icon: ICONS.params,
+        icon: NAV_ICONS.params,
       },
       {
         title: 'Subpaths',
         path: '/dashboard/subpaths',
-        icon: ICONS.subpaths,
+        icon: NAV_ICONS.subpaths,
         deepMatch: true,
       },
       {
         title: 'External link',
         path: 'https://www.google.com/',
-        icon: ICONS.external,
+        icon: NAV_ICONS.external,
         info: <Iconify width={18} icon="eva:external-link-fill" />,
       },
-      { title: 'Blank', path: paths.dashboard.blank, icon: ICONS.blank },
+      { title: 'Blank', path: paths.dashboard.blank, icon: NAV_ICONS.blank },
     ],
   },
 ];

@@ -3,6 +3,7 @@ import type { NavItemProps, NavSectionProps } from 'src/components/nav-section';
 import type { MainSectionProps, HeaderSectionProps, LayoutSectionProps } from '../core';
 
 import { merge } from 'es-toolkit';
+import { useState, useEffect } from 'react';
 import { useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -16,13 +17,14 @@ import { Logo } from 'src/components/logo';
 import { useSettingsContext } from 'src/components/settings';
 
 import { useAuthContext } from 'src/auth/hooks';
-import { isChurchRole } from 'src/auth/context/om-auth';
+import { omApiFetch, isChurchRole } from 'src/auth/context/om-auth';
 
 import { NavMobile } from './nav-mobile';
 import { VerticalDivider } from './content';
 import { NavVertical } from './nav-vertical';
 import { NavHorizontal } from './nav-horizontal';
 import { _account } from '../nav-config-account';
+import { navFromTemplate } from '../nav-template';
 import { Searchbar } from '../components/searchbar';
 import { MenuButton } from '../components/menu-button';
 import { AccountDrawer } from '../components/account-drawer';
@@ -67,8 +69,30 @@ export function DashboardLayout({
 
   const { value: open, onFalse: onClose, onTrue: onOpen } = useBoolean();
 
+  // Role menu templates (Menu editor): non-super_admin roles may have an admin-assigned
+  // nav template; when none exists (or the lookup fails) the built-in menu applies.
+  const [templateNav, setTemplateNav] = useState<NavSectionProps['data'] | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    const role = user?.role;
+    if (!role || role === 'super_admin' || slotProps?.nav?.data) {
+      setTemplateNav(null);
+    } else {
+      omApiFetch('/api/om/menus/mine')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (live) setTemplateNav(navFromTemplate(d?.nav)); })
+        .catch(() => { if (live) setTemplateNav(null); });
+    }
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, user?.role]);
+
   // Church roles get the parish default menu; platform roles keep the full template menu.
-  const navData = slotProps?.nav?.data ?? (isChurchRole(user?.role) ? churchNavData : dashboardNavData);
+  const navData =
+    slotProps?.nav?.data ??
+    templateNav ??
+    (isChurchRole(user?.role) ? churchNavData : dashboardNavData);
 
   const isNavMini = settings.state.navLayout === 'mini';
   const isNavHorizontal = settings.state.navLayout === 'horizontal';

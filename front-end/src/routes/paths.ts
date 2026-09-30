@@ -131,6 +131,7 @@ export const paths = {
     calendar: `${ROOTS.DASHBOARD}/calendar`,
     fileManager: `${ROOTS.DASHBOARD}/file-manager`,
     assetManager: `${ROOTS.DASHBOARD}/asset-manager`,
+    menuEditor: `${ROOTS.DASHBOARD}/menu-editor`,
     records: {
       root: `${ROOTS.DASHBOARD}/records`,
       list: (type: string) => `${ROOTS.DASHBOARD}/records/${type}`,

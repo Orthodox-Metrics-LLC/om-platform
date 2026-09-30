@@ -72,6 +72,7 @@ const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
 const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
+const MenuEditorPage = lazy(() => import('src/pages/dashboard/menu-editor'));
 // Sacramental records
 const RecordsListPage = lazy(() => import('src/pages/dashboard/records/list'));
 const RecordNewPage = lazy(() => import('src/pages/dashboard/records/new'));
@@ -213,6 +214,7 @@ export const dashboardRoutes: RouteObject[] = [
       },
       { path: 'file-manager', element: <FileManagerPage /> },
       { path: 'asset-manager', element: <AssetManagerPage /> },
+      { path: 'menu-editor', element: <MenuEditorPage /> },
       {
         path: 'records',
         children: [
