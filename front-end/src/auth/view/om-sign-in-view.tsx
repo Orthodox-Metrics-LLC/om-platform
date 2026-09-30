@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useState, useEffect } from 'react';
 import { useBoolean } from 'minimal-shared/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -237,12 +237,19 @@ function EnrollmentPrompt() {
 // ----------------------------------------------------------------------
 
 /**
- * Shown once authenticated. This app is the public site — it has no authenticated
- * surface of its own yet — so it confirms who signed in and hands off rather than
- * pretending to be a dashboard.
+ * Shown only while redirecting: an already-authenticated user who lands on the
+ * sign-in page is sent on to their role home (portal for church roles,
+ * dashboard for platform roles), honouring a valid ?returnTo=.
  */
 function SignedInPanel() {
+  const router = useRouter();
   const { user, signOut } = useOmAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+    router.replace(landingPath(user.role, returnTo));
+  }, [user, router]);
 
   const name =
     user?.display_name ||
@@ -253,7 +260,7 @@ function SignedInPanel() {
     <Stack spacing={3}>
       <FormHead
         title="You are signed in"
-        description="Authenticated against the Orthodox Metrics backend."
+        description="Taking you to your portal…"
         sx={{ textAlign: { xs: 'center', md: 'left' } }}
       />
 
@@ -275,9 +282,20 @@ function SignedInPanel() {
         </Stack>
       </Box>
 
-      <Button size="large" color="inherit" variant="outlined" onClick={signOut}>
-        Sign out
-      </Button>
+      <Stack direction="row" spacing={1.5}>
+        <Button
+          fullWidth
+          size="large"
+          color="inherit"
+          variant="contained"
+          onClick={() => router.replace(landingPath(user?.role, null))}
+        >
+          Continue
+        </Button>
+        <Button size="large" color="inherit" variant="outlined" onClick={signOut}>
+          Sign out
+        </Button>
+      </Stack>
     </Stack>
   );
 }
