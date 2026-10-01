@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import Box from '@mui/material/Box';
-
 import { paths } from 'src/routes/paths';
+
+import { DashboardContent } from 'src/layouts/dashboard';
 
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
@@ -58,7 +58,7 @@ export function OcrWizardView({ churchId }: Props) {
   };
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent maxWidth="md">
       <CustomBreadcrumbs
         heading="New OCR upload"
         links={[
@@ -108,6 +108,6 @@ export function OcrWizardView({ churchId }: Props) {
           onGoToUploadRecords={() => navigate(paths.dashboard.ocr.root)}
         />
       )}
-    </Box>
+    </DashboardContent>
   );
 }

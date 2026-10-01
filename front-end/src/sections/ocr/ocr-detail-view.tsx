@@ -17,6 +17,8 @@ import { paths } from 'src/routes/paths';
 
 import { fDateTime } from 'src/utils/format-time';
 
+import { DashboardContent } from 'src/layouts/dashboard';
+
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
@@ -119,7 +121,7 @@ export function OcrDetailView({ churchId }: Props) {
   const reviewStatus = job ? mapJobToWizardStatus(job) : null;
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent>
       <CustomBreadcrumbs
         heading="OCR upload"
         links={[
@@ -351,6 +353,6 @@ export function OcrDetailView({ churchId }: Props) {
           </Grid>
         </Grid>
       )}
-    </Box>
+    </DashboardContent>
   );
 }

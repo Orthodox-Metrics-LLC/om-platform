@@ -27,6 +27,8 @@ import { useRouter } from 'src/routes/hooks';
 
 import { fDateTime } from 'src/utils/format-time';
 
+import { DashboardContent } from 'src/layouts/dashboard';
+
 import { Label } from 'src/components/label';
 import { Image } from 'src/components/image';
 import { toast } from 'src/components/snackbar';
@@ -259,7 +261,7 @@ export function PageBuilderEditView({ id }: Props) {
   }
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent>
       <CustomBreadcrumbs
         heading={isNew ? 'New page' : page.title || 'Edit page'}
         links={[
@@ -612,6 +614,6 @@ export function PageBuilderEditView({ id }: Props) {
       )}
 
       <PageBuilderAssetPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={handlePick} />
-    </Box>
+    </DashboardContent>
   );
 }

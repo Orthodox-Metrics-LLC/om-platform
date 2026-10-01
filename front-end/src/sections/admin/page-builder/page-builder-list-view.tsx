@@ -21,6 +21,8 @@ import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
 
+import { DashboardContent } from 'src/layouts/dashboard';
+
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
@@ -82,7 +84,7 @@ export function PageBuilderListView() {
   };
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent>
       <CustomBreadcrumbs
         heading="Page Builder"
         links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Page Builder' }]}
@@ -183,6 +185,6 @@ export function PageBuilderListView() {
           </Button>
         }
       />
-    </Box>
+    </DashboardContent>
   );
 }

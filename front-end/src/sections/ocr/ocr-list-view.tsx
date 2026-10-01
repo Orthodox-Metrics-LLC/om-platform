@@ -27,6 +27,7 @@ import { paths } from 'src/routes/paths';
 
 import { fDateTime } from 'src/utils/format-time';
 
+import { DashboardContent } from 'src/layouts/dashboard';
 import { useWorkspaces } from 'src/layouts/components/use-active-church';
 
 import { Label } from 'src/components/label';
@@ -191,7 +192,7 @@ export function OcrListView({ churchId }: Props) {
     : null;
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent>
       <CustomBreadcrumbs
         heading="Upload Records"
         links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Upload Records' }]}
@@ -339,7 +340,7 @@ export function OcrListView({ churchId }: Props) {
           </Table>
         </TableContainer>
       </Card>
-    </Box>
+    </DashboardContent>
   );
 }
 

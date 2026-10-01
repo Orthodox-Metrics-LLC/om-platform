@@ -22,6 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import { paths } from 'src/routes/paths';
 
+import { DashboardContent } from 'src/layouts/dashboard';
 import { navFromTemplate } from 'src/layouts/nav-template';
 import { NAV_ICONS } from 'src/layouts/nav-config-dashboard';
 
@@ -151,7 +152,7 @@ export function MenuEditorView() {
   if (loading) return <Stack sx={{ py: 10, alignItems: 'center' }}><CircularProgress /></Stack>;
 
   return (
-    <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
+    <DashboardContent>
       <CustomBreadcrumbs
         heading="Menu editor"
         links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Menu editor' }]}
@@ -297,7 +298,7 @@ export function MenuEditorView() {
           </Box>
         </Card>
       </Stack>
-    </Box>
+    </DashboardContent>
   );
 }
 
