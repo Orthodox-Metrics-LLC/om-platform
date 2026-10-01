@@ -114,11 +114,14 @@ export function isJobTerminal(job: OmOcrJob): boolean {
   return rs === 'returned' || rs === 'not_church_record' || TERMINAL_REVIEW_STATUSES.includes(rs);
 }
 
+export type OmOcrProcessingMode = 'automatic' | 'assisted' | 'manual';
+
 export interface OmOcrBatchRow {
   /** batch_id when the backend assigned one, else the single job id. */
   id: string;
   batchId: string | null;
   displayName: string;
+  originalName: string | null;
   recordType: string;
   submittedBy: string;
   date: string;
@@ -126,6 +129,13 @@ export interface OmOcrBatchRow {
   completedImages: number;
   allProcessed: boolean;
   status: OmOcrWizardStatus;
+  mode: OmOcrProcessingMode;
+  /** Records the extractor detected across every image in the batch. */
+  recordsDetected: number;
+  /** Of those, how many have already been confirmed/auto-added. */
+  recordsConfirmed: number;
+  /** recordsDetected - recordsConfirmed (or a job-count fallback pre-extraction). */
+  needsReview: number;
   reviewReady: boolean;
   readyByName: string | null;
   readyAt: string | null;
@@ -171,6 +181,24 @@ function leastAdvancedJob(jobs: OmOcrJob[]): OmOcrJob {
   return [...jobs].sort(
     (a, b) => STATUS_RANK[mapJobToWizardStatus(a)] - STATUS_RANK[mapJobToWizardStatus(b)],
   )[0];
+}
+
+function jobRecordCount(job: OmOcrJob): number {
+  if (typeof job.records_count === 'number') return job.records_count;
+  return job.has_ocr_text ? 1 : 0;
+}
+
+function jobConfirmedCount(job: OmOcrJob): number {
+  if (typeof job.confirmed_count === 'number') return job.confirmed_count;
+  const status = mapJobToWizardStatus(job);
+  return status === 'already-exists' || status === 'completed' ? jobRecordCount(job) : 0;
+}
+
+function inferProcessingMode(jobs: OmOcrJob[]): OmOcrProcessingMode {
+  if (jobs.some((j) => ['returned', 'in_review', 'human_confirmed'].includes(j.review_status || ''))) {
+    return 'assisted';
+  }
+  return 'automatic';
 }
 
 function aggregateWizardStatus(jobs: OmOcrJob[]): OmOcrWizardStatus {
@@ -225,10 +253,17 @@ export function mapJobsToBatchRows(jobs: OmOcrJob[]): OmOcrBatchRow[] {
     const focus = leastAdvancedJob(group);
     const completedImages = group.filter((j) => isJobTerminal(j)).length;
     const totalImages = group.length;
+    const recordsDetected = group.reduce((sum, j) => sum + jobRecordCount(j), 0);
+    const recordsConfirmed = group.reduce((sum, j) => sum + jobConfirmedCount(j), 0);
+    const needsFromJobs = group.filter((j) => {
+      const s = mapJobToWizardStatus(j);
+      return s === 'ready-for-review' || s === 'returned';
+    }).length;
     return {
       id: first.batch_id || `J-${first.id}`,
       batchId: first.batch_id || null,
       displayName: first.batch_name || batchDisplayName(sorted),
+      originalName: first.original_filename || null,
       recordType: first.record_type || 'custom',
       submittedBy: formatUploader(first),
       date: first.created_at,
@@ -236,6 +271,10 @@ export function mapJobsToBatchRows(jobs: OmOcrJob[]): OmOcrBatchRow[] {
       completedImages,
       allProcessed: completedImages === totalImages,
       status: aggregateWizardStatus(group),
+      mode: inferProcessingMode(group),
+      recordsDetected,
+      recordsConfirmed,
+      needsReview: recordsDetected > 0 ? Math.max(0, recordsDetected - recordsConfirmed) : needsFromJobs,
       reviewReady: !!first.batch_ready_for_image_review,
       readyByName: first.batch_ready_by_name || null,
       readyAt: first.batch_ready_at || null,
@@ -243,6 +282,12 @@ export function mapJobsToBatchRows(jobs: OmOcrJob[]): OmOcrBatchRow[] {
       jobIds: sorted.map((j) => String(j.id)),
     };
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export function processingModeLabel(mode: OmOcrProcessingMode): string {
+  if (mode === 'assisted') return 'Assisted';
+  if (mode === 'manual') return 'Manual';
+  return 'Automatic';
 }
 
 export interface OmOcrSettings {
