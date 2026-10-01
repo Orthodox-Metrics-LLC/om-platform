@@ -3,6 +3,8 @@ import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 import { PaymentSummary } from '../payment-summary';
 import { PaymentMethods } from '../payment-methods';
 import { PaymentBillingAddress } from '../payment-billing-address';
@@ -11,6 +13,9 @@ import { PaymentBillingAddress } from '../payment-billing-address';
 
 export function PaymentView() {
   return (
+    <PublicPageBuilderOverride
+      pageType="payment"
+      fallback={
     <Container sx={{ pt: { xs: 3, md: 5 }, pb: 10 }}>
       <Typography variant="h3" align="center" sx={{ mb: 2 }}>
         {`Let's finish powering you up!`}
@@ -45,5 +50,7 @@ export function PaymentView() {
         </Grid>
       </Grid>
     </Container>
+      }
+    />
   );
 }

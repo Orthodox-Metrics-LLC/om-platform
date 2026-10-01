@@ -2,6 +2,7 @@ import Container from '@mui/material/Container';
 
 import { HomeFAQs } from 'src/sections/home/home-faqs';
 import { HomePricing } from 'src/sections/home/home-pricing';
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
 // ----------------------------------------------------------------------
 
@@ -18,10 +19,15 @@ import { HomePricing } from 'src/sections/home/home-pricing';
  */
 export function PricingView() {
   return (
+    <PublicPageBuilderOverride
+      pageType="pricing"
+      fallback={
     <Container maxWidth={false} disableGutters>
       <HomePricing />
 
       <HomeFAQs />
     </Container>
+      }
+    />
   );
 }

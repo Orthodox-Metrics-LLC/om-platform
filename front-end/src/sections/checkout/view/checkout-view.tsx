@@ -2,6 +2,8 @@ import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 import { CheckoutCart } from '../checkout-cart';
 import { useCheckoutContext } from '../context';
 import { CheckoutSteps } from '../checkout-steps';
@@ -15,6 +17,9 @@ export function CheckoutView() {
   const { steps, activeStep, completed, onResetCart } = useCheckoutContext();
 
   return (
+    <PublicPageBuilderOverride
+      pageType="checkout"
+      fallback={
     <Container sx={{ mb: 10 }}>
       <Typography variant="h4" sx={{ my: { xs: 3, md: 5 } }}>
         Checkout
@@ -38,5 +43,7 @@ export function CheckoutView() {
         )}
       </>
     </Container>
+      }
+    />
   );
 }

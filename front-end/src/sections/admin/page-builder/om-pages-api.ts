@@ -11,7 +11,9 @@ import { omApiFetch } from 'src/auth/context/om-auth';
  * server-side).
  */
 
-export type PageType = 'latest_news' | 'coming_soon' | 'maintenance' | 'error_404' | 'error_403' | 'error_500';
+export type PageType =
+  | 'latest_news' | 'coming_soon' | 'maintenance' | 'error_404' | 'error_403' | 'error_500'
+  | 'checkout' | 'payment' | 'pricing';
 
 export const PAGE_TYPES: { value: PageType; label: string }[] = [
   { value: 'latest_news', label: 'Latest News' },
@@ -20,6 +22,9 @@ export const PAGE_TYPES: { value: PageType; label: string }[] = [
   { value: 'error_404', label: '404 — Not found' },
   { value: 'error_403', label: '403 — Forbidden' },
   { value: 'error_500', label: '500 — Server error' },
+  { value: 'checkout', label: 'Checkout' },
+  { value: 'payment', label: 'Payment' },
+  { value: 'pricing', label: 'Pricing' },
 ];
 
 export type PageStatus = 'draft' | 'scheduled' | 'live' | 'expired' | 'archived';

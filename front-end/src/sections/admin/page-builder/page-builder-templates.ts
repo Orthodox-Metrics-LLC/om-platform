@@ -96,6 +96,48 @@ export const PAGE_BUILDER_TEMPLATES: PageTemplate[] = [
       cta_url: '/',
     },
   },
+  {
+    page_type: 'checkout',
+    label: 'Checkout',
+    description: 'Override the /product/checkout cart → billing → payment flow',
+    title: 'Checkout unavailable',
+    summary: 'Checkout is temporarily unavailable. Please check back shortly.',
+    item: {
+      title: 'Checkout unavailable',
+      body: 'We are temporarily unable to process checkout. Please check back shortly or contact us for help completing your order.',
+      layout_type: 'hero',
+      cta_label: 'Go to home',
+      cta_url: '/',
+    },
+  },
+  {
+    page_type: 'payment',
+    label: 'Payment',
+    description: 'Override the /payment plan upgrade & billing surface',
+    title: 'Payments unavailable',
+    summary: 'Payment processing is temporarily unavailable.',
+    item: {
+      title: 'Payments unavailable',
+      body: 'We are temporarily unable to process payments. Please check back shortly or contact us for help upgrading your plan.',
+      layout_type: 'hero',
+      cta_label: 'Go to home',
+      cta_url: '/',
+    },
+  },
+  {
+    page_type: 'pricing',
+    label: 'Pricing',
+    description: 'Override the /pricing plans surface',
+    title: 'Flexible plans for your community',
+    summary: 'Choose the plan that fits your parish and start today.',
+    item: {
+      title: 'Flexible plans for your community',
+      body: 'Choose the plan that fits your parish and start today. Contact us if you have questions about which plan is right for you.',
+      layout_type: 'hero',
+      cta_label: 'Contact us',
+      cta_url: '/contact',
+    },
+  },
 ];
 
 export function templateFor(pageType: PageType): PageTemplate | undefined {
