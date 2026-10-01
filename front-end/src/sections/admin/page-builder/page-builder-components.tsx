@@ -1,4 +1,4 @@
-import type { PageItem, LayoutType, PageItemConfig, PageEffectsConfig } from './om-pages-api';
+import type { PageType, PageItem, LayoutType, PageItemConfig, PageEffectsConfig } from './om-pages-api';
 
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
@@ -19,7 +19,19 @@ export type BuilderComponent = {
   description: string;
   icon: string;
   defaults?: PageItemConfig;
+  /**
+   * Restricts this component to specific page types (the type-specific
+   * component palette). Omitted = available on every page type, which is
+   * the case for all the decorative/static components below. The two live,
+   * data-bound components are scoped to the "flexible content" page types
+   * (latest_news, checkout, payment, pricing) and excluded from the
+   * placeholder surfaces (coming_soon, maintenance, error_*) where a live
+   * widget calling the backend wouldn't make sense.
+   */
+  pageTypes?: PageType[];
 };
+
+const LIVE_COMPONENT_PAGE_TYPES: PageType[] = ['latest_news', 'checkout', 'payment', 'pricing'];
 
 export const BUILDER_COMPONENTS: BuilderComponent[] = [
   { type: 'hero', label: 'Hero', description: 'Headline, copy, CTA and background media', icon: 'solar:star-bold-duotone' },
@@ -39,12 +51,31 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
   { type: 'timeline', label: 'Timeline', description: 'Chronological events and milestones', icon: 'solar:history-bold-duotone', defaults: { timeline: [{ title: 'Milestone', body: 'Describe this event', date: 'Today' }] } },
   { type: 'tooltip', label: 'Tooltip', description: 'Contextual hover or focus help', icon: 'solar:info-circle-bold-duotone', defaults: { tooltip: 'Helpful information', placement: 'top' } },
   { type: 'rating', label: 'Rating', description: 'Interactive or read-only rating display', icon: 'solar:star-bold-duotone', defaults: { rating: 4.5, precision: 0.5, max: 5, readOnly: true } },
-  { type: 'file_upload', label: 'File upload', description: 'Live upload widget that posts files to a backend endpoint (e.g. OCR intake)', icon: 'solar:upload-square-bold-duotone', defaults: { uploadEndpoint: '/api/ocr/jobs/upload', uploadRecordType: 'custom', uploadLanguage: 'en', uploadLayoutMode: 'auto', uploadButtonLabel: 'Upload' } },
-  { type: 'data_table', label: 'Data table', description: 'Live table bound to a GET API endpoint', icon: 'solar:table-bold-duotone', defaults: { tableEndpoint: '', tableColumns: [{ key: 'id', label: 'ID' }], tableRowsPath: '' } },
+  {
+    type: 'file_upload',
+    label: 'File upload',
+    description: 'Live upload widget that posts files to a backend endpoint (e.g. OCR intake)',
+    icon: 'solar:upload-square-bold-duotone',
+    defaults: { uploadEndpoint: '/api/ocr/jobs/upload', uploadRecordType: 'custom', uploadLanguage: 'en', uploadLayoutMode: 'auto', uploadButtonLabel: 'Upload' },
+    pageTypes: LIVE_COMPONENT_PAGE_TYPES,
+  },
+  {
+    type: 'data_table',
+    label: 'Data table',
+    description: 'Live table bound to a GET API endpoint',
+    icon: 'solar:table-bold-duotone',
+    defaults: { tableEndpoint: '', tableColumns: [{ key: 'id', label: 'ID' }], tableRowsPath: '' },
+    pageTypes: LIVE_COMPONENT_PAGE_TYPES,
+  },
 ];
 
 export function componentDefinition(type: LayoutType) {
   return BUILDER_COMPONENTS.find((component) => component.type === type);
+}
+
+/** The type-specific component palette: everything unscoped, plus whatever is scoped to this page type. */
+export function componentsForPageType(pageType: PageType): BuilderComponent[] {
+  return BUILDER_COMPONENTS.filter((component) => !component.pageTypes || component.pageTypes.includes(pageType));
 }
 
 // ----------------------------------------------------------------------

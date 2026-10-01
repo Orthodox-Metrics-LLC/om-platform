@@ -40,8 +40,8 @@ import { templateFor } from './page-builder-templates';
 import { omPagesApi, PAGE_TYPES } from './om-pages-api';
 import { PageBuilderAssetPickerDialog } from './page-builder-asset-picker-dialog';
 import {
-  BUILDER_COMPONENTS,
   componentDefinition,
+  componentsForPageType,
   PageBuilderEffectsEditor,
   PageBuilderComponentConfig,
 } from './page-builder-components';
@@ -380,15 +380,17 @@ export function PageBuilderEditView({ id }: Props) {
         </Card>
       )}
 
-      {tab === 'items' && (
+      {tab === 'items' && (() => {
+        const availableComponents = componentsForPageType(page.page_type || 'latest_news');
+        return (
         <Stack spacing={2}>
           <Card sx={{ p: 2.5 }}>
             <Typography variant="h6" sx={{ mb: 0.5 }}>Component library</Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              Add Minimal UI content, interaction and presentation components. Every component is saved in the page version and rendered on the public site.
+              Add Minimal UI content, interaction and presentation components. Every component is saved in the page version and rendered on the public site. The library below is scoped to this page&apos;s type — live, data-bound components (file upload, data table) only appear for page types where they make sense.
             </Typography>
             <Grid container spacing={1.5}>
-              {BUILDER_COMPONENTS.map((component) => (
+              {availableComponents.map((component) => (
                 <Grid key={component.type} size={{ xs: 6, sm: 4, md: 3 }}>
                   <Card
                     variant="outlined"
@@ -429,7 +431,12 @@ export function PageBuilderEditView({ id }: Props) {
                   <FormControl fullWidth>
                     <InputLabel>Layout</InputLabel>
                     <Select label="Layout" value={item.layout_type} onChange={(e) => updateItem(item, { layout_type: e.target.value as LayoutType })}>
-                      {BUILDER_COMPONENTS.map((component) => <MenuItem key={component.type} value={component.type}>{component.label}</MenuItem>)}
+                      {/* Always include the item's current type even if it falls outside this page type's palette
+                          (e.g. the page type changed after this item was added) so the Select never shows a blank value. */}
+                      {(availableComponents.some((c) => c.type === item.layout_type)
+                        ? availableComponents
+                        : [...availableComponents, componentDefinition(item.layout_type)].filter(Boolean)
+                      ).map((component) => <MenuItem key={component!.type} value={component!.type}>{component!.label}</MenuItem>)}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -484,7 +491,8 @@ export function PageBuilderEditView({ id }: Props) {
             Add item
           </Button>
         </Stack>
-      )}
+        );
+      })()}
 
       {tab === 'media' && (
         <Stack spacing={2}>
