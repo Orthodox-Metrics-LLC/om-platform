@@ -3,7 +3,7 @@ import type { PageItem, PageEffectsConfig } from 'src/sections/admin/page-builde
 
 import { useMemo, useState } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
-import { m, useScroll, useSpring } from 'framer-motion';
+import { m, useScroll, useSpring, useTransform } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -28,8 +28,12 @@ import { Carousel, useCarousel, CarouselDotButtons, CarouselArrowFloatButtons } 
 type Props = { item: PageItem };
 
 export function PageBuilderPublicItem({ item }: Props) {
-  const effects = item.effects_config || {};
-  const content = <ItemContent item={item} />;
+  const effects = { ...(item.effects_config || {}) };
+  if (item.layout_type === 'animate' && (!effects.animation || effects.animation === 'none')) {
+    const variant = String(item.component_config?.variant || 'fadeInUp');
+    effects.animation = variant.includes('Left') ? 'slide_left' : variant.includes('zoom') ? 'zoom' : variant.includes('scale') ? 'scale' : variant.includes('rotate') ? 'rotate' : variant.includes('Up') ? 'slide_up' : 'fade';
+  }
+  const content = effects.parallax ? <ParallaxContent><ItemContent item={item} /></ParallaxContent> : <ItemContent item={item} />;
   const motion = motionProps(effects);
 
   return (
@@ -73,6 +77,12 @@ function ItemScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   return <Box component={m.div} style={{ scaleX }} sx={{ height: 3, bgcolor: 'primary.main', transformOrigin: 'left', mb: 1 }} />;
+}
+
+function ParallaxContent({ children }: { children: ReactNode }) {
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [40, -40]);
+  return <Box component={m.div} style={{ y }}>{children}</Box>;
 }
 
 // ----------------------------------------------------------------------

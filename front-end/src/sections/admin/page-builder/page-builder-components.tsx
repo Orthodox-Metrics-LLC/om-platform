@@ -154,6 +154,7 @@ export function PageBuilderEffectsEditor({ effects, onChange }: EffectsEditorPro
       <Grid size={{ xs: 6, md: 3 }}><NumberField label="Scale" value={effects.scale ?? 1} step={0.05} onChange={(value) => set('scale', value)} /></Grid>
       <Grid size={{ xs: 6, md: 3 }}><NumberField label="Rotation" value={effects.rotate ?? 0} onChange={(value) => set('rotate', value)} /></Grid>
       <Grid size={{ xs: 6, md: 3 }}><NumberField label="Blur" value={effects.blur ?? 0} onChange={(value) => set('blur', value)} /></Grid>
+      <Grid size={{ xs: 6, md: 3 }}><NumberField label="Hover lift" value={effects.hover_lift ?? 6} onChange={(value) => set('hover_lift', value)} /></Grid>
       <Grid size={{ xs: 12 }}>
         <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap' }}>
           <FormControlLabel control={<Switch checked={!!effects.parallax} onChange={(e) => set('parallax', e.target.checked)} />} label="Parallax" />

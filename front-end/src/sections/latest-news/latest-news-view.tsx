@@ -49,17 +49,17 @@ export function LatestNewsView() {
           </Label>
 
           <Typography variant="h2" sx={{ mb: 1 }}>
-            {LATEST_NEWS_COPY.title}
+            {campaigns[0]?.title || LATEST_NEWS_COPY.title}
           </Typography>
 
-          <Typography sx={{ color: 'text.secondary' }}>{LATEST_NEWS_COPY.subtitle}</Typography>
+          <Typography sx={{ color: 'text.secondary' }}>{campaigns[0]?.summary || LATEST_NEWS_COPY.subtitle}</Typography>
         </Container>
       </Box>
 
       <Container component="section" sx={{ py: { xs: 8, md: 12 } }}>
         {/* Published campaigns come first when there are any. */}
-        {campaigns.map((campaign) => (
-          <CampaignBlock key={campaign.id} campaign={campaign} />
+        {campaigns.map((campaign, index) => (
+          <CampaignBlock key={campaign.id} campaign={campaign} hideHeading={index === 0} />
         ))}
 
         {campaigns.length === 0 && (
@@ -111,15 +111,14 @@ function useActiveCampaigns() {
 
 // ----------------------------------------------------------------------
 
-function CampaignBlock({ campaign }: { campaign: NewsCampaign }) {
+function CampaignBlock({ campaign, hideHeading = false }: { campaign: NewsCampaign; hideHeading?: boolean }) {
   return (
     <Box sx={{ mb: { xs: 6, md: 8 } }}>
-      <Typography variant="h4" sx={{ mb: 1 }}>
-        {campaign.title}
-      </Typography>
-
-      {campaign.summary && (
-        <Typography sx={{ color: 'text.secondary', mb: 3 }}>{campaign.summary}</Typography>
+      {!hideHeading && (
+        <>
+          <Typography variant="h4" sx={{ mb: 1 }}>{campaign.title}</Typography>
+          {campaign.summary && <Typography sx={{ color: 'text.secondary', mb: 3 }}>{campaign.summary}</Typography>}
+        </>
       )}
 
       <Stack spacing={{ xs: 4, md: 6 }}>
