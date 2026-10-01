@@ -123,7 +123,7 @@ function CampaignBlock({ campaign, hideHeading = false }: { campaign: NewsCampai
 
       <Stack spacing={{ xs: 4, md: 6 }}>
         {(campaign.items ?? []).map((item) => (
-          <PageBuilderPublicItem key={item.id} item={item} />
+          <PageBuilderPublicItem key={item.id} item={{ ...item, media: item.media?.length ? item.media : (campaign.media || []) }} />
         ))}
       </Stack>
 

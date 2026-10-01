@@ -39,7 +39,7 @@ export function PublicPageBuilderOverride({ pageType, fallback }: { pageType: Pa
         {page.summary && <Typography sx={{ mt: 1.5, color: 'text.secondary' }}>{page.summary}</Typography>}
       </Box>
       <Stack spacing={{ xs: 4, md: 6 }}>
-        {(page.items || []).map((item) => <PageBuilderPublicItem key={item.id} item={item} />)}
+        {(page.items || []).map((item) => <PageBuilderPublicItem key={item.id} item={{ ...item, media: item.media?.length ? item.media : (page.media || []) }} />)}
       </Stack>
     </Container>
   );

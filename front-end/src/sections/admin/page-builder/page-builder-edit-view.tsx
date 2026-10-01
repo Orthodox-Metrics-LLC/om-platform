@@ -563,7 +563,7 @@ export function PageBuilderEditView({ id }: Props) {
           </Box>
           <Stack spacing={{ xs: 4, md: 6 }}>
             {(page.items || []).filter((item) => item.active && item.status !== 'disabled').map((item) => (
-              <PageBuilderPublicItem key={item.id} item={item} />
+              <PageBuilderPublicItem key={item.id} item={{ ...item, media: item.media?.length ? item.media : (page.media || []) }} />
             ))}
           </Stack>
         </Card>

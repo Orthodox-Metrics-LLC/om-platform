@@ -1,5 +1,5 @@
 import type { IconifyName } from 'src/components/iconify/register-icons';
-import type { PageItem } from 'src/sections/admin/page-builder/om-pages-api';
+import type { PageItem, PageMedia } from 'src/sections/admin/page-builder/om-pages-api';
 
 // ----------------------------------------------------------------------
 
@@ -108,4 +108,5 @@ export type NewsCampaign = {
   summary?: string | null;
   slug?: string | null;
   items?: PageItem[];
+  media?: PageMedia[];
 };

@@ -5,8 +5,11 @@ import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
+import Select from '@mui/material/Select';
 import Dialog from '@mui/material/Dialog';
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
@@ -33,17 +36,22 @@ type Props = {
 export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
   const [assets, setAssets] = useState<OmAsset[]>([]);
   const [search, setSearch] = useState('');
+  const [scope, setScope] = useState<'public' | 'site'>('public');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async (q: string) => {
+  const load = useCallback(async (q: string, nextPage = 1, nextScope: 'public' | 'site' = scope) => {
     setLoading(true);
     try {
-      const page = await fetchOmAssetsPage({ search: q || undefined, page_size: 60 });
-      setAssets(page.assets.filter((a) => a.scope === 'public' || a.scope === 'site'));
+      const page = await fetchOmAssetsPage({ scope: nextScope, search: q || undefined, page: nextPage, page_size: 48 });
+      setAssets(page.assets);
+      setPageNumber(page.page);
+      setPageCount(Math.max(1, Math.ceil(page.total / page.page_size)));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     if (open) load(search);
@@ -54,15 +62,25 @@ export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Pick from Asset Manager</DialogTitle>
       <DialogContent>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search assets…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') load(search); }}
-          sx={{ mb: 2 }}
-        />
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+          <Select
+            size="small" value={scope} sx={{ minWidth: 140 }}
+            onChange={(event) => {
+              const next = event.target.value as 'public' | 'site';
+              setScope(next);
+              load(search, 1, next);
+            }}
+          >
+            <MenuItem value="public">Public assets</MenuItem>
+            <MenuItem value="site">Site assets</MenuItem>
+          </Select>
+          <TextField
+            fullWidth size="small" placeholder="Search assets…" value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') load(search, 1); }}
+          />
+          <Button variant="outlined" onClick={() => load(search, 1)}>Search</Button>
+        </Box>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
         ) : assets.length === 0 ? (
@@ -90,6 +108,13 @@ export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
               </Grid>
             ))}
           </Grid>
+        )}
+        {!loading && pageCount > 1 && (
+          <Pagination
+            page={pageNumber} count={pageCount} color="primary"
+            onChange={(_, nextPage) => load(search, nextPage)}
+            sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}
+          />
         )}
       </DialogContent>
       <DialogActions>
