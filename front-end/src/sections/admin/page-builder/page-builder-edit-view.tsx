@@ -34,15 +34,21 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
+import { PageBuilderPublicItem } from 'src/sections/latest-news/page-builder-public-item';
+
 import { templateFor } from './page-builder-templates';
 import { omPagesApi, PAGE_TYPES } from './om-pages-api';
 import { PageBuilderAssetPickerDialog } from './page-builder-asset-picker-dialog';
+import {
+  BUILDER_COMPONENTS,
+  componentDefinition,
+  PageBuilderEffectsEditor,
+  PageBuilderComponentConfig,
+} from './page-builder-components';
 
 // ----------------------------------------------------------------------
 
-const LAYOUT_TYPES: LayoutType[] = ['hero', 'split', 'card', 'banner', 'quote', 'image_grid', 'video'];
-
-type TabKey = 'setup' | 'items' | 'media' | 'versions';
+type TabKey = 'setup' | 'items' | 'media' | 'effects' | 'preview' | 'versions';
 
 type Props = { id?: number };
 
@@ -123,12 +129,28 @@ export function PageBuilderEditView({ id }: Props) {
     }
   };
 
-  const addItem = async () => {
+  const addItem = async (layoutType: LayoutType = 'card') => {
     if (!id) { toast.error('Save the page first'); return; }
+    const definition = componentDefinition(layoutType);
     try {
-      const { item } = await omPagesApi.addItem(id, { title: 'New item', layout_type: 'card' });
+      const { item } = await omPagesApi.addItem(id, {
+        title: definition?.label || 'New item',
+        layout_type: layoutType,
+        component_config: definition?.defaults || {},
+        effects_config: { animation: 'none', trigger: 'in_view', duration: 0.5, opacity: 1, scale: 1 },
+      });
       setPage((p) => ({ ...p, items: [...(p.items || []), item] }));
     } catch (e: any) { toast.error(e.message); }
+  };
+
+  const moveItem = async (index: number, direction: -1 | 1) => {
+    const items = [...(page.items || [])];
+    const target = index + direction;
+    if (target < 0 || target >= items.length || !id) return;
+    [items[index], items[target]] = [items[target], items[index]];
+    setPage((current) => ({ ...current, items }));
+    try { await omPagesApi.reorderItems(id, items.map((item) => item.id)); }
+    catch (e: any) { toast.error(e.message); await load(); }
   };
 
   const updateItem = async (item: PageItem, patch: Partial<PageItem>) => {
@@ -176,6 +198,20 @@ export function PageBuilderEditView({ id }: Props) {
       });
       toast.success('Media attached');
     } catch (e: any) { toast.error(e.message || 'Failed to attach media'); }
+  };
+
+  const patchMedia = async (mediaId: number, patch: Partial<Page['media'][number]>) => {
+    try {
+      const { media } = await omPagesApi.updateMedia(mediaId, patch);
+      setPage((current) => ({
+        ...current,
+        media: (current.media || []).map((entry) => (entry.id === mediaId ? media : entry)),
+        items: (current.items || []).map((item) => ({
+          ...item,
+          media: (item.media || []).map((entry) => (entry.id === mediaId ? media : entry)),
+        })),
+      }));
+    } catch (e: any) { toast.error(e.message); }
   };
 
   const removeMedia = async (mediaId: number, itemId: number | null) => {
@@ -257,8 +293,10 @@ export function PageBuilderEditView({ id }: Props) {
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab value="setup" label="Setup" />
-        <Tab value="items" label="Items" disabled={isNew} />
+        <Tab value="items" label={`Items${page.items?.length ? ` (${page.items.length})` : ''}`} disabled={isNew} />
         <Tab value="media" label="Media" disabled={isNew} />
+        <Tab value="effects" label="Effects" disabled={isNew} />
+        <Tab value="preview" label="Preview" disabled={isNew} />
         <Tab value="versions" label={`Versions${versions.length ? ` (${versions.length})` : ''}`} disabled={isNew} />
       </Tabs>
 
@@ -344,8 +382,39 @@ export function PageBuilderEditView({ id }: Props) {
 
       {tab === 'items' && (
         <Stack spacing={2}>
-          {(page.items || []).map((item) => (
+          <Card sx={{ p: 2.5 }}>
+            <Typography variant="h6" sx={{ mb: 0.5 }}>Component library</Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+              Add Minimal UI content, interaction and presentation components. Every component is saved in the page version and rendered on the public site.
+            </Typography>
+            <Grid container spacing={1.5}>
+              {BUILDER_COMPONENTS.map((component) => (
+                <Grid key={component.type} size={{ xs: 6, sm: 4, md: 3 }}>
+                  <Card
+                    variant="outlined"
+                    onClick={() => addItem(component.type)}
+                    sx={{ p: 1.5, height: 1, cursor: 'pointer', '&:hover': { borderColor: 'primary.main', bgcolor: 'action.hover' } }}
+                  >
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+                      <Iconify icon={component.icon as any} width={20} sx={{ color: 'primary.main' }} />
+                      <Typography variant="subtitle2">{component.label}</Typography>
+                    </Stack>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{component.description}</Typography>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Card>
+
+          {(page.items || []).map((item, index) => (
             <Card key={item.id} sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+                <Label variant="soft">{componentDefinition(item.layout_type)?.label || item.layout_type}</Label>
+                <Box sx={{ flex: 1 }} />
+                <FormControlLabel control={<Switch size="small" checked={item.active} onChange={(event) => updateItem(item, { active: event.target.checked, status: event.target.checked ? 'active' : 'disabled' })} />} label="Visible" />
+                <IconButton size="small" disabled={index === 0} onClick={() => moveItem(index, -1)}><Iconify icon="eva:arrow-ios-upward-fill" /></IconButton>
+                <IconButton size="small" disabled={index === (page.items || []).length - 1} onClick={() => moveItem(index, 1)}><Iconify icon="eva:arrow-ios-downward-fill" /></IconButton>
+              </Stack>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField fullWidth label="Title" value={item.title} onChange={(e) => updateItem(item, { title: e.target.value })} />
@@ -360,7 +429,7 @@ export function PageBuilderEditView({ id }: Props) {
                   <FormControl fullWidth>
                     <InputLabel>Layout</InputLabel>
                     <Select label="Layout" value={item.layout_type} onChange={(e) => updateItem(item, { layout_type: e.target.value as LayoutType })}>
-                      {LAYOUT_TYPES.map((l) => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+                      {BUILDER_COMPONENTS.map((component) => <MenuItem key={component.type} value={component.type}>{component.label}</MenuItem>)}
                     </Select>
                   </FormControl>
                 </Grid>
@@ -371,6 +440,16 @@ export function PageBuilderEditView({ id }: Props) {
                   <TextField fullWidth label="CTA URL" value={item.cta_url || ''} onChange={(e) => updateItem(item, { cta_url: e.target.value })} />
                 </Grid>
               </Grid>
+
+              <Box sx={{ mt: 2, p: 2, borderRadius: 1.5, bgcolor: 'background.neutral' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+                  {componentDefinition(item.layout_type)?.label || item.layout_type} settings
+                </Typography>
+                <PageBuilderComponentConfig
+                  item={item}
+                  onChange={(component_config) => updateItem(item, { component_config })}
+                />
+              </Box>
 
               <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
                 {(item.media || []).map((m) => (
@@ -401,37 +480,91 @@ export function PageBuilderEditView({ id }: Props) {
               </Stack>
             </Card>
           ))}
-          <Button variant="outlined" startIcon={<Iconify icon="mingcute:add-line" />} onClick={addItem}>
+          <Button variant="outlined" startIcon={<Iconify icon="mingcute:add-line" />} onClick={() => addItem('card')}>
             Add item
           </Button>
         </Stack>
       )}
 
       {tab === 'media' && (
-        <Card sx={{ p: 2.5 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>Page-level media</Typography>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-            {(page.media || []).map((m) => (
-              <Box key={m.id} sx={{ position: 'relative', width: 96, height: 96 }}>
-                {m.file_type === 'image' ? (
-                  <Image src={m.file_url} sx={{ borderRadius: 1, width: 1, height: 1 }} />
-                ) : (
-                  <Box sx={{ width: 1, height: 1, borderRadius: 1, bgcolor: 'background.neutral', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Iconify icon="solar:file-text-bold" />
-                  </Box>
-                )}
-                <IconButton
-                  size="small"
-                  onClick={() => removeMedia(m.id, null)}
-                  sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'background.paper', boxShadow: 1 }}
-                >
-                  <Iconify icon="solar:close-circle-bold" width={16} />
-                </IconButton>
+        <Stack spacing={2}>
+          <Card sx={{ p: 2.5 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' } }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6">Asset Manager media</Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Browse the real public/site asset library. Attached media stays linked to its Asset Manager record.
+                </Typography>
               </Box>
+              <Button variant="outlined" href={paths.dashboard.assetManager} target="_blank" component="a">Open Asset Manager</Button>
+              <Button variant="contained" startIcon={<Iconify icon="solar:gallery-add-bold" />} onClick={() => openPicker(null)}>Attach media</Button>
+            </Stack>
+          </Card>
+          <Grid container spacing={2}>
+            {(page.media || []).map((media) => (
+              <Grid key={media.id} size={{ xs: 12, md: 6 }}>
+                <Card variant="outlined" sx={{ p: 2 }}>
+                  <Stack direction="row" spacing={2}>
+                    <Box sx={{ width: 128, height: 96, flexShrink: 0 }}>
+                      {media.file_type === 'image' ? <Image src={media.file_url} sx={{ borderRadius: 1, width: 1, height: 1 }} /> : <Box sx={{ width: 1, height: 1, borderRadius: 1, bgcolor: 'background.neutral', display: 'grid', placeItems: 'center' }}><Iconify icon="solar:file-text-bold" width={30} /></Box>}
+                    </Box>
+                    <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+                      <TextField size="small" label="Alt text" defaultValue={media.alt_text || ''} onBlur={(event) => patchMedia(media.id, { alt_text: event.target.value })} />
+                      <TextField size="small" label="Caption" defaultValue={media.caption || ''} onBlur={(event) => patchMedia(media.id, { caption: event.target.value })} />
+                      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                        <FormControlLabel control={<Switch size="small" checked={media.is_primary} onChange={(event) => patchMedia(media.id, { is_primary: event.target.checked })} />} label="Primary" />
+                        <IconButton color="error" size="small" onClick={() => removeMedia(media.id, null)}><Iconify icon="solar:trash-bin-trash-bold" /></IconButton>
+                      </Stack>
+                    </Stack>
+                  </Stack>
+                </Card>
+              </Grid>
             ))}
-            <Button variant="outlined" startIcon={<Iconify icon="solar:gallery-add-bold" />} onClick={() => openPicker(null)}>
-              Add from Asset Manager
-            </Button>
+          </Grid>
+          {!page.media?.length && <Card sx={{ p: 6, textAlign: 'center' }}><Typography color="text.secondary">No page-level media attached yet.</Typography></Card>}
+        </Stack>
+      )}
+
+      {tab === 'effects' && (
+        <Stack spacing={2}>
+          <Card sx={{ p: 2.5 }}>
+            <Typography variant="h6">Effects</Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Configure Minimal-style motion, in-view triggers, transforms, sticky positioning and scroll progress per item.
+            </Typography>
+          </Card>
+          {(page.items || []).map((item) => (
+            <Card key={item.id} sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2 }}>
+                <Iconify icon={(componentDefinition(item.layout_type)?.icon || 'solar:widget-5-bold-duotone') as any} width={22} sx={{ color: 'primary.main' }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1">{item.title}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>{componentDefinition(item.layout_type)?.label || item.layout_type}</Typography>
+                </Box>
+              </Stack>
+              <PageBuilderEffectsEditor
+                effects={item.effects_config || {}}
+                onChange={(effects_config) => updateItem(item, { effects_config })}
+              />
+            </Card>
+          ))}
+          {!page.items?.length && (
+            <Card sx={{ p: 5, textAlign: 'center' }}><Typography color="text.secondary">Add an item before configuring effects.</Typography></Card>
+          )}
+        </Stack>
+      )}
+
+      {tab === 'preview' && (
+        <Card sx={{ p: { xs: 2, md: 4 }, bgcolor: 'background.default' }}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Label color="warning" variant="soft" sx={{ mb: 1.5 }}>Draft preview</Label>
+            <Typography variant="h2">{page.title}</Typography>
+            {page.summary && <Typography sx={{ mt: 1, color: 'text.secondary' }}>{page.summary}</Typography>}
+          </Box>
+          <Stack spacing={{ xs: 4, md: 6 }}>
+            {(page.items || []).filter((item) => item.active && item.status !== 'disabled').map((item) => (
+              <PageBuilderPublicItem key={item.id} item={item} />
+            ))}
           </Stack>
         </Card>
       )}

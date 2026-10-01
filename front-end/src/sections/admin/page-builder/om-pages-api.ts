@@ -23,7 +23,38 @@ export const PAGE_TYPES: { value: PageType; label: string }[] = [
 ];
 
 export type PageStatus = 'draft' | 'scheduled' | 'live' | 'expired' | 'archived';
-export type LayoutType = 'hero' | 'split' | 'card' | 'banner' | 'quote' | 'image_grid' | 'video';
+export type LayoutType =
+  | 'hero' | 'split' | 'card' | 'banner' | 'quote' | 'image_grid' | 'video'
+  | 'animate' | 'utilities' | 'scrollbar' | 'scroll_progress' | 'lightbox'
+  | 'form_wizard' | 'carousel' | 'timeline' | 'tooltip' | 'rating';
+
+export type PageItemConfig = Record<string, unknown> & {
+  variant?: string;
+  orientation?: 'horizontal' | 'vertical';
+  height?: number;
+  maxHeight?: number;
+  progress?: number;
+  rating?: number;
+  precision?: number;
+  tooltip?: string;
+  steps?: { title: string; body?: string }[];
+  timeline?: { title: string; body?: string; date?: string }[];
+};
+
+export type PageEffectsConfig = {
+  animation?: 'none' | 'fade' | 'slide_up' | 'slide_left' | 'zoom' | 'scale' | 'rotate';
+  trigger?: 'on_load' | 'in_view' | 'hover';
+  duration?: number;
+  delay?: number;
+  opacity?: number;
+  scale?: number;
+  rotate?: number;
+  blur?: number;
+  hover_lift?: number;
+  parallax?: boolean;
+  sticky?: boolean;
+  show_scroll_progress?: boolean;
+};
 export type ItemStatus = 'draft' | 'active' | 'disabled';
 export type FileType = 'image' | 'video' | 'document';
 
@@ -54,6 +85,8 @@ export interface PageItem {
   sort_order: number;
   status: ItemStatus;
   layout_type: LayoutType;
+  component_config: PageItemConfig;
+  effects_config: PageEffectsConfig;
   active: boolean;
   media: PageMedia[];
   created_at?: string;

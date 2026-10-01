@@ -6,11 +6,16 @@ import { RouterLink } from 'src/routes/components';
 
 import { MaintenanceIllustration } from 'src/assets/illustrations';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 // ----------------------------------------------------------------------
 
 export function MaintenanceView() {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+    <PublicPageBuilderOverride
+      pageType="maintenance"
+      fallback={
+        <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
       <Typography variant="h3" sx={{ mb: 2 }}>
         Website currently under maintenance
       </Typography>
@@ -24,6 +29,8 @@ export function MaintenanceView() {
       <Button component={RouterLink} href="/" size="large" variant="contained">
         Go to home
       </Button>
-    </Box>
+        </Box>
+      }
+    />
   );
 }

@@ -11,6 +11,8 @@ import { ServerErrorIllustration } from 'src/assets/illustrations';
 
 import { varBounce, MotionContainer } from 'src/components/animate';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 // ----------------------------------------------------------------------
 
 export function View500() {
@@ -20,7 +22,9 @@ export function View500() {
         content: { compact: true },
       }}
     >
-      <Container component={MotionContainer}>
+      <PublicPageBuilderOverride
+        pageType="error_500"
+        fallback={<Container component={MotionContainer}>
         <m.div variants={varBounce('in')}>
           <Typography variant="h3" sx={{ mb: 2 }}>
             500 Internal server error
@@ -40,7 +44,8 @@ export function View500() {
         <Button component={RouterLink} href="/" size="large" variant="contained">
           Go to home
         </Button>
-      </Container>
+        </Container>}
+      />
     </SimpleLayout>
   );
 }

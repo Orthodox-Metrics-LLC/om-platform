@@ -16,13 +16,18 @@ import { ComingSoonIllustration } from 'src/assets/illustrations';
 
 import { Iconify } from 'src/components/iconify';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 // ----------------------------------------------------------------------
 
 export function ComingSoonView() {
   const countdown = useCountdownDate(new Date('2026-12-31 00:00'));
 
   return (
-    <Container>
+    <PublicPageBuilderOverride
+      pageType="coming_soon"
+      fallback={
+        <Container>
       <Typography variant="h3" sx={{ mb: 2 }}>
         Coming soon!
       </Typography>
@@ -83,7 +88,9 @@ export function ComingSoonView() {
           </IconButton>
         ))}
       </Box>
-    </Container>
+        </Container>
+      }
+    />
   );
 }
 

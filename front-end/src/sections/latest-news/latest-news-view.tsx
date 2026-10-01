@@ -16,6 +16,7 @@ import { RouterLink } from 'src/routes/components';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import { PageBuilderPublicItem } from './page-builder-public-item';
 import { ANNOUNCEMENTS, LATEST_NEWS_COPY } from './latest-news-data';
 
 // ----------------------------------------------------------------------
@@ -61,11 +62,13 @@ export function LatestNewsView() {
           <CampaignBlock key={campaign.id} campaign={campaign} />
         ))}
 
-        <Stack spacing={{ xs: 6, md: 8 }}>
-          {ANNOUNCEMENTS.map((item) => (
-            <AnnouncementBlock key={item.id} item={item} />
-          ))}
-        </Stack>
+        {campaigns.length === 0 && (
+          <Stack spacing={{ xs: 6, md: 8 }}>
+            {ANNOUNCEMENTS.map((item) => (
+              <AnnouncementBlock key={item.id} item={item} />
+            ))}
+          </Stack>
+        )}
       </Container>
     </>
   );
@@ -87,7 +90,7 @@ function useActiveCampaigns() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch('/api/public/latest-news/active', { credentials: 'include' })
+    fetch('/api/public/latest-news/active?page_type=latest_news', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data?.success && Array.isArray(data.campaigns)) {
@@ -119,26 +122,9 @@ function CampaignBlock({ campaign }: { campaign: NewsCampaign }) {
         <Typography sx={{ color: 'text.secondary', mb: 3 }}>{campaign.summary}</Typography>
       )}
 
-      <Stack spacing={3}>
+      <Stack spacing={{ xs: 4, md: 6 }}>
         {(campaign.items ?? []).map((item) => (
-          <Box key={item.id}>
-            <Typography variant="subtitle1">{item.title}</Typography>
-            {item.subtitle && (
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {item.subtitle}
-              </Typography>
-            )}
-            {(item.excerpt || item.body) && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                {item.excerpt || item.body}
-              </Typography>
-            )}
-            {item.cta_label && item.cta_url && (
-              <Button href={item.cta_url} size="small" color="inherit" sx={{ mt: 1 }}>
-                {item.cta_label}
-              </Button>
-            )}
-          </Box>
+          <PageBuilderPublicItem key={item.id} item={item} />
         ))}
       </Stack>
 

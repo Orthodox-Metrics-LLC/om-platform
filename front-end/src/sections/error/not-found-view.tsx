@@ -11,6 +11,8 @@ import { PageNotFoundIllustration } from 'src/assets/illustrations';
 
 import { varBounce, MotionContainer } from 'src/components/animate';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 // ----------------------------------------------------------------------
 
 export function NotFoundView() {
@@ -20,7 +22,9 @@ export function NotFoundView() {
         content: { compact: true },
       }}
     >
-      <Container component={MotionContainer}>
+      <PublicPageBuilderOverride
+        pageType="error_404"
+        fallback={<Container component={MotionContainer}>
         <m.div variants={varBounce('in')}>
           <Typography variant="h3" sx={{ mb: 2 }}>
             Sorry, page not found!
@@ -41,7 +45,8 @@ export function NotFoundView() {
         <Button component={RouterLink} href="/" size="large" variant="contained">
           Go to home
         </Button>
-      </Container>
+        </Container>}
+      />
     </SimpleLayout>
   );
 }
