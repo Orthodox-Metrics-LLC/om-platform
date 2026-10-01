@@ -5,13 +5,17 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
 import TableRow from '@mui/material/TableRow';
+import Checkbox from '@mui/material/Checkbox';
 import TableHead from '@mui/material/TableHead';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import Pagination from '@mui/material/Pagination';
+import CardHeader from '@mui/material/CardHeader';
+import CardContent from '@mui/material/CardContent';
+import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -24,40 +28,52 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { fetchOcrJobs, type OmOcrJob } from './om-ocr-api';
+import { OcrUploadPanel } from './ocr-upload-panel';
+import {
+  statusLabel,
+  fetchOcrJobs,
+  mapJobsToBatchRows,
+  type OmOcrBatchRow,
+  batchProcessingLabel,
+  setOcrBatchReviewReady,
+  type OmOcrWizardStatus,
+} from './om-ocr-api';
 
 // ----------------------------------------------------------------------
+
+const ICON_ADD = 'solar:add-circle-bold' as any;
+const ICON_EYE = 'solar:eye-bold' as any;
+const ICON_LOCK = 'solar:lock-keyhole-bold' as any;
 
 type Props = {
   churchId: number | null;
 };
 
-const PAGE_SIZE = 25;
-
-function statusColor(status: string): 'default' | 'primary' | 'success' | 'warning' | 'error' {
-  const s = String(status || '').toLowerCase();
-  if (s === 'completed' || s === 'complete' || s === 'seeded') return 'success';
-  if (s === 'processing' || s === 'pending') return 'warning';
-  if (s === 'error' || s === 'cancelled') return 'error';
+function statusColor(status: OmOcrWizardStatus): 'default' | 'primary' | 'success' | 'warning' | 'error' {
+  if (status === 'completed' || status === 'already-exists') return 'success';
+  if (status === 'ready-for-review') return 'primary';
+  if (status === 'processing' || status === 'ready-for-image-review') return 'warning';
+  if (status === 'failed' || status === 'not-church-record') return 'error';
   return 'default';
 }
 
 export function OcrListView({ churchId }: Props) {
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<OmOcrJob[]>([]);
+  const [rows, setRows] = useState<OmOcrBatchRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [showUpload, setShowUpload] = useState(false);
+  const [pendingReadyId, setPendingReadyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!churchId) return;
     setLoading(true);
     setError(null);
     try {
-      const rows = await fetchOcrJobs(churchId, { limit: 200 });
-      setJobs(rows);
+      const jobs = await fetchOcrJobs(churchId, { limit: 200 });
+      setRows(mapJobsToBatchRows(jobs));
     } catch (err: any) {
-      setError(err?.message || 'Failed to load OCR jobs');
+      setError(err?.message || 'Failed to load OCR uploads');
     } finally {
       setLoading(false);
     }
@@ -67,36 +83,46 @@ export function OcrListView({ churchId }: Props) {
     load();
   }, [load]);
 
-  // Refresh every 10s while jobs are still pending/processing.
+  // Poll while any batch is still processing.
   useEffect(() => {
-    if (!jobs.some((j) => /pending|processing/i.test(j.status))) return undefined;
-    const t = setInterval(load, 10000);
+    if (!rows.some((r) => !r.allProcessed)) return undefined;
+    const t = setInterval(load, 8000);
     return () => clearInterval(t);
-  }, [jobs, load]);
+  }, [rows, load]);
 
-  const pageCount = Math.max(1, Math.ceil(jobs.length / PAGE_SIZE));
-  const pageJobs = jobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const handleToggleReady = async (row: OmOcrBatchRow, ready: boolean) => {
+    if (!churchId || !row.batchId) return;
+    setPendingReadyId(row.id);
+    try {
+      await setOcrBatchReviewReady(churchId, row.batchId, ready);
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Could not update Ready for Image Review');
+    } finally {
+      setPendingReadyId(null);
+    }
+  };
 
   return (
     <Box sx={{ px: { xs: 2, md: 5 }, py: 4 }}>
       <CustomBreadcrumbs
-        heading="OCR Uploads"
-        links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'OCR Uploads' }]}
+        heading="Upload Records"
+        links={[{ name: 'Dashboard', href: paths.dashboard.root }, { name: 'Upload Records' }]}
         action={
           <Button
             variant="contained"
-            startIcon={<Iconify icon={'solar:add-circle-bold' as any} />}
-            onClick={() => navigate(paths.dashboard.ocr.upload)}
+            startIcon={<Iconify icon={ICON_ADD} />}
+            onClick={() => setShowUpload((v) => !v)}
           >
-            New upload
+            New Upload
           </Button>
         }
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 
       {!churchId && (
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Select a parish to view OCR uploads.
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+          Select a parish to view uploaded records.
         </Typography>
       )}
 
@@ -106,71 +132,149 @@ export function OcrListView({ churchId }: Props) {
         </Typography>
       )}
 
+      <Collapse in={showUpload} unmountOnExit sx={{ mb: 3 }}>
+        <Card>
+          <CardHeader title="Upload new images or PDFs" />
+          <CardContent>
+            <OcrUploadPanel
+              churchId={churchId}
+              onUploaded={() => {
+                setShowUpload(false);
+                load();
+              }}
+            />
+          </CardContent>
+        </Card>
+      </Collapse>
+
       <Card>
         <TableContainer component={Scrollbar}>
-          <Table size="small" sx={{ minWidth: 720 }}>
+          <Table size="small" sx={{ minWidth: 960 }}>
             <TableHead>
               <TableRow>
-                <TableCell>Filename</TableCell>
+                <TableCell padding="checkbox" />
+                <TableCell>Upload</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Confidence</TableCell>
-                <TableCell>Records</TableCell>
-                <TableCell>Created</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell>Pages</TableCell>
+                <TableCell sx={{ minWidth: 180 }}>Processing</TableCell>
+                <TableCell sx={{ minWidth: 220 }}>Ready for image review</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading && jobs.length === 0 ? (
+              {loading && rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ) : pageJobs.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    No OCR uploads yet.
+                  <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                    No uploads yet. Click &quot;New Upload&quot; to get started.
                   </TableCell>
                 </TableRow>
               ) : (
-                pageJobs.map((job) => (
-                  <TableRow key={job.id} hover>
-                    <TableCell>
-                      <Typography variant="subtitle2" noWrap sx={{ maxWidth: 260 }}>
-                        {job.original_filename || job.filename}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{job.record_type || '—'}</TableCell>
-                    <TableCell>
-                      <Label color={statusColor(job.status)}>{job.status}</Label>
-                    </TableCell>
-                    <TableCell>
-                      {job.confidence_score ? `${Math.round(job.confidence_score * 100)}%` : '—'}
-                    </TableCell>
-                    <TableCell>{job.records_count ?? '—'}</TableCell>
-                    <TableCell>{fDateTime(job.created_at)}</TableCell>
-                    <TableCell align="right">
-                      <IconButton
-                        size="small"
-                        onClick={() => navigate(paths.dashboard.ocr.details(job.id))}
-                      >
-                        <Iconify icon={'solar:eye-bold' as any} />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))
+                rows.map((row) => {
+                  const pct = row.totalImages > 0
+                    ? Math.round((row.completedImages / row.totalImages) * 100)
+                    : 0;
+                  const reviewEnabled = row.allProcessed && row.reviewReady;
+                  return (
+                    <TableRow key={row.id} hover>
+                      <TableCell padding="checkbox">
+                        <Checkbox disabled />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" noWrap sx={{ maxWidth: 240 }}>
+                          {row.displayName}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.submittedBy}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Label color={statusColor(row.status)} sx={{ textTransform: 'capitalize' }}>
+                          {row.recordType}
+                        </Label>
+                      </TableCell>
+                      <TableCell>{fDateTime(row.date)}</TableCell>
+                      <TableCell>{row.totalImages}</TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="caption"
+                          sx={{ fontWeight: 600, color: row.allProcessed ? 'success.main' : 'text.primary' }}
+                        >
+                          {batchProcessingLabel(row)}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={pct}
+                          color={row.allProcessed ? 'success' : 'primary'}
+                          sx={{ mt: 0.5, height: 6, borderRadius: 1 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Checkbox
+                            size="small"
+                            checked={row.reviewReady}
+                            disabled={!row.allProcessed || !row.batchId || pendingReadyId === row.id}
+                            onChange={(e) => handleToggleReady(row, e.target.checked)}
+                          />
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                              Ready for Image Review
+                            </Typography>
+                            {row.reviewReady && row.readyByName ? (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                By {row.readyByName}
+                              </Typography>
+                            ) : !row.allProcessed ? (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                              >
+                                <Iconify icon={ICON_LOCK} width={12} /> Available once processing completes
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant={reviewEnabled ? 'contained' : 'outlined'}
+                          color={reviewEnabled ? 'primary' : 'inherit'}
+                          disabled={!reviewEnabled}
+                          onClick={() => navigate(paths.dashboard.ocr.details(row.primaryJobId))}
+                          sx={{ mr: 1 }}
+                        >
+                          Review
+                        </Button>
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(paths.dashboard.ocr.details(row.primaryJobId))}
+                        >
+                          <Iconify icon={ICON_EYE} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </TableContainer>
-
-        {pageCount > 1 && (
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
-            <Pagination page={page} count={pageCount} onChange={(_, next) => setPage(next)} />
-          </Box>
-        )}
       </Card>
+
+      {rows.length > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          Statuses: {Array.from(new Set(rows.map((r) => r.status))).map(statusLabel).join(' · ')}
+        </Typography>
+      )}
     </Box>
   );
 }

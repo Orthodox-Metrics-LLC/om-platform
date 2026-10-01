@@ -29,8 +29,10 @@ export interface OmOcrJob {
   church_id: string;
   original_filename: string;
   filename: string;
+  canonical_filename?: string | null;
   status: OmOcrJobStatus;
   review_status: OmOcrReviewStatus;
+  review_notes?: string | null;
   record_type: OmOcrRecordType | string | null;
   language: string;
   confidence_score: number;
@@ -41,8 +43,15 @@ export interface OmOcrJob {
   confirmed_count: number | null;
   error_message: string | null;
   ocr_text_preview?: string | null;
+  already_exists?: boolean;
+  not_church_record?: boolean;
+  seeded_at?: string | null;
+  uploaded_by?: string | number | null;
   batch_id?: string | null;
   batch_name?: string | null;
+  batch_ready_for_image_review?: boolean;
+  batch_ready_by_name?: string | null;
+  batch_ready_at?: string | null;
 }
 
 export interface OmOcrJobDetail extends OmOcrJob {
@@ -59,9 +68,181 @@ export interface OmOcrPage {
   pageId: number;
   pageIndex: number;
   rawText: string | null;
+  recordCandidates?: unknown;
+  tableExtractionJson?: unknown;
   ocrConfidence: number | null;
   status: string;
   rotation: number;
+}
+
+// ----------------------------------------------------------------------
+// Batch model — one "Upload Records" row can span several ocr_jobs rows
+// (multi-page uploads share a batch_id, see ocrJobIngestService.js).
+// Mirrors the mapping used by the old portal's Parish Uploader dashboard.
+// ----------------------------------------------------------------------
+
+/** Coarse status used to drive the batch processing/ready UI. */
+export type OmOcrWizardStatus =
+  | 'ready-for-image-review'
+  | 'processing'
+  | 'ready-for-review'
+  | 'completed'
+  | 'failed'
+  | 'returned'
+  | 'already-exists'
+  | 'not-church-record';
+
+const TERMINAL_REVIEW_STATUSES = ['agent_extracted', 'ready_to_seed', 'seeded'];
+
+export function mapJobToWizardStatus(job: OmOcrJob): OmOcrWizardStatus {
+  const reviewStatus = job.review_status || 'uploaded';
+  if (job.status === 'failed' || job.status === 'error') return 'failed';
+  if (reviewStatus === 'not_church_record' || job.not_church_record) return 'not-church-record';
+  if (reviewStatus === 'returned') return 'returned';
+  if (reviewStatus === 'seeded' || job.already_exists) return 'already-exists';
+  if (['agent_extracted', 'ready_to_seed', 'in_review'].includes(reviewStatus)) return 'ready-for-review';
+  if (reviewStatus === 'ocr_complete' || reviewStatus === 'pending_review') return 'processing';
+  if (reviewStatus === 'uploaded' || job.status === 'queued' || job.status === 'pending') {
+    return 'ready-for-image-review';
+  }
+  return 'processing';
+}
+
+export function isJobTerminal(job: OmOcrJob): boolean {
+  if (job.status === 'failed' || job.status === 'error') return true;
+  const rs = job.review_status || 'uploaded';
+  return rs === 'returned' || rs === 'not_church_record' || TERMINAL_REVIEW_STATUSES.includes(rs);
+}
+
+export interface OmOcrBatchRow {
+  /** batch_id when the backend assigned one, else the single job id. */
+  id: string;
+  batchId: string | null;
+  displayName: string;
+  recordType: string;
+  submittedBy: string;
+  date: string;
+  totalImages: number;
+  completedImages: number;
+  allProcessed: boolean;
+  status: OmOcrWizardStatus;
+  reviewReady: boolean;
+  readyByName: string | null;
+  readyAt: string | null;
+  /** The job used for navigation (first/least-advanced job in the batch). */
+  primaryJobId: string;
+  jobIds: string[];
+}
+
+function jobDisplayName(job: OmOcrJob): string {
+  return (job.canonical_filename || job.original_filename || job.filename || '').split('/').pop()
+    || `Job #${job.id}`;
+}
+
+function batchDisplayName(jobs: OmOcrJob[]): string {
+  if (jobs.length === 1) return jobDisplayName(jobs[0]);
+  const names = jobs.map(jobDisplayName);
+  const first = names[0] || 'Batch';
+  const stem = first.replace(/\.[^.]+$/, '').replace(/[-_]\d+$/, '');
+  if (stem.length >= 3 && names.every((n) => n.replace(/\.[^.]+$/, '').startsWith(stem.slice(0, Math.min(stem.length, 12))))) {
+    return stem;
+  }
+  return `${stem || 'Batch'} (${jobs.length} images)`;
+}
+
+function formatUploader(job: OmOcrJob): string {
+  const raw = job.uploaded_by;
+  if (raw && !/^\d+$/.test(String(raw))) return String(raw);
+  return '—';
+}
+
+const STATUS_RANK: Record<OmOcrWizardStatus, number> = {
+  'ready-for-image-review': 1,
+  processing: 2,
+  failed: 2,
+  'not-church-record': 2,
+  'ready-for-review': 3,
+  returned: 3,
+  'already-exists': 4,
+  completed: 4,
+};
+
+function leastAdvancedJob(jobs: OmOcrJob[]): OmOcrJob {
+  return [...jobs].sort(
+    (a, b) => STATUS_RANK[mapJobToWizardStatus(a)] - STATUS_RANK[mapJobToWizardStatus(b)],
+  )[0];
+}
+
+function aggregateWizardStatus(jobs: OmOcrJob[]): OmOcrWizardStatus {
+  const statuses = jobs.map(mapJobToWizardStatus);
+  if (statuses.every((s) => s === 'failed')) return 'failed';
+  if (statuses.every((s) => s === 'not-church-record')) return 'not-church-record';
+  if (statuses.some((s) => s === 'processing')) return 'processing';
+  if (statuses.some((s) => s === 'ready-for-image-review')) return 'ready-for-image-review';
+  if (statuses.some((s) => s === 'ready-for-review')) return 'ready-for-review';
+  if (statuses.some((s) => s === 'returned')) return 'returned';
+  if (statuses.every((s) => s === 'already-exists' || s === 'completed')) {
+    return statuses[0] === 'completed' ? 'completed' : 'already-exists';
+  }
+  return statuses[0];
+}
+
+export function batchProcessingLabel(row: Pick<OmOcrBatchRow, 'allProcessed' | 'completedImages' | 'totalImages'>): string {
+  if (row.totalImages === 0) return 'No images';
+  if (row.allProcessed) return `Processing complete — ${row.totalImages} of ${row.totalImages}`;
+  return `Processing ${row.completedImages} of ${row.totalImages}`;
+}
+
+export function statusLabel(status: OmOcrWizardStatus): string {
+  switch (status) {
+    case 'ready-for-image-review': return 'Uploaded';
+    case 'processing': return 'Processing';
+    case 'ready-for-review': return 'Ready for review';
+    case 'completed': return 'Completed';
+    case 'failed': return 'Failed';
+    case 'returned': return 'Returned';
+    case 'already-exists': return 'Already in records';
+    case 'not-church-record': return 'Not a church record';
+    default: return status;
+  }
+}
+
+/** Groups raw jobs into the same batches the old Parish Uploader dashboard showed. */
+export function mapJobsToBatchRows(jobs: OmOcrJob[]): OmOcrBatchRow[] {
+  const groups = new Map<string, OmOcrJob[]>();
+  for (const job of jobs) {
+    const key = job.batch_id ? `b:${job.batch_id}` : `j:${job.id}`;
+    const existing = groups.get(key);
+    if (existing) existing.push(job);
+    else groups.set(key, [job]);
+  }
+
+  return [...groups.values()].map((group) => {
+    const sorted = [...group].sort((a, b) => (
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    ));
+    const first = sorted[0];
+    const focus = leastAdvancedJob(group);
+    const completedImages = group.filter((j) => isJobTerminal(j)).length;
+    const totalImages = group.length;
+    return {
+      id: first.batch_id || `J-${first.id}`,
+      batchId: first.batch_id || null,
+      displayName: first.batch_name || batchDisplayName(sorted),
+      recordType: first.record_type || 'custom',
+      submittedBy: formatUploader(first),
+      date: first.created_at,
+      totalImages,
+      completedImages,
+      allProcessed: completedImages === totalImages,
+      status: aggregateWizardStatus(group),
+      reviewReady: !!first.batch_ready_for_image_review,
+      readyByName: first.batch_ready_by_name || null,
+      readyAt: first.batch_ready_at || null,
+      primaryJobId: String(focus.id),
+      jobIds: sorted.map((j) => String(j.id)),
+    };
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 export interface OmOcrSettings {
@@ -147,4 +328,30 @@ export async function uploadOcrFiles(
     body: formData,
   });
   return parseJson<OmOcrUploadResult>(res);
+}
+
+export async function renameOcrBatch(
+  churchId: number | string,
+  batchId: string,
+  name: string,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/batches/${batchId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  await parseJson(res);
+}
+
+export async function setOcrBatchReviewReady(
+  churchId: number | string,
+  batchId: string,
+  ready: boolean,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/batches/${batchId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ready_for_image_review: ready }),
+  });
+  await parseJson(res);
 }
