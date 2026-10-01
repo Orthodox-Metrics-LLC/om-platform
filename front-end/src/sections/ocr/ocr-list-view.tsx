@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router';
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { usePopover } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -9,6 +10,7 @@ import Select from '@mui/material/Select';
 import Divider from '@mui/material/Divider';
 import TableRow from '@mui/material/TableRow';
 import Checkbox from '@mui/material/Checkbox';
+import MenuList from '@mui/material/MenuList';
 import MenuItem from '@mui/material/MenuItem';
 import TableHead from '@mui/material/TableHead';
 import TableCell from '@mui/material/TableCell';
@@ -16,8 +18,6 @@ import TableBody from '@mui/material/TableBody';
 import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import CardHeader from '@mui/material/CardHeader';
-import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
@@ -32,12 +32,14 @@ import { useWorkspaces } from 'src/layouts/components/use-active-church';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
+import { CustomPopover } from 'src/components/custom-popover';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { OcrUploadPanel } from './ocr-upload-panel';
 import {
   fetchOcrJobs,
+  deleteOcrJobs,
   ocrJobImageUrl,
+  renameOcrBatch,
   mapJobsToBatchRows,
   type OmOcrBatchRow,
   processingModeLabel,
@@ -48,9 +50,9 @@ import {
 
 // ----------------------------------------------------------------------
 
-const ICON_EYE = 'solar:eye-bold' as any;
 const ICON_LOCK = 'solar:lock-keyhole-bold' as any;
 const ICON_SEARCH = 'eva:search-fill' as any;
+const ICON_MORE = 'eva:more-vertical-fill' as any;
 
 type Props = {
   churchId: number | null;
@@ -113,7 +115,6 @@ export function OcrListView({ churchId }: Props) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingReadyId, setPendingReadyId] = useState<string | null>(null);
-  const uploadPanelRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     if (!churchId) return;
@@ -153,6 +154,29 @@ export function OcrListView({ churchId }: Props) {
     }
   };
 
+  const handleRename = async (row: OmOcrBatchRow) => {
+    if (!churchId || !row.batchId) return;
+    const name = window.prompt('Rename this upload', row.displayName);
+    if (!name || !name.trim()) return;
+    try {
+      await renameOcrBatch(churchId, row.batchId, name.trim());
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Could not rename upload');
+    }
+  };
+
+  const handleDelete = async (row: OmOcrBatchRow) => {
+    if (!churchId) return;
+    if (!window.confirm(`Delete "${row.displayName}" and its ${row.totalImages} image(s)? This cannot be undone.`)) return;
+    try {
+      await deleteOcrJobs(churchId, row.jobIds);
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Could not delete upload');
+    }
+  };
+
   const filteredRows = rows.filter((row) => {
     if (typeFilter !== 'all' && row.recordType !== typeFilter) return false;
     if (!search.trim()) return true;
@@ -175,7 +199,7 @@ export function OcrListView({ churchId }: Props) {
           <Button
             variant="contained"
             startIcon={<Iconify icon={'solar:add-circle-bold' as any} />}
-            onClick={() => uploadPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            onClick={() => navigate(paths.dashboard.ocr.upload)}
           >
             New Upload
           </Button>
@@ -205,7 +229,7 @@ export function OcrListView({ churchId }: Props) {
         </Typography>
       )}
 
-      <Card sx={{ mb: 3 }}>
+      <Card>
         <Box
           sx={{
             p: 2,
@@ -275,7 +299,7 @@ export function OcrListView({ churchId }: Props) {
                 <TableCell sx={{ minWidth: 180 }}>Processing</TableCell>
                 <TableCell sx={{ minWidth: 200 }}>Review readiness</TableCell>
                 <TableCell sx={{ minWidth: 160 }}>Review action / progress</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell align="right" />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -289,145 +313,188 @@ export function OcrListView({ churchId }: Props) {
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     {rows.length === 0
-                      ? 'No uploads yet. Use New Upload below to get started.'
+                      ? 'No uploads yet. Use New Upload above to get started.'
                       : 'No uploads match your search.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRows.map((row) => {
-                  const pct = row.totalImages > 0
-                    ? Math.round((row.completedImages / row.totalImages) * 100)
-                    : 0;
-                  const reviewEnabled = row.allProcessed && row.reviewReady;
-                  const selected = selectedIds.includes(row.id);
-                  return (
-                    <TableRow key={row.id} hover selected={selected}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selected}
-                          onChange={(e) =>
-                            setSelectedIds((prev) =>
-                              e.target.checked ? [...prev, row.id] : prev.filter((id) => id !== row.id)
-                            )
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <BatchThumb churchId={churchId} jobId={row.primaryJobId} />
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography variant="subtitle2" noWrap sx={{ maxWidth: 220 }}>
-                              {row.displayName} {row.totalImages > 1 ? `(${row.totalImages} images)` : ''}
-                            </Typography>
-                            {row.originalName && (
-                              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', maxWidth: 220 }}>
-                                {row.originalName}
-                              </Typography>
-                            )}
-                            {row.batchId && (
-                              <Typography variant="caption" color="text.disabled" noWrap sx={{ display: 'block', maxWidth: 220 }}>
-                                {row.batchId}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Label color={statusColor(row.status)} sx={{ textTransform: 'capitalize' }}>
-                          {row.recordType}
-                        </Label>
-                      </TableCell>
-                      <TableCell>{fDateTime(row.date)}</TableCell>
-                      <TableCell>{row.totalImages}</TableCell>
-                      <TableCell>{row.recordsDetected || '—'}</TableCell>
-                      <TableCell>
-                        <Label color="info" variant="soft">
-                          {processingModeLabel(row.mode)}
-                        </Label>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontWeight: 600, color: row.allProcessed ? 'success.main' : 'text.primary' }}
-                        >
-                          {batchProcessingLabel(row)}
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={pct}
-                          color={row.allProcessed ? 'success' : 'primary'}
-                          sx={{ mt: 0.5, height: 6, borderRadius: 1 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <Checkbox
-                            size="small"
-                            checked={row.reviewReady}
-                            disabled={!row.allProcessed || !row.batchId || pendingReadyId === row.id}
-                            onChange={(e) => handleToggleReady(row, e.target.checked)}
-                          />
-                          <Box>
-                            <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                              Ready for Image Review
-                            </Typography>
-                            {row.reviewReady && row.readyByName ? (
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                By {row.readyByName}
-                              </Typography>
-                            ) : !row.allProcessed ? (
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                              >
-                                <Iconify icon={ICON_LOCK} width={12} /> Available once processing completes
-                              </Typography>
-                            ) : null}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="small"
-                          fullWidth
-                          variant={reviewEnabled ? 'contained' : 'outlined'}
-                          color={reviewEnabled ? 'primary' : 'inherit'}
-                          disabled={!reviewEnabled}
-                          onClick={() => navigate(paths.dashboard.ocr.details(row.primaryJobId))}
-                        >
-                          Review Images
-                        </Button>
-                        {row.recordsDetected > 0 && (
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                            {row.recordsConfirmed} of {row.recordsDetected}{' '}
-                            {row.needsReview > 0 ? `· ${row.needsReview} need attention` : 'auto-added'}
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(paths.dashboard.ocr.details(row.primaryJobId))}
-                        >
-                          <Iconify icon={ICON_EYE} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                filteredRows.map((row) => (
+                  <OcrBatchRow
+                    key={row.id}
+                    row={row}
+                    churchId={churchId}
+                    selected={selectedIds.includes(row.id)}
+                    pendingReady={pendingReadyId === row.id}
+                    onToggleSelected={(checked) =>
+                      setSelectedIds((prev) => (checked ? [...prev, row.id] : prev.filter((id) => id !== row.id)))
+                    }
+                    onToggleReady={(ready) => handleToggleReady(row, ready)}
+                    onView={() => navigate(paths.dashboard.ocr.details(row.primaryJobId))}
+                    onRename={() => handleRename(row)}
+                    onDelete={() => handleDelete(row)}
+                  />
+                ))
               )}
             </TableBody>
           </Table>
         </TableContainer>
       </Card>
-
-      <Card ref={uploadPanelRef}>
-        <CardHeader title="New Upload" subheader="Add images or PDFs for OCR processing" />
-        <CardContent>
-          <OcrUploadPanel churchId={churchId} onUploaded={load} />
-        </CardContent>
-      </Card>
     </Box>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+type RowProps = {
+  row: OmOcrBatchRow;
+  churchId: number | null;
+  selected: boolean;
+  pendingReady: boolean;
+  onToggleSelected: (checked: boolean) => void;
+  onToggleReady: (ready: boolean) => void;
+  onView: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+};
+
+function OcrBatchRow({
+  row,
+  churchId,
+  selected,
+  pendingReady,
+  onToggleSelected,
+  onToggleReady,
+  onView,
+  onRename,
+  onDelete,
+}: RowProps) {
+  const menu = usePopover();
+  const pct = row.totalImages > 0 ? Math.round((row.completedImages / row.totalImages) * 100) : 0;
+  const reviewEnabled = row.allProcessed && row.reviewReady;
+
+  return (
+    <>
+      <TableRow hover selected={selected}>
+        <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+          <Checkbox checked={selected} onChange={(e) => onToggleSelected(e.target.checked)} />
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <BatchThumb churchId={churchId} jobId={row.primaryJobId} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle2" noWrap sx={{ maxWidth: 220 }}>
+                {row.displayName} {row.totalImages > 1 ? `(${row.totalImages} images)` : ''}
+              </Typography>
+              {row.originalName && (
+                <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', maxWidth: 220 }}>
+                  {row.originalName}
+                </Typography>
+              )}
+              {row.batchId && (
+                <Typography variant="caption" color="text.disabled" noWrap sx={{ display: 'block', maxWidth: 220 }}>
+                  {row.batchId}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </TableCell>
+        <TableCell>
+          <Label color={statusColor(row.status)} sx={{ textTransform: 'capitalize' }}>
+            {row.recordType}
+          </Label>
+        </TableCell>
+        <TableCell>{fDateTime(row.date)}</TableCell>
+        <TableCell>{row.totalImages}</TableCell>
+        <TableCell>{row.recordsDetected || '—'}</TableCell>
+        <TableCell>
+          <Label color="info" variant="soft">
+            {processingModeLabel(row.mode)}
+          </Label>
+        </TableCell>
+        <TableCell>
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, color: row.allProcessed ? 'success.main' : 'text.primary' }}
+          >
+            {batchProcessingLabel(row)}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={pct}
+            color={row.allProcessed ? 'success' : 'primary'}
+            sx={{ mt: 0.5, height: 6, borderRadius: 1 }}
+          />
+        </TableCell>
+        <TableCell>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+            <Checkbox
+              size="small"
+              checked={row.reviewReady}
+              disabled={!row.allProcessed || !row.batchId || pendingReady}
+              onChange={(e) => onToggleReady(e.target.checked)}
+            />
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                Ready for Image Review
+              </Typography>
+              {row.reviewReady && row.readyByName ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  By {row.readyByName}
+                </Typography>
+              ) : !row.allProcessed ? (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                >
+                  <Iconify icon={ICON_LOCK} width={12} /> Available once processing completes
+                </Typography>
+              ) : null}
+            </Box>
+          </Box>
+        </TableCell>
+        <TableCell>
+          <Button
+            size="small"
+            fullWidth
+            variant={reviewEnabled ? 'contained' : 'outlined'}
+            color={reviewEnabled ? 'primary' : 'inherit'}
+            disabled={!reviewEnabled}
+            onClick={onView}
+          >
+            Review Images
+          </Button>
+          {row.recordsDetected > 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              {row.recordsConfirmed} of {row.recordsDetected}{' '}
+              {row.needsReview > 0 ? `· ${row.needsReview} need attention` : 'auto-added'}
+            </Typography>
+          )}
+        </TableCell>
+        <TableCell align="right" sx={{ pr: 1 }} onClick={(e) => e.stopPropagation()}>
+          <IconButton color={menu.open ? 'inherit' : 'default'} onClick={menu.onOpen}>
+            <Iconify icon={ICON_MORE} />
+          </IconButton>
+        </TableCell>
+      </TableRow>
+
+      <CustomPopover open={menu.open} anchorEl={menu.anchorEl} onClose={menu.onClose}>
+        <MenuList>
+          <MenuItem onClick={() => { menu.onClose(); onView(); }}>
+            <Iconify icon="solar:eye-bold" />
+            View
+          </MenuItem>
+          <MenuItem onClick={() => { menu.onClose(); onRename(); }}>
+            <Iconify icon="solar:pen-bold" />
+            Rename
+          </MenuItem>
+          <Divider sx={{ borderStyle: 'dashed' }} />
+          <MenuItem onClick={() => { menu.onClose(); onDelete(); }} sx={{ color: 'error.main' }}>
+            <Iconify icon="solar:trash-bin-trash-bold" />
+            Delete
+          </MenuItem>
+        </MenuList>
+      </CustomPopover>
+    </>
   );
 }

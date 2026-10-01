@@ -400,3 +400,134 @@ export async function setOcrBatchReviewReady(
   });
   await parseJson(res);
 }
+
+export async function deleteOcrJobs(
+  churchId: number | string,
+  jobIds: Array<string | number>,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/jobs`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobIds: jobIds.map((id) => Number(id)) }),
+  });
+  await parseJson(res);
+}
+
+// ----------------------------------------------------------------------
+// Upload wizard — Configure step options and Processing step progress.
+// ----------------------------------------------------------------------
+
+export const WIZARD_RECORD_TYPES: { value: OmOcrRecordType; label: string; icon: string }[] = [
+  { value: 'baptism', label: 'Baptism', icon: 'solar:water-bold-duotone' },
+  { value: 'marriage', label: 'Marriage', icon: 'solar:hearts-bold-duotone' },
+  { value: 'funeral', label: 'Funeral', icon: 'solar:candle-bold-duotone' },
+  { value: 'custom', label: 'Custom', icon: 'solar:document-bold-duotone' },
+];
+
+export const WIZARD_LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'el', label: 'Greek' },
+  { value: 'ru', label: 'Russian' },
+  { value: 'ro', label: 'Romanian' },
+  { value: 'ka', label: 'Georgian' },
+  { value: 'zh', label: 'Chinese' },
+] as const;
+
+export const WIZARD_LAYOUT_OPTIONS: {
+  value: string;
+  label: string;
+  recommended: boolean;
+  description: string;
+  guidance?: string;
+}[] = [
+  {
+    value: 'auto',
+    label: 'Auto-detect',
+    recommended: true,
+    description: 'Let Orthodox Metrics determine how many notebook pages appear in each photo.',
+    guidance: 'Best when the photos are clear and all pages have visible edges.',
+  },
+  {
+    value: 'single',
+    label: 'One page per photo',
+    recommended: false,
+    description: 'Each photo contains one complete notebook page.',
+  },
+  {
+    value: 'open_book',
+    label: 'Open book — two facing pages',
+    recommended: false,
+    description: 'Each photo shows the left and right pages of an open notebook register.',
+    guidance: 'Use this for death, baptism, or marriage books where one row spans both pages.',
+  },
+  {
+    value: 'ledger',
+    label: 'Tabular ledger — many rows on one page',
+    recommended: false,
+    description: 'A single page (or open book) with numbered rows for several people.',
+    guidance: 'Use this when one photo contains 2+ handwritten register entries.',
+  },
+  {
+    value: 'multi_record_split',
+    label: 'Multiple pages in one photo',
+    recommended: false,
+    description: 'Each photo contains several smaller notebook pages arranged together.',
+    guidance: 'Use this when two to six separate pages are visible in one image.',
+  },
+];
+
+/** Processing step labels, in order — mirrors the old portal's wizard. */
+export const WIZARD_PROCESSING_STEPS = [
+  'Upload complete',
+  'Preparing images',
+  'Running OCR',
+  'Extracting records',
+  'Matching clergy and locations',
+  'Validating fields',
+  'Checking for duplicates',
+  'Preparing records for review',
+];
+
+/** Maps the least-advanced job in the session onto a WIZARD_PROCESSING_STEPS index. */
+export function wizardProcessingStepIndex(jobs: OmOcrJob[]): number {
+  if (jobs.length === 0) return 0;
+  if (jobs.every((j) => isJobTerminal(j))) return WIZARD_PROCESSING_STEPS.length - 1;
+  if (jobs.some((j) => j.status === 'failed' || j.status === 'error')) {
+    const ok = jobs.filter((j) => j.status !== 'failed' && j.status !== 'error');
+    if (ok.length === 0) return 2;
+  }
+  const stepForJob = (j: OmOcrJob): number => {
+    const rs = j.review_status || 'uploaded';
+    if (['agent_extracted', 'ready_to_seed', 'seeded'].includes(rs)) return 7;
+    if (rs === 'in_review') return 5;
+    if (rs === 'ocr_complete' || rs === 'pending_review') return 3;
+    return 1;
+  };
+  return Math.min(...jobs.map(stepForJob));
+}
+
+export interface OmOcrSessionSummary {
+  totalImages: number;
+  readyForReview: number;
+  completed: number;
+  failed: number;
+  processing: number;
+  recordsFound: number;
+}
+
+export function summarizeOcrSession(jobs: OmOcrJob[]): OmOcrSessionSummary {
+  let readyForReview = 0;
+  let completed = 0;
+  let failed = 0;
+  let processing = 0;
+  let recordsFound = 0;
+  for (const job of jobs) {
+    const status = mapJobToWizardStatus(job);
+    if (status === 'ready-for-review') readyForReview += 1;
+    else if (status === 'completed' || status === 'already-exists') completed += 1;
+    else if (status === 'failed' || status === 'not-church-record') failed += 1;
+    else processing += 1;
+    if (typeof job.records_count === 'number') recordsFound += job.records_count;
+  }
+  return { totalImages: jobs.length, readyForReview, completed, failed, processing, recordsFound };
+}
