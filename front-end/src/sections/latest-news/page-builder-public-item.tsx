@@ -1,24 +1,32 @@
 import type { ReactNode } from 'react';
 import type { PageItem, PageEffectsConfig } from 'src/sections/admin/page-builder/om-pages-api';
 
-import { useMemo, useState } from 'react';
 import Autoplay from 'embla-carousel-autoplay';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { m, useScroll, useSpring, useTransform } from 'framer-motion';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Step from '@mui/material/Step';
 import Grid from '@mui/material/Grid';
+import Table from '@mui/material/Table';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Rating from '@mui/material/Rating';
 import Stepper from '@mui/material/Stepper';
 import Tooltip from '@mui/material/Tooltip';
+import TableRow from '@mui/material/TableRow';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
 import StepLabel from '@mui/material/StepLabel';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
+import TableContainer from '@mui/material/TableContainer';
+import CircularProgress from '@mui/material/CircularProgress';
 
 import { Image } from 'src/components/image';
+import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { Lightbox, useLightbox } from 'src/components/lightbox';
 import { Carousel, useCarousel, CarouselDotButtons, CarouselArrowFloatButtons } from 'src/components/carousel';
@@ -96,6 +104,8 @@ function ItemContent({ item }: Props) {
   if (item.layout_type === 'lightbox' || item.layout_type === 'image_grid') return <GalleryItem item={item} lightbox={item.layout_type === 'lightbox'} />;
   if (item.layout_type === 'form_wizard') return <WizardItem item={item} />;
   if (item.layout_type === 'timeline') return <TimelineItem item={item} />;
+  if (item.layout_type === 'file_upload') return <FileUploadItem item={item} />;
+  if (item.layout_type === 'data_table') return <DataTableItem item={item} />;
   if (item.layout_type === 'rating') {
     return (
       <ContentShell item={item}>
@@ -233,6 +243,199 @@ function TimelineItem({ item }: Props) {
           </Box>
         ))}
       </Stack>
+    </ContentShell>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Live components — unlike everything above, these actually call the
+// backend at render time instead of rendering stored copy/media.
+// ----------------------------------------------------------------------
+
+function FileUploadItem({ item }: Props) {
+  const config = item.component_config || {};
+  const endpoint = String(config.uploadEndpoint || '');
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const handleBrowse = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = event.target.files ? Array.from(event.target.files) : [];
+    if (picked.length) setFiles((prev) => [...prev, ...picked]);
+    event.target.value = '';
+  };
+
+  const handleUpload = async () => {
+    if (!endpoint || files.length === 0) return;
+    setUploading(true);
+    setResult(null);
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      if (config.uploadChurchId) formData.append('churchId', String(config.uploadChurchId));
+      if (config.uploadRecordType) formData.append('recordType', String(config.uploadRecordType));
+      if (config.uploadLanguage) formData.append('language', String(config.uploadLanguage));
+      if (config.uploadLayoutMode) formData.append('recordLayoutMode', String(config.uploadLayoutMode));
+
+      const response = await fetch(endpoint, { method: 'POST', body: formData, credentials: 'include' });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || body?.success === false) {
+        throw new Error(body?.error || body?.message || `Upload failed (${response.status})`);
+      }
+      setFiles([]);
+      setResult({ ok: true, message: body?.message || 'Upload successful.' });
+    } catch (err: any) {
+      setResult({ ok: false, message: err?.message || 'Upload failed.' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <ContentShell item={item} hideBody={!item.body}>
+      <Stack spacing={2}>
+        <Box
+          sx={{
+            p: 4,
+            gap: 1.5,
+            display: 'flex',
+            textAlign: 'center',
+            alignItems: 'center',
+            borderRadius: 1.5,
+            borderStyle: 'dashed',
+            borderWidth: 1,
+            flexDirection: 'column',
+            borderColor: 'divider',
+          }}
+        >
+          <Iconify icon={'solar:cloud-upload-bold' as any} width={44} sx={{ color: 'text.disabled' }} />
+          <Button component="label" variant="contained">
+            {String(config.uploadButtonLabel || 'Choose files')}
+            <Box
+              component="input"
+              type="file"
+              multiple
+              onChange={handleBrowse}
+              sx={{ display: 'none' }}
+            />
+          </Button>
+          {config.uploadHelperText ? (
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {String(config.uploadHelperText)}
+            </Typography>
+          ) : null}
+          {files.length > 0 && (
+            <Typography variant="body2">{files.length} file{files.length === 1 ? '' : 's'} selected</Typography>
+          )}
+        </Box>
+
+        <Stack direction="row" spacing={2} sx={{ justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            disabled={!endpoint || files.length === 0 || uploading}
+            onClick={handleUpload}
+            startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {uploading ? 'Uploading…' : 'Upload'}
+          </Button>
+        </Stack>
+
+        {result && (
+          <Typography variant="body2" sx={{ color: result.ok ? 'success.main' : 'error.main' }}>
+            {result.message}
+          </Typography>
+        )}
+      </Stack>
+    </ContentShell>
+  );
+}
+
+function DataTableItem({ item }: Props) {
+  const config = item.component_config || {};
+  const endpoint = String(config.tableEndpoint || '');
+  const rowsPath = String(config.tableRowsPath || '');
+  const columns = Array.isArray(config.tableColumns) && config.tableColumns.length > 0
+    ? config.tableColumns
+    : [{ key: 'id', label: 'ID' }];
+
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!endpoint) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(endpoint, { credentials: 'include' });
+      const body = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(body?.error || body?.message || `Request failed (${response.status})`);
+
+      let data: unknown = body;
+      if (rowsPath) {
+        for (const segment of rowsPath.split('.').filter(Boolean)) {
+          data = (data as any)?.[segment];
+        }
+      } else if (!Array.isArray(data)) {
+        const guess = ['items', 'rows', 'data', 'jobs', 'campaigns', 'results'].find((key) => Array.isArray((data as any)?.[key]));
+        if (guess) data = (data as any)[guess];
+      }
+      setRows(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load data');
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint, rowsPath]);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <ContentShell item={item} hideBody={!item.body}>
+      {error && <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>}
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {columns.map((col) => <TableCell key={col.key}>{col.label}</TableCell>)}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 4 }}>
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  No data to display.
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((row, index) => (
+                 
+                <TableRow key={index}>
+                  {columns.map((col) => {
+                    const value = row?.[col.key];
+                    return (
+                      <TableCell key={col.key}>
+                        {value === null || value === undefined
+                          ? '—'
+                          : typeof value === 'object'
+                            ? JSON.stringify(value)
+                            : String(value)}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </ContentShell>
   );
 }

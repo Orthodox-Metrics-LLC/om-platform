@@ -39,6 +39,8 @@ export const BUILDER_COMPONENTS: BuilderComponent[] = [
   { type: 'timeline', label: 'Timeline', description: 'Chronological events and milestones', icon: 'solar:history-bold-duotone', defaults: { timeline: [{ title: 'Milestone', body: 'Describe this event', date: 'Today' }] } },
   { type: 'tooltip', label: 'Tooltip', description: 'Contextual hover or focus help', icon: 'solar:info-circle-bold-duotone', defaults: { tooltip: 'Helpful information', placement: 'top' } },
   { type: 'rating', label: 'Rating', description: 'Interactive or read-only rating display', icon: 'solar:star-bold-duotone', defaults: { rating: 4.5, precision: 0.5, max: 5, readOnly: true } },
+  { type: 'file_upload', label: 'File upload', description: 'Live upload widget that posts files to a backend endpoint (e.g. OCR intake)', icon: 'solar:upload-square-bold-duotone', defaults: { uploadEndpoint: '/api/ocr/jobs/upload', uploadRecordType: 'custom', uploadLanguage: 'en', uploadLayoutMode: 'auto', uploadButtonLabel: 'Upload' } },
+  { type: 'data_table', label: 'Data table', description: 'Live table bound to a GET API endpoint', icon: 'solar:table-bold-duotone', defaults: { tableEndpoint: '', tableColumns: [{ key: 'id', label: 'ID' }], tableRowsPath: '' } },
 ];
 
 export function componentDefinition(type: LayoutType) {
@@ -66,6 +68,20 @@ export function PageBuilderComponentConfig({ item, onChange }: ConfigEditorProps
         try { set(key, JSON.parse(event.target.value)); } catch { /* Keep the previous valid value. */ }
       }}
       helperText="Use an array of objects with title, body, and optional date."
+      sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }}
+    />
+  );
+
+  const jsonField = (key: string, label: string, fallback: unknown[], helperText: string) => (
+    <TextField
+      fullWidth multiline minRows={4}
+      label={label}
+      key={`${item.id}-${key}-${JSON.stringify(config[key] || fallback).length}`}
+      defaultValue={JSON.stringify(config[key] || fallback, null, 2)}
+      onBlur={(event) => {
+        try { set(key, JSON.parse(event.target.value)); } catch { /* Keep the previous valid value. */ }
+      }}
+      helperText={helperText}
       sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }}
     />
   );
@@ -120,6 +136,61 @@ export function PageBuilderComponentConfig({ item, onChange }: ConfigEditorProps
           <Grid size={{ xs: 12, md: 4 }}><NumberField label="Value" value={Number(config.rating || 0)} step={0.5} onChange={(value) => set('rating', value)} /></Grid>
           <Grid size={{ xs: 12, md: 4 }}><SelectField label="Precision" value={String(config.precision || 1)} onChange={(value) => set('precision', Number(value))} options={['1', '0.5']} /></Grid>
           <Grid size={{ xs: 12, md: 4 }}><FormControlLabel control={<Switch checked={config.readOnly !== false} onChange={(e) => set('readOnly', e.target.checked)} />} label="Read only" /></Grid>
+        </Grid>
+      );
+    case 'file_upload':
+      return (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              label="Upload endpoint"
+              value={String(config.uploadEndpoint || '')}
+              onChange={(e) => set('uploadEndpoint', e.target.value)}
+              helperText="Backend API path the uploaded files are POSTed to (multipart/form-data, field name 'files')."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <NumberField label="Church ID" value={Number(config.uploadChurchId || 0)} onChange={(value) => set('uploadChurchId', value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Record type" value={String(config.uploadRecordType || 'custom')} onChange={(e) => set('uploadRecordType', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Language" value={String(config.uploadLanguage || 'en')} onChange={(e) => set('uploadLanguage', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Button label" value={String(config.uploadButtonLabel || 'Upload')} onChange={(e) => set('uploadButtonLabel', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField fullWidth label="Helper text" value={String(config.uploadHelperText || '')} onChange={(e) => set('uploadHelperText', e.target.value)} />
+          </Grid>
+        </Grid>
+      );
+    case 'data_table':
+      return (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <TextField
+              fullWidth
+              label="Data endpoint (GET)"
+              value={String(config.tableEndpoint || '')}
+              onChange={(e) => set('tableEndpoint', e.target.value)}
+              helperText="API path returning JSON. Must be reachable without authentication on a public page."
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Rows path (optional)"
+              value={String(config.tableRowsPath || '')}
+              onChange={(e) => set('tableRowsPath', e.target.value)}
+              helperText="Dot path to the array in the response, e.g. 'jobs'. Leave blank if the response is itself an array."
+            />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            {jsonField('tableColumns', 'Columns (JSON)', [{ key: 'id', label: 'ID' }], "Array of { key, label } — key is read from each row, label is the column header.")}
+          </Grid>
         </Grid>
       );
     default:

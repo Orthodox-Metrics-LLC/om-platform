@@ -31,7 +31,10 @@ export type PageStatus = 'draft' | 'scheduled' | 'live' | 'expired' | 'archived'
 export type LayoutType =
   | 'hero' | 'split' | 'card' | 'banner' | 'quote' | 'image_grid' | 'video'
   | 'animate' | 'utilities' | 'scrollbar' | 'scroll_progress' | 'lightbox'
-  | 'form_wizard' | 'carousel' | 'timeline' | 'tooltip' | 'rating';
+  | 'form_wizard' | 'carousel' | 'timeline' | 'tooltip' | 'rating'
+  | 'file_upload' | 'data_table';
+
+export type PageTableColumn = { key: string; label: string };
 
 export type PageItemConfig = Record<string, unknown> & {
   variant?: string;
@@ -44,6 +47,18 @@ export type PageItemConfig = Record<string, unknown> & {
   tooltip?: string;
   steps?: { title: string; body?: string }[];
   timeline?: { title: string; body?: string; date?: string }[];
+  /** `file_upload` — live, functional upload widget (not decorative). */
+  uploadEndpoint?: string;
+  uploadChurchId?: number;
+  uploadRecordType?: string;
+  uploadLanguage?: string;
+  uploadLayoutMode?: string;
+  uploadButtonLabel?: string;
+  uploadHelperText?: string;
+  /** `data_table` — live table bound to a GET endpoint. */
+  tableEndpoint?: string;
+  tableColumns?: PageTableColumn[];
+  tableRowsPath?: string;
 };
 
 export type PageEffectsConfig = {
