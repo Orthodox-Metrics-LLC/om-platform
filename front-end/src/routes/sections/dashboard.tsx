@@ -73,6 +73,9 @@ const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
 const MenuEditorPage = lazy(() => import('src/pages/dashboard/menu-editor'));
+const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-builder'));
+const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
+const PageBuilderEditPage = lazy(() => import('src/pages/dashboard/admin/page-builder/edit'));
 // Sacramental records
 const RecordsListPage = lazy(() => import('src/pages/dashboard/records/list'));
 const RecordNewPage = lazy(() => import('src/pages/dashboard/records/new'));
@@ -215,6 +218,14 @@ export const dashboardRoutes: RouteObject[] = [
       { path: 'file-manager', element: <FileManagerPage /> },
       { path: 'asset-manager', element: <AssetManagerPage /> },
       { path: 'menu-editor', element: <MenuEditorPage /> },
+      {
+        path: 'admin/page-builder',
+        children: [
+          { index: true, element: <PageBuilderListPage /> },
+          { path: 'new', element: <PageBuilderNewPage /> },
+          { path: ':id/edit', element: <PageBuilderEditPage /> },
+        ],
+      },
       {
         path: 'records',
         children: [

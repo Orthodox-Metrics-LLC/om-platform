@@ -132,6 +132,11 @@ export const paths = {
     fileManager: `${ROOTS.DASHBOARD}/file-manager`,
     assetManager: `${ROOTS.DASHBOARD}/asset-manager`,
     menuEditor: `${ROOTS.DASHBOARD}/menu-editor`,
+    pageBuilder: {
+      root: `${ROOTS.DASHBOARD}/admin/page-builder`,
+      new: `${ROOTS.DASHBOARD}/admin/page-builder/new`,
+      edit: (id: string | number) => `${ROOTS.DASHBOARD}/admin/page-builder/${id}/edit`,
+    },
     records: {
       root: `${ROOTS.DASHBOARD}/records`,
       list: (type: string) => `${ROOTS.DASHBOARD}/records/${type}`,

@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "NODE_OPTIONS=--max-old-space-size=6144 vite",
     "start": "NODE_OPTIONS=--max-old-space-size=6144 vite preview",
+    "typecheck": "tsc --noEmit",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 tsc && vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
