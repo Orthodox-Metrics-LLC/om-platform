@@ -22,9 +22,10 @@ type Props = {
   view: 'grid' | 'list';
   onChangeView: (v: 'grid' | 'list') => void;
   onUpload: () => void;
+  onZipImport: () => void;
 };
 
-export function AssetManagerToolbar({ view, onChangeView, onUpload }: Props) {
+export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport }: Props) {
   const { filters, setFilters, resetFilters, total, navLocation, collections } = useAssetManager();
   const [searchInput, setSearchInput] = useState(filters.search);
 
@@ -79,6 +80,7 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload }: Props) {
           <ToggleButton value="grid"><Iconify icon="mingcute:dot-grid-fill" /></ToggleButton>
         </ToggleButtonGroup>
         <Box sx={{ flexGrow: 1 }} />
+        <Button variant="outlined" startIcon={<Iconify icon="solar:archive-down-minimlistic-bold" />} onClick={onZipImport}>Import ZIP</Button>
         <Button variant="contained" startIcon={<Iconify icon="eva:cloud-upload-fill" />} onClick={onUpload}>Upload</Button>
       </Box>
 

@@ -28,6 +28,7 @@ import { AssetDetailsDrawer } from './asset-details-drawer';
 import { AssetManagerSidebar } from './asset-manager-sidebar';
 import { AssetManagerToolbar } from './asset-manager-toolbar';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
+import { AssetZipImportDialog } from './asset-zip-import-dialog';
 import { useAssetManager, AssetManagerProvider } from './asset-manager-context';
 import { AssetSplitDialog, AssetTransformDialog } from './asset-transform-dialog';
 
@@ -49,6 +50,7 @@ function AssetLibraryContent() {
   const [editing, setEditing] = useState(false);
   const details = useBoolean();
   const uploadDialog = useBoolean();
+  const zipImportDialog = useBoolean();
   const transformDialog = useBoolean();
   const splitDialog = useBoolean();
   const copyDialog = useBoolean();
@@ -56,6 +58,7 @@ function AssetLibraryContent() {
   const confirmArchive = useBoolean();
   const confirmDupes = useBoolean();
   const [dropFiles, setDropFiles] = useState<File[]>([]);
+  const [zipDropFile, setZipDropFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const open = useCallback((a: OmAsset, edit = false) => { setCurrent(a); setEditing(edit); details.onTrue(); }, [details]);
@@ -141,14 +144,23 @@ function AssetLibraryContent() {
       sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', position: 'relative' }}
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true); } }}
       onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => { if (e.dataTransfer.files.length) { e.preventDefault(); setDragOver(false); setDropFiles(Array.from(e.dataTransfer.files)); uploadDialog.onTrue(); } }}
+      onDrop={(e) => {
+        if (!e.dataTransfer.files.length) return;
+        e.preventDefault(); setDragOver(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length === 1 && files[0].name.toLowerCase().endsWith('.zip')) {
+          setZipDropFile(files[0]); zipImportDialog.onTrue();
+        } else {
+          setDropFiles(files); uploadDialog.onTrue();
+        }
+      }}
     >
       <Card sx={{ width: 264, flexShrink: 0, display: { xs: 'none', md: 'block' }, height: 'calc(100vh - 260px)', position: 'sticky', top: 96 }}>
         <AssetManagerSidebar />
       </Card>
 
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <AssetManagerToolbar view={view} onChangeView={setView} onUpload={() => { setDropFiles([]); uploadDialog.onTrue(); }} />
+        <AssetManagerToolbar view={view} onChangeView={setView} onUpload={() => { setDropFiles([]); uploadDialog.onTrue(); }} onZipImport={zipImportDialog.onTrue} />
         <Box sx={{ mt: 3 }}>
           <AssetBulkActions />
           {renderBody()}
@@ -163,6 +175,7 @@ function AssetLibraryContent() {
 
       <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} />
       <AssetUploadDialog open={uploadDialog.value} onClose={uploadDialog.onFalse} initialFiles={dropFiles} />
+      <AssetZipImportDialog open={zipImportDialog.value} onClose={() => { setZipDropFile(null); zipImportDialog.onFalse(); }} initialFile={zipDropFile} />
       <AssetTransformDialog open={transformDialog.value} onClose={transformDialog.onFalse} asset={current} onDone={(a) => { if (a) { am.actions.replaceAsset(a); setCurrent(a); } am.reload(); }} />
       <AssetSplitDialog open={splitDialog.value} onClose={splitDialog.onFalse} asset={current} onDone={() => { details.onFalse(); am.reload(); am.reloadMeta(); }} />
       <AssetCopyDialog open={copyDialog.value} onClose={copyDialog.onFalse} asset={current} />

@@ -292,6 +292,91 @@ export async function uploadOmAsset(
   return asset;
 }
 
+/* ─── ZIP image import ─── */
+
+export type ZipNamingStrategy = 'smart' | 'sequential' | 'preserve';
+export type ZipImportEntry = {
+  index?: number;
+  entry_name?: string;
+  original_name: string;
+  stored_filename?: string;
+  title?: string;
+  alt_text?: string;
+  size?: number;
+  status: 'ready' | 'skipped' | 'imported' | 'duplicate' | 'failed';
+  reason?: string;
+  error?: string;
+  asset_id?: number;
+  duplicate_asset_id?: number;
+};
+export type ZipImportAnalysis = {
+  id: number;
+  import_token: string;
+  archive_filename: string;
+  archive_slug: string;
+  scope: OmAssetScope;
+  church_id: number | null;
+  category: string;
+  folder: string;
+  naming_strategy: ZipNamingStrategy;
+  tags: string[];
+  total_bytes: number;
+  manifest: ZipImportEntry[];
+};
+export type ZipImportResult = {
+  id: number;
+  import_token: string;
+  status: 'completed' | 'partial' | 'failed';
+  imported_count: number;
+  skipped_count: number;
+  failed_count: number;
+  report: ZipImportEntry[];
+};
+
+export function analyzeZipImport(formData: FormData, onProgress?: (percent: number) => void) {
+  return new Promise<ZipImportAnalysis>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `/api${BASE}/zip-import/analyze`);
+    xhr.withCredentials = true;
+    const token = sessionStorage.getItem('om_access_token');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.upload.onprogress = (event) => { if (onProgress && event.lengthComputable) onProgress(Math.round((event.loaded * 100) / event.total)); };
+    xhr.onerror = () => reject(new Error('ZIP upload failed'));
+    xhr.onload = () => {
+      try {
+        const json = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300 && json.import) resolve(json.import);
+        else reject(new Error(json.message || json.error || `ZIP analysis failed (${xhr.status})`));
+      } catch { reject(new Error(`ZIP analysis failed (${xhr.status})`)); }
+    };
+    xhr.send(formData);
+  });
+}
+
+export async function commitZipImport(token: string, payload: {
+  scope?: OmAssetScope;
+  church_id?: number | null;
+  category?: string;
+  folder?: string;
+  collection_id?: number | null;
+  tags?: string[];
+  skip_duplicates?: boolean;
+  entries?: Partial<ZipImportEntry>[];
+}): Promise<ZipImportResult> {
+  const res = await apiClient.post<{ import: ZipImportResult }>(`${BASE}/zip-import/${token}/commit`, payload);
+  return res.import;
+}
+
+export async function cancelZipImport(token: string): Promise<boolean> {
+  const res = await apiClient.delete<{ cancelled: boolean }>(`${BASE}/zip-import/${token}`);
+  return !!res.cancelled;
+}
+
+export async function listZipImports(): Promise<any[]> {
+  const res = await apiClient.get<{ imports: any[] }>(`${BASE}/zip-imports`);
+  return res.imports || [];
+}
+
 /* ─── Smart Upload Assist ─── */
 
 export interface AnalyzeUploadFileInput {
