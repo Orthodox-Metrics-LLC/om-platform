@@ -137,6 +137,11 @@ export const paths = {
       new: `${ROOTS.DASHBOARD}/admin/page-builder/new`,
       edit: (id: string | number) => `${ROOTS.DASHBOARD}/admin/page-builder/${id}/edit`,
     },
+    ocr: {
+      root: `${ROOTS.DASHBOARD}/ocr`,
+      upload: `${ROOTS.DASHBOARD}/ocr/upload`,
+      details: (id: string | number) => `${ROOTS.DASHBOARD}/ocr/${id}`,
+    },
     records: {
       root: `${ROOTS.DASHBOARD}/records`,
       list: (type: string) => `${ROOTS.DASHBOARD}/records/${type}`,

@@ -85,6 +85,10 @@ const RecordsCertificatesPage = lazy(() => import('src/pages/dashboard/records/c
 const CertificateTemplatesPage = lazy(() => import('src/pages/dashboard/records/certificate-templates'));
 const CertificateDesignerPage = lazy(() => import('src/pages/dashboard/records/certificate-designer'));
 const SacramentalCalendarPage = lazy(() => import('src/pages/dashboard/records/sacramental-calendar'));
+// OCR
+const OcrListPage = lazy(() => import('src/pages/dashboard/ocr'));
+const OcrUploadPage = lazy(() => import('src/pages/dashboard/ocr/upload'));
+const OcrDetailsPage = lazy(() => import('src/pages/dashboard/ocr/details'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -224,6 +228,14 @@ export const dashboardRoutes: RouteObject[] = [
           { index: true, element: <PageBuilderListPage /> },
           { path: 'new', element: <PageBuilderNewPage /> },
           { path: ':id/edit', element: <PageBuilderEditPage /> },
+        ],
+      },
+      {
+        path: 'ocr',
+        children: [
+          { index: true, element: <OcrListPage /> },
+          { path: 'upload', element: <OcrUploadPage /> },
+          { path: ':id', element: <OcrDetailsPage /> },
         ],
       },
       {
