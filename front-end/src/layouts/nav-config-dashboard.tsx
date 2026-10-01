@@ -97,14 +97,21 @@ export const churchNavData: NavSectionProps['data'] = [
           { title: 'File', path: paths.dashboard.general.file },
         ],
       },
-      { title: 'Upload Records', path: paths.dashboard.ocr.root, icon: NAV_ICONS.folder, deepMatch: true },
     ],
   },
   {
     subheader: 'Applications',
     items: [
-      { title: 'Records', path: paths.dashboard.records.root, icon: NAV_ICONS.file, deepMatch: true },
-      { title: 'Certificates', path: paths.dashboard.records.certificates, icon: NAV_ICONS.course, deepMatch: true },
+      {
+        title: 'Records',
+        path: paths.dashboard.records.root,
+        icon: NAV_ICONS.file,
+        children: [
+          { title: 'Upload Records', path: paths.dashboard.ocr.root, deepMatch: true },
+          { title: 'Certificates', path: paths.dashboard.records.certificates, deepMatch: true },
+          { title: 'Metrics', path: paths.dashboard.records.root, deepMatch: true },
+        ],
+      },
       { title: 'Sacramental calendar', path: paths.dashboard.records.sacramentalCalendar, icon: NAV_ICONS.booking },
       { title: 'Invoices', path: paths.dashboard.invoice.root, icon: NAV_ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
       { title: 'File manager', path: paths.dashboard.fileManager, icon: NAV_ICONS.folder },
