@@ -170,6 +170,7 @@ export interface OmAssetListParams {
   page_size?: number;
   paginate?: 'cursor';
   cursor?: string | null;
+  smart_search?: boolean;
 }
 
 export interface OmAssetPage {

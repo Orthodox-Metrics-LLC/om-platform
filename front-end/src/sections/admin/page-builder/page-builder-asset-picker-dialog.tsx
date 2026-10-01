@@ -1,4 +1,4 @@
-import type { OmAsset } from 'src/sections/admin/asset-manager/om-assets-api';
+import type { OmAsset, AssetSortField } from 'src/sections/admin/asset-manager/om-assets-api';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -14,10 +14,13 @@ import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import InputAdornment from '@mui/material/InputAdornment';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import { Iconify } from 'src/components/iconify';
+
 import { AssetThumb } from 'src/sections/admin/asset-manager/asset-card';
-import { fetchOmAssetsPage } from 'src/sections/admin/asset-manager/om-assets-api';
+import { fetchOmAssetsPage, ASSET_SORT_OPTIONS } from 'src/sections/admin/asset-manager/om-assets-api';
 
 // ----------------------------------------------------------------------
 
@@ -27,65 +30,157 @@ type Props = {
   onPick: (asset: OmAsset) => void;
 };
 
+const SCOPE_OPTIONS: { value: '' | 'public' | 'church' | 'site' | 'internal'; label: string }[] = [
+  { value: '', label: 'All assets' },
+  { value: 'public', label: 'Public assets' },
+  { value: 'site', label: 'Site assets' },
+  { value: 'church', label: 'Church assets' },
+  { value: 'internal', label: 'Internal assets' },
+];
+
 /**
- * Lightweight asset picker for the Page Builder (not the full Asset Manager
- * context — just enough to browse/search and pick one asset to attach as
- * page/item media). Scoped to 'public' + 'site' assets, since Page Builder
- * content is for the public-facing site.
+ * Asset picker for the Page Builder. Browses the full Asset Manager catalog,
+ * defaults to newest-first, and supports smart search (video / image / document
+ * synonyms plus year/date-range filters).
  */
 export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
   const [assets, setAssets] = useState<OmAsset[]>([]);
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'public' | 'site'>('public');
+  const [scope, setScope] = useState<'' | 'public' | 'church' | 'site' | 'internal'>('');
+  const [sort, setSort] = useState<AssetSortField>('created_desc');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageCount, setPageCount] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const load = useCallback(async (q: string, nextPage = 1, nextScope: 'public' | 'site' = scope) => {
-    setLoading(true);
-    try {
-      const page = await fetchOmAssetsPage({ scope: nextScope, search: q || undefined, page: nextPage, page_size: 48 });
-      setAssets(page.assets);
-      setPageNumber(page.page);
-      setPageCount(Math.max(1, Math.ceil(page.total / page.page_size)));
-    } finally {
-      setLoading(false);
-    }
-  }, [scope]);
+  const load = useCallback(
+    async (
+      q: string,
+      nextPage = 1,
+      nextScope: '' | 'public' | 'church' | 'site' | 'internal' = scope,
+      nextSort: AssetSortField = sort,
+    ) => {
+      setLoading(true);
+      try {
+        const page = await fetchOmAssetsPage({
+          scope: nextScope || undefined,
+          search: q || undefined,
+          sort: nextSort,
+          page: nextPage,
+          page_size: 48,
+          smart_search: true,
+        });
+        setAssets(page.assets);
+        setTotal(page.total);
+        setPageNumber(page.page);
+        setPageCount(Math.max(1, Math.ceil(page.total / page.page_size)));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [scope, sort],
+  );
 
+  // Initial load when the dialog opens.
   useEffect(() => {
     if (open) load(search);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Debounced reload on search/scope/sort changes.
+  useEffect(() => {
+    if (!open) return undefined;
+    const t = setTimeout(() => load(search, 1), 350);
+    return () => clearTimeout(t);
+  }, [open, search, scope, sort, load]);
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Pick from Asset Manager</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
           <Select
-            size="small" value={scope} sx={{ minWidth: 140 }}
+            size="small"
+            value={scope}
+            sx={{ minWidth: 150 }}
             onChange={(event) => {
-              const next = event.target.value as 'public' | 'site';
+              const next = event.target.value as typeof scope;
               setScope(next);
-              load(search, 1, next);
+              load(search, 1, next, sort);
             }}
           >
-            <MenuItem value="public">Public assets</MenuItem>
-            <MenuItem value="site">Site assets</MenuItem>
+            {SCOPE_OPTIONS.map((opt) => (
+              <MenuItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </MenuItem>
+            ))}
           </Select>
+
+          <Select
+            size="small"
+            value={sort}
+            sx={{ minWidth: 160 }}
+            onChange={(event) => {
+              const next = event.target.value as AssetSortField;
+              setSort(next);
+              load(search, 1, scope, next);
+            }}
+          >
+            {ASSET_SORT_OPTIONS.map((opt) => (
+              <MenuItem key={opt.id} value={opt.id}>
+                {opt.label}
+              </MenuItem>
+            ))}
+          </Select>
+
           <TextField
-            fullWidth size="small" placeholder="Search assets…" value={search}
+            fullWidth
+            size="small"
+            placeholder="Search assets…"
+            value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') load(search, 1); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') load(search, 1);
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-          <Button variant="outlined" onClick={() => load(search, 1)}>Search</Button>
+
+          <Button variant="outlined" onClick={() => load(search, 1)}>
+            Search
+          </Button>
         </Box>
+
+        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 2 }}>
+          {loading ? 'Loading…' : `${total.toLocaleString()} result${total === 1 ? '' : 's'}`}
+          {' · Try '}
+          <Box component="span" sx={{ color: 'text.primary' }}>
+            video
+          </Box>
+          ,{' '}
+          <Box component="span" sx={{ color: 'text.primary' }}>
+            pictures from 2025
+          </Box>
+          , or{' '}
+          <Box component="span" sx={{ color: 'text.primary' }}>
+            docs
+          </Box>
+        </Typography>
+
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress />
+          </Box>
         ) : assets.length === 0 ? (
           <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', py: 6 }}>
-            No public/site assets found. Upload media under Management → Asset Manager first.
+            No assets found. Upload media under Management → Asset Manager first.
           </Typography>
         ) : (
           <Grid container spacing={1.5}>
@@ -109,9 +204,12 @@ export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
             ))}
           </Grid>
         )}
+
         {!loading && pageCount > 1 && (
           <Pagination
-            page={pageNumber} count={pageCount} color="primary"
+            page={pageNumber}
+            count={pageCount}
+            color="primary"
             onChange={(_, nextPage) => load(search, nextPage)}
             sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}
           />
