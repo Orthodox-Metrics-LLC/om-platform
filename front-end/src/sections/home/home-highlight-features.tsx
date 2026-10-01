@@ -107,10 +107,10 @@ const ITEMS = [
       { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Russian' },
       { src: 'dashboard-ethiopian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Amharic for the Ethiopian Orthodox Church' },
       { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
-      { src: 'dashboard-greek.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
-      { src: 'dashboard-serbian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Serbian' },
+      { src: 'dashboard-greek-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
+      { src: 'dashboard-serbian-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Serbian' },
       { src: 'dashboard-bulgarian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Bulgarian' },
-      { src: 'dashboard-georgian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Georgian' },
+      { src: 'dashboard-georgian-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Georgian' },
       {
         src: 'dashboard-arabic.webp',
         ratio: 1.5,
