@@ -91,11 +91,11 @@ export function HomeHighlightFeatures({ sx, ...other }: BoxProps) {
 // ----------------------------------------------------------------------
 
 /**
- * All twelve church dashboards are normalized to a 3:2 aspect ratio
- * (padded, never cropped, in the source export) so they line up at the
- * same height and width across the row regardless of each dashboard's
- * original crop. Ordered largest to smallest by church population:
- * Russian through Korean.
+ * The public-site language cards are authored as complete images under
+ * public/assets/images/home/highlights (`<language>-card.png`). They are
+ * displayed at a shared height with their native aspect ratios intact — no
+ * cropping, padding, avatar compositing, or legacy dashboard assets.
+ * Ordered largest to smallest by church population: Russian through Korean.
  */
 const ITEMS = [
   {
@@ -104,22 +104,22 @@ const ITEMS = [
       'One dashboard for every church — Russian, Ethiopian, Romanian, Greek, Serbian, Bulgarian, Georgian, Arabic, American, Chinese, Japanese, and Korean — including full right-to-left layout.',
     icon: 'solar:global-bold-duotone',
     images: [
-      { src: 'dashboard-russian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Russian' },
-      { src: 'dashboard-ethiopian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Amharic for the Ethiopian Orthodox Church' },
-      { src: 'dashboard-romanian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Romanian' },
-      { src: 'dashboard-greek-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Greek' },
-      { src: 'dashboard-serbian-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Serbian' },
-      { src: 'dashboard-bulgarian.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Bulgarian' },
-      { src: 'dashboard-georgian-avatar-free.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Georgian' },
+      { src: 'russian-card.png', ratio: 1236 / 1039, alt: 'The Orthodox Metrics dashboard in Russian' },
+      { src: 'ethiopian-card.png', ratio: 1409 / 1041, alt: 'The Orthodox Metrics dashboard in Amharic for the Ethiopian Orthodox Church' },
+      { src: 'romanian-card.png', ratio: 1261 / 1048, alt: 'The Orthodox Metrics dashboard in Romanian' },
+      { src: 'greek-card.png', ratio: 1519 / 1006, alt: 'The Orthodox Metrics dashboard in Greek' },
+      { src: 'serbian-card.png', ratio: 1224 / 1024, alt: 'The Orthodox Metrics dashboard in Serbian' },
+      { src: 'bulgarian-card.png', ratio: 1409 / 1100, alt: 'The Orthodox Metrics dashboard in Bulgarian' },
+      { src: 'georgian-card.png', ratio: 1293 / 1100, alt: 'The Orthodox Metrics dashboard in Georgian' },
       {
-        src: 'dashboard-arabic.webp',
-        ratio: 1.5,
+        src: 'arabic-card.png',
+        ratio: 1037 / 993,
         alt: 'The Orthodox Metrics dashboard in Arabic, laid out right-to-left',
       },
-      { src: 'dashboard-english.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in English for the Orthodox Church in America' },
-      { src: 'dashboard-chinese.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Chinese' },
-      { src: 'dashboard-japanese.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Japanese' },
-      { src: 'dashboard-korean.webp', ratio: 1.5, alt: 'The Orthodox Metrics dashboard in Korean' },
+      { src: 'english-card.png', ratio: 1272 / 987, alt: 'The Orthodox Metrics dashboard in English for the Orthodox Church in America' },
+      { src: 'chinese-card.png', ratio: 1210 / 997, alt: 'The Orthodox Metrics dashboard in Chinese' },
+      { src: 'japanese-card.png', ratio: 1236 / 1041, alt: 'The Orthodox Metrics dashboard in Japanese' },
+      { src: 'korean-card.png', ratio: 1269 / 1025, alt: 'The Orthodox Metrics dashboard in Korean' },
     ],
   },
 ] as const;
@@ -261,7 +261,7 @@ function Item({ item, sx, ...other }: ItemProps) {
               component="img"
               loading="lazy"
               alt={image.alt}
-              src={`${CONFIG.assetsDir}/assets/images/home/highlights/${image.src}?v=20261001-1`}
+              src={`${CONFIG.assetsDir}/assets/images/home/highlights/${image.src}`}
               sx={{
                 display: 'block',
                 /**
