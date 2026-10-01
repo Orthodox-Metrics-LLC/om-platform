@@ -1,4 +1,4 @@
-import type { OmAsset } from 'src/sections/asset-manager/om-assets-api';
+import type { OmAsset } from 'src/sections/admin/asset-manager/om-assets-api';
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -13,8 +13,8 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import { AssetThumb } from 'src/sections/asset-manager/asset-card';
-import { fetchOmAssetsPage } from 'src/sections/asset-manager/om-assets-api';
+import { AssetThumb } from 'src/sections/admin/asset-manager/asset-card';
+import { fetchOmAssetsPage } from 'src/sections/admin/asset-manager/om-assets-api';
 
 // ----------------------------------------------------------------------
 

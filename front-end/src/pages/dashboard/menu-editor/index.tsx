@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/global-config';
 
-import { MenuEditorView } from 'src/sections/menu-editor/menu-editor-view';
+import { MenuEditorView } from 'src/sections/admin/menu-editor/menu-editor-view';
 
 // ----------------------------------------------------------------------
 

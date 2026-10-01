@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/global-config';
 
-import { UserCreateView } from 'src/sections/user/view';
+import { UserCreateView } from 'src/sections/admin/user-management/view/user-create-view';
 
 // ----------------------------------------------------------------------
 

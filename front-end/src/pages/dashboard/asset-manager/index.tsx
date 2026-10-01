@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/global-config';
 
-import { AssetManagerView } from 'src/sections/asset-manager/view/asset-manager-view';
+import { AssetManagerView } from 'src/sections/admin/asset-manager/view/asset-manager-view';
 
 // ----------------------------------------------------------------------
 

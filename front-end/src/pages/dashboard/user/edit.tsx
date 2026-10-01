@@ -2,7 +2,7 @@ import { useParams } from 'src/routes/hooks';
 
 import { CONFIG } from 'src/global-config';
 
-import { UserEditView } from 'src/sections/user/view';
+import { UserEditView } from 'src/sections/admin/user-management/view/user-edit-view';
 
 // ----------------------------------------------------------------------
 

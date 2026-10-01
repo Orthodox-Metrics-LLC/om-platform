@@ -1,6 +1,6 @@
 import type { DesignerState } from './use-designer';
-import type { OmAsset } from 'src/sections/asset-manager/om-assets-api';
 import type { StudioMeta, CertificateType } from '../om-certificates-api';
+import type { OmAsset } from 'src/sections/admin/asset-manager/om-assets-api';
 
 import { useState, useEffect } from 'react';
 
@@ -26,7 +26,7 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { omAssetFileUrl, fetchOmAssetsCursorPage } from 'src/sections/asset-manager/om-assets-api';
+import { omAssetFileUrl, fetchOmAssetsCursorPage } from 'src/sections/admin/asset-manager/om-assets-api';
 
 // ----------------------------------------------------------------------
 

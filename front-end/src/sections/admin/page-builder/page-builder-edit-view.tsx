@@ -1,4 +1,4 @@
-import type { OmAsset } from 'src/sections/asset-manager/om-assets-api';
+import type { OmAsset } from 'src/sections/admin/asset-manager/om-assets-api';
 import type { Page, PageItem, PageType, LayoutType, PageVersion } from './om-pages-api';
 
 import { useState, useEffect, useCallback } from 'react';
