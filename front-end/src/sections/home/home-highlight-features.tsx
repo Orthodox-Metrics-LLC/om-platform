@@ -261,7 +261,7 @@ function Item({ item, sx, ...other }: ItemProps) {
               component="img"
               loading="lazy"
               alt={image.alt}
-              src={`${CONFIG.assetsDir}/assets/images/home/highlights/${image.src}?v=20260930-2`}
+              src={`${CONFIG.assetsDir}/assets/images/home/highlights/${image.src}?v=20260930-3`}
               sx={{
                 display: 'block',
                 /**
