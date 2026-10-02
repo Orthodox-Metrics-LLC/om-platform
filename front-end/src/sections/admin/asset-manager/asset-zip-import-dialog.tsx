@@ -30,7 +30,6 @@ import { fData } from 'src/utils/format-number';
 
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
-import { Scrollbar } from 'src/components/scrollbar';
 
 import { AssetChurchSelect } from './asset-church-select';
 import { commitZipImport, cancelZipImport, analyzeZipImport } from './om-assets-api';
@@ -41,6 +40,35 @@ import { ASSET_SCOPES, useAssetManager, ASSET_CATEGORIES } from './asset-manager
 type Props = { open: boolean; onClose: () => void; initialFile?: File | null };
 
 type EditableEntry = ZipImportEntry & { title: string; alt_text: string; stored_filename: string };
+
+const GENERATED_SOURCE_RE = /^(?:https?|www)[_.:-]/i;
+const GENERATED_NAME_IN_IMPORT_RE = /(?:^|[-_])(?:https?|www)(?:[_.:-]|$)/i;
+
+function toDisplayTitle(filename: string) {
+  return filename
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function normalizeReviewEntry(entry: ZipImportEntry, index: number, archiveSlug: string): EditableEntry {
+  let storedFilename = entry.stored_filename || entry.original_name;
+  const generatedSource = GENERATED_SOURCE_RE.test(entry.original_name);
+  const staleGeneratedName = GENERATED_NAME_IN_IMPORT_RE.test(storedFilename);
+
+  if (generatedSource && staleGeneratedName) {
+    const extension = storedFilename.match(/\.[a-z0-9]+$/i)?.[0] || entry.original_name.match(/\.[a-z0-9]+$/i)?.[0] || '.png';
+    storedFilename = `${archiveSlug || 'asset-import'}-${String((entry.index ?? index) + 1).padStart(3, '0')}${extension.toLowerCase()}`;
+  }
+
+  const title = staleGeneratedName ? toDisplayTitle(storedFilename) : entry.title || '';
+  return {
+    ...entry,
+    stored_filename: storedFilename,
+    title,
+    alt_text: staleGeneratedName ? title : entry.alt_text || entry.title || '',
+  };
+}
 
 export function AssetZipImportDialog({ open, onClose, initialFile = null }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -106,12 +134,9 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
       setAnalysis(next);
       setCategory(next.category);
       setFolder(next.folder);
-      setEntries(next.manifest.filter((entry) => entry.status === 'ready').map((entry) => ({
-        ...entry,
-        stored_filename: entry.stored_filename || entry.original_name,
-        title: entry.title || '',
-        alt_text: entry.alt_text || entry.title || '',
-      })));
+      setEntries(next.manifest
+        .filter((entry) => entry.status === 'ready')
+        .map((entry, index) => normalizeReviewEntry(entry, index, next.archive_slug)));
       toast.success(`${next.manifest.filter((entry) => entry.status === 'ready').length} images ready for review`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'ZIP analysis failed');
@@ -186,7 +211,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
               <TextField label="Asset folder" value={folder} onChange={(event) => setFolder(event.target.value)} />
               <FormControlLabel control={<Switch checked={skipDuplicates} onChange={(event) => setSkipDuplicates(event.target.checked)} />} label="Skip duplicate images" />
             </Box>
-            <Scrollbar sx={{ maxHeight: 520, overflowX: 'auto' }}>
+            <Box sx={{ maxHeight: 520, overflow: 'auto' }}>
               <Table size="small" stickyHeader sx={{ minWidth: 1180, tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
@@ -238,7 +263,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
                   ))}
                 </TableBody>
               </Table>
-            </Scrollbar>
+            </Box>
           </Box>
         )}
 
