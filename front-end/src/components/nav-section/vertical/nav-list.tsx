@@ -1,4 +1,4 @@
-import type { NavListProps, NavSubListProps } from '../types';
+import type { NavListProps, NavSubListProps, NavItemDataProps } from '../types';
 
 import { useBoolean } from 'minimal-shared/hooks';
 import { useRef, useEffect, useCallback } from 'react';
@@ -12,6 +12,24 @@ import { NavUl, NavLi, NavCollapse } from '../components';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Some OM nav groups (e.g. "Portal Home") group together items whose routes
+ * don't share the parent's own path prefix (Analytics/File live at their
+ * original top-level routes, not nested under /portal). isActiveLink alone
+ * only matches the parent's own path, so the group would otherwise collapse
+ * the moment you navigate to a child whose path isn't a literal sub-path of
+ * the parent. Recursing into children keeps the group open whenever any
+ * descendant route is the current one, regardless of its URL shape.
+ */
+function hasActiveChild(pathname: string, children?: NavItemDataProps[]): boolean {
+  if (!children) return false;
+  return children.some(
+    (child) =>
+      isActiveLink(pathname, child.path, child.deepMatch ?? !!child.children) ||
+      hasActiveChild(pathname, child.children)
+  );
+}
+
 export function NavList({
   data,
   depth,
@@ -23,7 +41,9 @@ export function NavList({
   const pathname = usePathname();
   const navItemRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = isActiveLink(pathname, data.path, data.deepMatch ?? !!data.children);
+  const isActive =
+    isActiveLink(pathname, data.path, data.deepMatch ?? !!data.children) ||
+    hasActiveChild(pathname, data.children);
 
   const { value: open, onFalse: onClose, onToggle } = useBoolean(isActive);
 
