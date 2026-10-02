@@ -304,6 +304,7 @@ export type ZipImportEntry = {
   title?: string;
   alt_text?: string;
   size?: number;
+  media_type?: 'image' | 'video';
   status: 'ready' | 'skipped' | 'imported' | 'duplicate' | 'failed';
   reason?: string;
   error?: string;

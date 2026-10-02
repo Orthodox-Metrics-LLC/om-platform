@@ -137,7 +137,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
       setEntries(next.manifest
         .filter((entry) => entry.status === 'ready')
         .map((entry, index) => normalizeReviewEntry(entry, index, next.archive_slug)));
-      toast.success(`${next.manifest.filter((entry) => entry.status === 'ready').length} images ready for review`);
+      toast.success(`${next.manifest.filter((entry) => entry.status === 'ready').length} files ready for review`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'ZIP analysis failed');
     } finally { setBusy(false); }
@@ -161,7 +161,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
       setResult(imported);
       await Promise.all([reload(), reloadMeta()]);
       if (imported.failed_count) toast.warning(`Imported ${imported.imported_count}; ${imported.failed_count} failed`);
-      else toast.success(`${imported.imported_count} images imported`);
+      else toast.success(`${imported.imported_count} files imported`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'ZIP import failed');
     } finally { setBusy(false); }
@@ -172,12 +172,12 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
 
   return (
     <Dialog fullWidth maxWidth="lg" open={open} onClose={close}>
-      <DialogTitle>Import image ZIP</DialogTitle>
+      <DialogTitle>Import media ZIP</DialogTitle>
       <DialogContent dividers>
         {!analysis && !result && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <Alert severity="info">
-              The archive name becomes the import folder and filename prefix. Generic names such as image.png or ChatGPT exports are renamed sequentially; meaningful names are preserved after the archive prefix.
+              The archive name becomes the import folder and filename prefix. Generic names such as image.png, video.mp4, or generated exports are renamed sequentially; meaningful names are preserved after the archive prefix.
             </Alert>
             <Box
               onClick={() => fileRef.current?.click()}
@@ -204,12 +204,12 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
         {analysis && !result && (
           <Box>
             <Alert severity="success" sx={{ mb: 2 }}>
-              <b>{analysis.archive_filename}</b>: {entries.length} images · category <b>{category}</b> · folder <b>{folder}</b>. Review every generated filename before importing.
+              <b>{analysis.archive_filename}</b>: {entries.length} files · category <b>{category}</b> · folder <b>{folder}</b>. Review every generated filename before importing.
             </Alert>
             <Box sx={{ display: 'grid', gap: 2, mb: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' } }}>
               <TextField select label="Category" value={category} onChange={(event) => setCategory(event.target.value)}>{ASSET_CATEGORIES.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}</TextField>
               <TextField label="Asset folder" value={folder} onChange={(event) => setFolder(event.target.value)} />
-              <FormControlLabel control={<Switch checked={skipDuplicates} onChange={(event) => setSkipDuplicates(event.target.checked)} />} label="Skip duplicate images" />
+              <FormControlLabel control={<Switch checked={skipDuplicates} onChange={(event) => setSkipDuplicates(event.target.checked)} />} label="Skip duplicate files" />
             </Box>
             <Box sx={{ maxHeight: 520, overflow: 'auto' }}>
               <Table size="small" stickyHeader sx={{ minWidth: 1180, tableLayout: 'fixed' }}>
@@ -281,7 +281,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
       <DialogActions>
         <Button onClick={close} disabled={busy}>{result ? 'Close' : 'Cancel'}</Button>
         {!analysis && !result && <Button variant="contained" disabled={!file || busy} loading={busy} onClick={analyze}>Analyze ZIP</Button>}
-        {analysis && !result && <><Button onClick={chooseAnother}>Choose another</Button><Button variant="contained" disabled={busy || !entries.length} loading={busy} onClick={commit}>Import {entries.length} images</Button></>}
+        {analysis && !result && <><Button onClick={chooseAnother}>Choose another</Button><Button variant="contained" disabled={busy || !entries.length} loading={busy} onClick={commit}>Import {entries.length} files</Button></>}
       </DialogActions>
     </Dialog>
   );
