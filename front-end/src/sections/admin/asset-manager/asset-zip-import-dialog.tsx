@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Select from '@mui/material/Select';
 import Switch from '@mui/material/Switch';
+import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
@@ -185,10 +186,57 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
               <TextField label="Asset folder" value={folder} onChange={(event) => setFolder(event.target.value)} />
               <FormControlLabel control={<Switch checked={skipDuplicates} onChange={(event) => setSkipDuplicates(event.target.checked)} />} label="Skip duplicate images" />
             </Box>
-            <Scrollbar sx={{ maxHeight: 520 }}>
-              <Table size="small" stickyHeader>
-                <TableHead><TableRow><TableCell>#</TableCell><TableCell>Original</TableCell><TableCell>Imported filename</TableCell><TableCell>Title</TableCell><TableCell>Alt text</TableCell><TableCell align="right">Size</TableCell></TableRow></TableHead>
-                <TableBody>{entries.map((entry, index) => <TableRow key={entry.entry_name}><TableCell>{index + 1}</TableCell><TableCell sx={{ maxWidth: 190 }}><Typography variant="caption" noWrap>{entry.original_name}</Typography></TableCell><TableCell><TextField size="small" value={entry.stored_filename} onChange={(event) => patchEntry(index, { stored_filename: event.target.value })} /></TableCell><TableCell><TextField size="small" value={entry.title} onChange={(event) => patchEntry(index, { title: event.target.value })} /></TableCell><TableCell><TextField size="small" value={entry.alt_text} onChange={(event) => patchEntry(index, { alt_text: event.target.value })} /></TableCell><TableCell align="right">{fData(entry.size || 0)}</TableCell></TableRow>)}</TableBody>
+            <Scrollbar sx={{ maxHeight: 520, overflowX: 'auto' }}>
+              <Table size="small" stickyHeader sx={{ minWidth: 1180, tableLayout: 'fixed' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: 48 }}>#</TableCell>
+                    <TableCell sx={{ width: 220 }}>Original</TableCell>
+                    <TableCell sx={{ width: 260 }}>Imported filename</TableCell>
+                    <TableCell sx={{ width: 200 }}>Title</TableCell>
+                    <TableCell sx={{ width: 250 }}>Alt text</TableCell>
+                    <TableCell align="right" sx={{ width: 100 }}>Size</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {entries.map((entry, index) => (
+                    <TableRow key={entry.entry_name}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell sx={{ overflow: 'hidden' }}>
+                        <Tooltip title={entry.original_name} placement="top" arrow>
+                          <Typography variant="caption" noWrap sx={{ display: 'block' }}>
+                            {entry.original_name}
+                          </Typography>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={entry.stored_filename}
+                          onChange={(event) => patchEntry(index, { stored_filename: event.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={entry.title}
+                          onChange={(event) => patchEntry(index, { title: event.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={entry.alt_text}
+                          onChange={(event) => patchEntry(index, { alt_text: event.target.value })}
+                        />
+                      </TableCell>
+                      <TableCell align="right">{fData(entry.size || 0)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
               </Table>
             </Scrollbar>
           </Box>
