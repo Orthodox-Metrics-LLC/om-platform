@@ -2,6 +2,7 @@ import type { OmAsset } from './om-assets-api';
 import type { AssetMenuAction } from './asset-card';
 
 import { useState, useCallback } from 'react';
+import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
@@ -168,7 +169,21 @@ function AssetLibraryContent() {
       </Box>
 
       {dragOver && (
-        <Box sx={{ position: 'absolute', inset: 0, zIndex: 10, borderRadius: 2, border: '2px dashed', borderColor: 'primary.main', bgcolor: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
+            borderRadius: 2,
+            border: '2px dashed',
+            borderColor: 'primary.main',
+            bgcolor: (theme) => varAlpha(theme.vars.palette.primary.mainChannel, 0.08),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+          }}
+        >
           <Typography variant="h6" color="primary">Drop files to upload</Typography>
         </Box>
       )}
