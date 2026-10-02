@@ -108,7 +108,8 @@ function Row({ asset, selected, onToggle, onOpen, onAction }: { asset: OmAsset; 
           {image && item('Split into tiles', 'split', 'mingcute:dot-grid-fill')}
           {item('Copy to another scope', 'copy-to', 'solar:copy-bold')}
           {item('Send to Workshop', 'workshop', 'solar:export-bold')}
-          {item('Archive', 'archive', 'solar:trash-bin-trash-bold', 'error.main')}
+          {item('Archive', 'archive', 'solar:archive-down-minimlistic-bold', 'warning.main')}
+          {item('Delete permanently', 'purge', 'solar:trash-bin-trash-bold', 'error.main')}
         </MenuList>
       </CustomPopover>
     </>

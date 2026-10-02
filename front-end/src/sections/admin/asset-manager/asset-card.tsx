@@ -23,7 +23,7 @@ import { isImageAsset, isVideoAsset } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
-export type AssetMenuAction = 'open' | 'edit' | 'copy-url' | 'download' | 'transform' | 'split' | 'copy-to' | 'workshop' | 'archive';
+export type AssetMenuAction = 'open' | 'edit' | 'copy-url' | 'download' | 'transform' | 'split' | 'copy-to' | 'workshop' | 'archive' | 'purge';
 
 type Props = {
   asset: OmAsset;
@@ -113,7 +113,8 @@ export function AssetCard({ asset, selected, onSelect, onOpen, onAction, dense }
           {image && item('Split into tiles', 'split', 'mingcute:dot-grid-fill')}
           {item('Copy to another scope', 'copy-to', 'solar:copy-bold')}
           {item('Send to Workshop', 'workshop', 'solar:export-bold')}
-          {item('Archive', 'archive', 'solar:trash-bin-trash-bold', 'error.main')}
+          {item('Archive', 'archive', 'solar:archive-down-minimlistic-bold', 'warning.main')}
+          {item('Delete permanently', 'purge', 'solar:trash-bin-trash-bold', 'error.main')}
         </MenuList>
       </CustomPopover>
     </>

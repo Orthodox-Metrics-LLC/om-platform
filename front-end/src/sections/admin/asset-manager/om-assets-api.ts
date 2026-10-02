@@ -527,6 +527,16 @@ export async function bulkDeleteOmAssets(ids: number[]) {
 /** @deprecated use bulkDeleteOmAssets */
 export const bulkArchiveOmAssets = bulkDeleteOmAssets;
 
+/** Hard delete — removes the file + row permanently. Cannot be undone (unlike deleteOmAsset, which archives). */
+export async function purgeOmAsset(id: number) {
+  await apiClient.delete(`${BASE}/${id}/purge`);
+}
+
+export async function bulkPurgeOmAssets(ids: number[]) {
+  const res = await apiClient.post<{ success: boolean; purged: number }>(`${BASE}/bulk-purge`, { ids });
+  return res;
+}
+
 export async function bulkChangeOmAssetScope(ids: number[], scope: OmAssetScope, church_id?: number | null) {
   const res = await apiClient.post<{ success: boolean; assets: OmAsset[] }>(`${BASE}/bulk-scope`, {
     ids,

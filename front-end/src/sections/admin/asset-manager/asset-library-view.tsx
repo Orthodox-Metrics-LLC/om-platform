@@ -59,6 +59,7 @@ function AssetLibraryContent() {
   const copyDialog = useBoolean();
   const workshopDialog = useBoolean();
   const confirmArchive = useBoolean();
+  const confirmPurge = useBoolean();
   const confirmDupes = useBoolean();
   const [dropFiles, setDropFiles] = useState<File[]>([]);
   const [zipDropFile, setZipDropFile] = useState<File | null>(null);
@@ -118,10 +119,11 @@ function AssetLibraryContent() {
         case 'copy-to': copyDialog.onTrue(); break;
         case 'workshop': workshopDialog.onTrue(); break;
         case 'archive': confirmArchive.onTrue(); break;
+        case 'purge': confirmPurge.onTrue(); break;
         default:
       }
     },
-    [open, transformDialog, splitDialog, copyDialog, workshopDialog, confirmArchive]
+    [open, transformDialog, splitDialog, copyDialog, workshopDialog, confirmArchive, confirmPurge]
   );
 
   const renderGroups = (groups: { key: string; title: string; subtitle?: string; assets: OmAsset[] }[]) =>
@@ -224,7 +226,7 @@ function AssetLibraryContent() {
         </Box>
       )}
 
-      <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} />
+      <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} onPurge={confirmPurge.onTrue} />
       <Lightbox
         open={lightboxIndex >= 0}
         close={() => setLightboxIndex(-1)}
@@ -239,7 +241,14 @@ function AssetLibraryContent() {
       <AssetSplitDialog open={splitDialog.value} onClose={splitDialog.onFalse} asset={current} onDone={() => { details.onFalse(); am.reload(); am.reloadMeta(); }} />
       <AssetCopyDialog open={copyDialog.value} onClose={copyDialog.onFalse} asset={current} />
       <AssetWorkshopDialog open={workshopDialog.value} onClose={workshopDialog.onFalse} assetIds={current ? [current.id] : []} />
-      <ConfirmDialog open={confirmArchive.value} onClose={confirmArchive.onFalse} title="Archive asset" content={<>Archive <strong>{current?.name}</strong>?</>} action={<Button variant="contained" color="error" onClick={() => { confirmArchive.onFalse(); details.onFalse(); if (current) am.actions.archive([current.id]).catch(() => {}); }}>Archive</Button>} />
+      <ConfirmDialog open={confirmArchive.value} onClose={confirmArchive.onFalse} title="Archive asset" content={<>Archive <strong>{current?.name}</strong>?</>} action={<Button variant="contained" color="warning" onClick={() => { confirmArchive.onFalse(); details.onFalse(); if (current) am.actions.archive([current.id]).catch(() => {}); }}>Archive</Button>} />
+      <ConfirmDialog
+        open={confirmPurge.value}
+        onClose={confirmPurge.onFalse}
+        title="Delete asset permanently"
+        content={<>Permanently delete <strong>{current?.name}</strong>? The file and all metadata are removed immediately — <strong>this cannot be undone</strong>. If you just want to hide it, use Archive instead.</>}
+        action={<Button variant="contained" color="error" onClick={() => { confirmPurge.onFalse(); details.onFalse(); if (current) am.actions.purge([current.id]).catch(() => {}); }}>Delete permanently</Button>}
+      />
       <ConfirmDialog open={confirmDupes.value} onClose={confirmDupes.onFalse} title="Remove duplicates" content="Archive every duplicate copy, keeping the oldest asset of each group?" action={<Button variant="contained" color="error" onClick={() => { confirmDupes.onFalse(); am.actions.deleteDuplicates().catch(() => {}); }}>Remove</Button>} />
     </Box>
   );

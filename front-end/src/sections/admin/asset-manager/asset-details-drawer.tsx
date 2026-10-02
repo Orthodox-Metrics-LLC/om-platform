@@ -39,9 +39,10 @@ type Props = {
   onCopyTo: () => void;
   onWorkshop: () => void;
   onArchive: () => void;
+  onPurge: () => void;
 };
 
-export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose, onTransform, onSplit, onCopyTo, onWorkshop, onArchive }: Props) {
+export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose, onTransform, onSplit, onCopyTo, onWorkshop, onArchive, onPurge }: Props) {
   const { actions, tags: allTags, collections, directories } = useAssetManager();
   const [editing, setEditing] = useState(editingProp);
   const [form, setForm] = useState<any>({});
@@ -163,7 +164,8 @@ export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose,
             {isImageAsset(asset) && <Button size="small" variant="soft" startIcon={<Iconify icon="mingcute:dot-grid-fill" />} onClick={onSplit}>Split</Button>}
             <Button size="small" variant="soft" startIcon={<Iconify icon="solar:copy-bold" />} onClick={onCopyTo}>Copy to…</Button>
             <Button size="small" variant="soft" startIcon={<Iconify icon="solar:export-bold" />} onClick={onWorkshop}>Workshop</Button>
-            <Button size="small" variant="soft" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={onArchive}>Archive</Button>
+            <Button size="small" variant="soft" color="warning" startIcon={<Iconify icon="solar:archive-down-minimlistic-bold" />} onClick={onArchive}>Archive</Button>
+            <Button size="small" variant="soft" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={onPurge}>Delete</Button>
           </>
         )}
       </Box>

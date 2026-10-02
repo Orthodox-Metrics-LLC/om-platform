@@ -15,10 +15,12 @@ import { toast } from 'src/components/snackbar';
 
 import {
   copyOmAsset,
+  purgeOmAsset,
   deleteOmAsset,
   updateOmAsset,
   fetchOmAssetTags,
   bulkMoveOmAssets,
+  bulkPurgeOmAssets,
   bulkDeleteOmAssets,
   bulkSetOmAssetTags,
   fetchOmAssetDuplicates,
@@ -92,6 +94,7 @@ type State = {
   actions: {
     update: (id: number, payload: Parameters<typeof updateOmAsset>[1]) => Promise<OmAsset>;
     archive: (ids: number[]) => Promise<void>;
+    purge: (ids: number[]) => Promise<void>;
     moveToDirectory: (ids: number[], directory: string) => Promise<void>;
     applyTags: (ids: number[], tags: string[], mode: 'add' | 'remove' | 'set') => Promise<void>;
     changeScope: (ids: number[], scope: OmAssetScope, churchId?: number | null) => Promise<void>;
@@ -254,6 +257,7 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
     () => ({
       update: (id, payload) => run(() => updateOmAsset(id, payload), 'Asset updated', true),
       archive: (ids) => run(async () => { if (ids.length === 1) await deleteOmAsset(ids[0]); else await bulkDeleteOmAssets(ids); setSelected(new Set()); }, `${ids.length === 1 ? 'Asset' : `${ids.length} assets`} archived`, true),
+      purge: (ids) => run(async () => { if (ids.length === 1) await purgeOmAsset(ids[0]); else await bulkPurgeOmAssets(ids); setSelected(new Set()); }, `${ids.length === 1 ? 'Asset' : `${ids.length} assets`} permanently deleted`, true),
       moveToDirectory: (ids, directory) => run(async () => { await bulkMoveOmAssets(ids, directory); }, 'Moved', true),
       applyTags: (ids, tg, mode) => run(async () => { await bulkSetOmAssetTags(ids, tg, mode); }, 'Tags updated', true),
       changeScope: (ids, scope, churchId) => run(async () => { await bulkChangeOmAssetScope(ids, scope, churchId); }, 'Scope changed', true),
