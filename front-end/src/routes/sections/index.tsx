@@ -3,6 +3,8 @@ import type { RouteObject } from 'react-router';
 import { lazy, Suspense } from 'react';
 import { Navigate } from 'react-router';
 
+import { paths } from 'src/routes/paths';
+
 import { MainLayout } from 'src/layouts/main';
 import { AuthSplitLayout } from 'src/layouts/auth-split';
 
@@ -65,6 +67,6 @@ export const routesSection: RouteObject[] = [
   // Components
   ...componentsRoutes,
 
-  // Unknown paths (legacy Google links like /samples) → site home
-  { path: '*', element: <Navigate to="/" replace /> },
+  // Unknown paths → real 404 page
+  { path: '*', element: <Navigate to={paths.page404} replace /> },
 ];
