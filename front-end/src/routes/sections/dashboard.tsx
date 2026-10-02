@@ -10,7 +10,7 @@ import { LoadingScreen } from 'src/components/loading-screen';
 
 import { AccountLayout } from 'src/sections/account/account-layout';
 
-import { AuthGuard } from 'src/auth/guard';
+import { AuthGuard, RoleRouteGuard } from 'src/auth/guard';
 
 import { usePathname } from '../hooks';
 
@@ -181,6 +181,11 @@ export const dashboardRoutes: RouteObject[] = [
       },
       {
         path: 'invoice',
+        element: (
+          <RoleRouteGuard allowedRoles={['church_admin', 'manager', 'priest', 'deacon']}>
+            <Outlet />
+          </RoleRouteGuard>
+        ),
         children: [
           { index: true, element: <InvoiceListPage /> },
           { path: 'list', element: <InvoiceListPage /> },
@@ -220,10 +225,29 @@ export const dashboardRoutes: RouteObject[] = [
         ],
       },
       { path: 'file-manager', element: <FileManagerPage /> },
-      { path: 'asset-manager', element: <AssetManagerPage /> },
-      { path: 'menu-editor', element: <MenuEditorPage /> },
+      {
+        path: 'asset-manager',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
+            <AssetManagerPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'menu-editor',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
+            <MenuEditorPage />
+          </RoleRouteGuard>
+        ),
+      },
       {
         path: 'admin/page-builder',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
+            <Outlet />
+          </RoleRouteGuard>
+        ),
         children: [
           { index: true, element: <PageBuilderListPage /> },
           { path: 'new', element: <PageBuilderNewPage /> },
