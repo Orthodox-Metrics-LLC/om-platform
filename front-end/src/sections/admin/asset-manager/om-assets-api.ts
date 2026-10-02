@@ -335,10 +335,13 @@ export type ZipImportResult = {
   report: ZipImportEntry[];
 };
 
-export function analyzeZipImport(formData: FormData, onProgress?: (percent: number) => void) {
-  return new Promise<ZipImportAnalysis>((resolve, reject) => {
+const ZIP_CHUNK_BYTES = 64 * 1024 * 1024;
+const ZIP_CHUNK_THRESHOLD_BYTES = 450 * 1024 * 1024;
+
+function postZipForm<T>(url: string, formData: FormData, onProgress?: (percent: number) => void) {
+  return new Promise<T>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `/api${BASE}/zip-import/analyze`);
+    xhr.open('POST', url);
     xhr.withCredentials = true;
     const token = sessionStorage.getItem('om_access_token');
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -347,12 +350,58 @@ export function analyzeZipImport(formData: FormData, onProgress?: (percent: numb
     xhr.onload = () => {
       try {
         const json = JSON.parse(xhr.responseText || '{}');
-        if (xhr.status >= 200 && xhr.status < 300 && json.import) resolve(json.import);
-        else reject(new Error(json.message || json.error || `ZIP analysis failed (${xhr.status})`));
-      } catch { reject(new Error(`ZIP analysis failed (${xhr.status})`)); }
+        if (xhr.status >= 200 && xhr.status < 300) resolve(json as T);
+        else reject(new Error(json.message || json.error || `ZIP request failed (${xhr.status})`));
+      } catch { reject(new Error(`ZIP request failed (${xhr.status})`)); }
     };
     xhr.send(formData);
   });
+}
+
+async function analyzeChunkedZipImport(file: File, options: FormData, onProgress?: (percent: number) => void) {
+  const totalChunks = Math.ceil(file.size / ZIP_CHUNK_BYTES);
+  const started = await apiClient.post<{ upload: { upload_id: string } }>(`${BASE}/zip-import/chunks/start`, {
+    filename: file.name,
+    total_bytes: file.size,
+    total_chunks: totalChunks,
+  });
+  const uploadId = started.upload.upload_id;
+  let uploadedBytes = 0;
+
+  for (let index = 0; index < totalChunks; index += 1) {
+    const start = index * ZIP_CHUNK_BYTES;
+    const chunk = file.slice(start, Math.min(file.size, start + ZIP_CHUNK_BYTES));
+    const form = new FormData();
+    form.append('chunk_index', String(index));
+    form.append('chunk', chunk, `${file.name}.part-${index}`);
+    await postZipForm(`/api${BASE}/zip-import/chunks/${uploadId}`, form, (percent) => {
+      if (!onProgress) return;
+      const loaded = Math.round((chunk.size * percent) / 100);
+      onProgress(Math.round(((uploadedBytes + loaded) * 100) / file.size));
+    });
+    uploadedBytes += chunk.size;
+  }
+
+  const result = await apiClient.post<{ import: ZipImportAnalysis }>(`${BASE}/zip-import/chunks/${uploadId}/complete`, {
+    scope: options.get('scope'),
+    church_id: options.get('church_id'),
+    category: options.get('category'),
+    folder: options.get('folder'),
+    naming_strategy: options.get('naming_strategy'),
+  });
+  onProgress?.(100);
+  return result.import;
+}
+
+export async function analyzeZipImport(formData: FormData, onProgress?: (percent: number) => void) {
+  const archive = formData.get('archive');
+  if (archive instanceof File && archive.size > ZIP_CHUNK_THRESHOLD_BYTES) {
+    return analyzeChunkedZipImport(archive, formData, onProgress);
+  }
+
+  const result = await postZipForm<{ import: ZipImportAnalysis }>(`/api${BASE}/zip-import/analyze`, formData, onProgress);
+  if (!result.import) throw new Error('ZIP analysis failed');
+  return result.import;
 }
 
 export async function commitZipImport(token: string, payload: {

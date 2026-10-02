@@ -177,7 +177,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
         {!analysis && !result && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <Alert severity="info">
-              The archive name becomes the import folder and filename prefix. Generic names such as image.png, video.mp4, or generated exports are renamed sequentially; meaningful names are preserved after the archive prefix.
+              The archive name becomes the import folder and filename prefix. Generic names such as image.png, video.mp4, or generated exports are renamed sequentially; meaningful names are preserved after the archive prefix. Archives over 450 MB upload automatically in safe chunks.
             </Alert>
             <Box
               onClick={() => fileRef.current?.click()}
