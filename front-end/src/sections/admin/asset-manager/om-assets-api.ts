@@ -65,7 +65,8 @@ const apiClient = {
 
 export type OmAssetScope = 'public' | 'church' | 'site' | 'internal';
 export type OmAssetVisibility = 'public' | 'authenticated' | 'internal_only';
-export type OmAssetSourceType = 'upload' | 'import' | 'legacy' | 'generated' | 'screenshot' | 'promote_copy';
+export type OmAssetSourceType =
+  | 'upload' | 'import' | 'legacy' | 'generated' | 'screenshot' | 'promote_copy' | 'quarantine';
 export type OmAssetOwnerSystem =
   | 'om' | 'omai' | 'omstudio' | 'omworkshop' | 'ombrain' | 'certificate_studio' | 'public_website';
 

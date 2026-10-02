@@ -304,12 +304,14 @@ export const ASSET_VISIBILITIES: { value: OmAssetVisibility; label: string }[] =
 export const ASSET_SOURCE_TYPES: { value: OmAssetSourceType; label: string }[] = [
   { value: 'upload', label: 'Upload' }, { value: 'import', label: 'Import' }, { value: 'legacy', label: 'Legacy' },
   { value: 'generated', label: 'Generated' }, { value: 'screenshot', label: 'Screenshot' }, { value: 'promote_copy', label: 'Promoted copy' },
+  { value: 'quarantine', label: 'Quarantine' },
 ];
 
 export const ASSET_CATEGORIES: { value: string; label: string; group: string }[] = [
   ...['layout', 'border', 'cross', 'seal', 'header', 'background', 'icon', 'watermark', 'signature', 'font', 'divider', 'branding', 'logo', 'content', 'template'].map((v) => ({ value: v, label: v.replace(/_/g, ' '), group: 'Design' })),
   ...['diagram', 'infrastructure', 'ui_reference', 'screenshot', 'church_photo', 'clergy', 'certificate', 'map', 'document_scan', 'marketing', 'social_media', 'misc'].map((v) => ({ value: v, label: v.replace(/_/g, ' '), group: 'Content' })),
   { value: 'document', label: 'document', group: 'Documents' },
+  { value: 'flagged', label: 'flagged', group: 'Quarantine' },
 ];
 
 export const isImageAsset = (a: OmAsset) => /^image\//.test(a.mime_type || '') || /^(png|jpe?g|gif|webp|svg|avif|bmp)$/i.test(a.file_type || '');
