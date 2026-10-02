@@ -1,9 +1,10 @@
+import type { Slide } from 'yet-another-react-lightbox';
 import type { OmAsset } from './om-assets-api';
 import type { AssetMenuAction } from './asset-card';
 
-import { useState, useCallback } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean } from 'minimal-shared/hooks';
+import { useMemo, useState, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -16,6 +17,7 @@ import { fData } from 'src/utils/format-number';
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
+import { Lightbox } from 'src/components/lightbox';
 import { EmptyContent } from 'src/components/empty-content';
 import { ConfirmDialog } from 'src/components/custom-dialog';
 
@@ -30,8 +32,8 @@ import { AssetManagerSidebar } from './asset-manager-sidebar';
 import { AssetManagerToolbar } from './asset-manager-toolbar';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
 import { AssetZipImportDialog } from './asset-zip-import-dialog';
-import { useAssetManager, AssetManagerProvider } from './asset-manager-context';
 import { AssetSplitDialog, AssetTransformDialog } from './asset-transform-dialog';
+import { isImageAsset, isVideoAsset, useAssetManager, AssetManagerProvider } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
@@ -61,8 +63,47 @@ function AssetLibraryContent() {
   const [dropFiles, setDropFiles] = useState<File[]>([]);
   const [zipDropFile, setZipDropFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(-1);
 
-  const open = useCallback((a: OmAsset, edit = false) => { setCurrent(a); setEditing(edit); details.onTrue(); }, [details]);
+  const visible: OmAsset[] =
+    am.navLocation === 'duplicates' ? am.duplicateGroups.flatMap((g) => g.assets)
+    : am.navLocation === 'similar' ? am.similarGroups.flatMap((g) => g.assets)
+    : am.assets;
+
+  // Images/videos preview inline (large view + a filmstrip of neighboring
+  // assets on the right) instead of popping the metadata drawer. Other file
+  // types (documents, etc.) still open the drawer — a lightbox doesn't make
+  // sense for those.
+  const previewableAssets = useMemo(() => visible.filter((a) => isImageAsset(a) || isVideoAsset(a)), [visible]);
+  const lightboxSlides: Slide[] = useMemo(
+    () =>
+      previewableAssets.map((a): Slide =>
+        isVideoAsset(a)
+          ? {
+              type: 'video',
+              sources: [{ src: omAssetDirectUrl(a), type: a.mime_type || a.file_type || 'video/mp4' }],
+              title: a.title || a.name,
+            }
+          : { src: omAssetDirectUrl(a), title: a.title || a.name }
+      ),
+    [previewableAssets]
+  );
+
+  const open = useCallback(
+    (a: OmAsset, edit = false) => {
+      setCurrent(a);
+      setEditing(edit);
+      if (!edit) {
+        const idx = previewableAssets.findIndex((x) => x.id === a.id);
+        if (idx >= 0) {
+          setLightboxIndex(idx);
+          return;
+        }
+      }
+      details.onTrue();
+    },
+    [details, previewableAssets]
+  );
 
   const onAction = useCallback(
     (a: OmAsset, action: AssetMenuAction) => {
@@ -82,11 +123,6 @@ function AssetLibraryContent() {
     },
     [open, transformDialog, splitDialog, copyDialog, workshopDialog, confirmArchive]
   );
-
-  const visible: OmAsset[] =
-    am.navLocation === 'duplicates' ? am.duplicateGroups.flatMap((g) => g.assets)
-    : am.navLocation === 'similar' ? am.similarGroups.flatMap((g) => g.assets)
-    : am.assets;
 
   const renderGroups = (groups: { key: string; title: string; subtitle?: string; assets: OmAsset[] }[]) =>
     groups.map((g) => (
@@ -189,6 +225,14 @@ function AssetLibraryContent() {
       )}
 
       <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} />
+      <Lightbox
+        open={lightboxIndex >= 0}
+        close={() => setLightboxIndex(-1)}
+        slides={lightboxSlides}
+        index={Math.max(lightboxIndex, 0)}
+        disableTotal={false}
+        thumbnails={{ position: 'end' }}
+      />
       <AssetUploadDialog open={uploadDialog.value} onClose={uploadDialog.onFalse} initialFiles={dropFiles} />
       <AssetZipImportDialog open={zipImportDialog.value} onClose={() => { setZipDropFile(null); zipImportDialog.onFalse(); }} initialFile={zipDropFile} />
       <AssetTransformDialog open={transformDialog.value} onClose={transformDialog.onFalse} asset={current} onDone={(a) => { if (a) { am.actions.replaceAsset(a); setCurrent(a); } am.reload(); }} />

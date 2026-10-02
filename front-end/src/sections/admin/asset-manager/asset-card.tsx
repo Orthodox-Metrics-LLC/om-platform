@@ -49,6 +49,7 @@ export function AssetThumb({ asset, ratio = '4/3', sx }: { asset: OmAsset; ratio
 export function AssetCard({ asset, selected, onSelect, onOpen, onAction, dense }: Props) {
   const menu = usePopover();
   const image = isImageAsset(asset);
+  const previewable = image || isVideoAsset(asset);
 
   const item = (label: string, action: AssetMenuAction, icon: string, color?: string) => (
     <MenuItem key={action} onClick={() => { menu.onClose(); onAction(action); }} sx={color ? { color } : undefined}>
@@ -104,7 +105,7 @@ export function AssetCard({ asset, selected, onSelect, onOpen, onAction, dense }
 
       <CustomPopover open={menu.open} anchorEl={menu.anchorEl} onClose={menu.onClose} slotProps={{ arrow: { placement: 'right-top' } }}>
         <MenuList>
-          {item('Details', 'open', 'solar:eye-bold')}
+          {item(previewable ? 'Preview' : 'Details', 'open', 'solar:eye-bold')}
           {item('Edit metadata', 'edit', 'solar:pen-bold')}
           {item('Copy URL', 'copy-url', 'eva:link-2-fill')}
           <MenuItem component="a" href={omAssetDirectUrl(asset)} download onClick={menu.onClose}><Iconify icon="eva:cloud-download-fill" />Download</MenuItem>

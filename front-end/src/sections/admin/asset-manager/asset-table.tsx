@@ -25,7 +25,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { CustomPopover } from 'src/components/custom-popover';
 
 import { AssetThumb, SCOPE_COLOR } from './asset-card';
-import { isImageAsset } from './asset-manager-context';
+import { isImageAsset, isVideoAsset } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
@@ -71,6 +71,7 @@ export function AssetTable({ assets, selected, onToggle, onToggleAll, onOpen, on
 function Row({ asset, selected, onToggle, onOpen, onAction }: { asset: OmAsset; selected: boolean; onToggle: () => void; onOpen: () => void; onAction: (a: AssetMenuAction) => void }) {
   const menu = usePopover();
   const image = isImageAsset(asset);
+  const previewable = image || isVideoAsset(asset);
   const item = (label: string, action: AssetMenuAction, icon: string, color?: string) => (
     <MenuItem key={action} onClick={() => { menu.onClose(); onAction(action); }} sx={color ? { color } : undefined}><Iconify icon={icon as any} />{label}</MenuItem>
   );
@@ -99,7 +100,7 @@ function Row({ asset, selected, onToggle, onOpen, onAction }: { asset: OmAsset; 
       </TableRow>
       <CustomPopover open={menu.open} anchorEl={menu.anchorEl} onClose={menu.onClose}>
         <MenuList>
-          {item('Details', 'open', 'solar:eye-bold')}
+          {item(previewable ? 'Preview' : 'Details', 'open', 'solar:eye-bold')}
           {item('Edit metadata', 'edit', 'solar:pen-bold')}
           {item('Copy URL', 'copy-url', 'eva:link-2-fill')}
           {item('Download', 'download', 'eva:cloud-download-fill')}
