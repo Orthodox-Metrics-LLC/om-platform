@@ -1,5 +1,7 @@
 import { CONFIG } from 'src/global-config';
 
+import { omApiFetch } from 'src/auth/context/om-auth';
+
 // ----------------------------------------------------------------------
 
 /**
@@ -8,7 +10,7 @@ import { CONFIG } from 'src/global-config';
  * static asset path so it survives re-deploys and needs no upload pipeline.
  */
 export type OmAvatarPreset = {
-  id: 'female' | 'male-priest' | 'male-bishop' | 'monk-elder' | 'priest-kamilavka' | 'priest-fur-hat' | 'hierarch-elder';
+  id: string;
   label: string;
   src: string;
 };
@@ -27,4 +29,41 @@ export const OM_AVATARS: OmAvatarPreset[] = [
 
 export function isOmAvatarPreset(url?: string | null) {
   return !!url && OM_AVATARS.some((a) => a.src === url);
+}
+
+/** Slug of the Asset Manager collection (scope=public) that feeds extra avatar choices. */
+const AVATAR_COLLECTION_SLUG = 'avatars-public';
+
+/**
+ * Additional avatar presets sourced from the Asset Manager's "avatars public"
+ * collection, so uploading a new headshot there makes it selectable here
+ * without a code change. Returns [] (never throws) if the collection is
+ * missing or the request fails, so the Account page's built-in presets
+ * always keep working on their own.
+ */
+export async function fetchAssetManagerAvatars(): Promise<OmAvatarPreset[]> {
+  try {
+    const collectionsRes = await omApiFetch('/api/assets/collections?scope=public');
+    const collectionsJson = await collectionsRes.json().catch(() => null);
+    if (!collectionsRes.ok) return [];
+
+    const collection = (collectionsJson?.collections || []).find(
+      (c: { slug?: string }) => c.slug === AVATAR_COLLECTION_SLUG
+    );
+    if (!collection) return [];
+
+    const assetsRes = await omApiFetch(`/api/assets?collection_id=${collection.id}`);
+    const assetsJson = await assetsRes.json().catch(() => null);
+    if (!assetsRes.ok) return [];
+
+    return (assetsJson?.assets || [])
+      .filter((a: { public_url?: string; internal_url?: string }) => a.public_url || a.internal_url)
+      .map((a: { id: number; title?: string; display_name?: string; name: string; public_url?: string; internal_url?: string }) => ({
+        id: `asset-${a.id}`,
+        label: a.title || a.display_name || a.name,
+        src: (a.public_url || a.internal_url) as string,
+      }));
+  } catch {
+    return [];
+  }
 }

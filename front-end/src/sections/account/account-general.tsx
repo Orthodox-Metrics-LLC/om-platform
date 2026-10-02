@@ -18,8 +18,8 @@ import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaUtils } from 'src/components/hook-form';
 
-import { OM_AVATARS } from 'src/auth/utils';
 import { useOmAuth, omApiFetch, omRoleLabel } from 'src/auth/context/om-auth';
+import { OM_AVATARS, type OmAvatarPreset, fetchAssetManagerAvatars } from 'src/auth/utils';
 
 // ----------------------------------------------------------------------
 
@@ -107,6 +107,8 @@ export function AccountGeneral() {
 
   const [profile, setProfile] = useState<OmProfile | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [extraAvatars, setExtraAvatars] = useState<OmAvatarPreset[]>([]);
+  const avatarOptions = [...OM_AVATARS, ...extraAvatars];
 
   const methods = useForm({
     mode: 'all',
@@ -132,6 +134,18 @@ export function AccountGeneral() {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load profile');
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Extra avatar choices from the Asset Manager "avatars public" collection —
+  // uploading a new headshot there makes it selectable here automatically.
+  useEffect(() => {
+    let cancelled = false;
+    fetchAssetManagerAvatars().then((avatars) => {
+      if (!cancelled) setExtraAvatars(avatars);
+    });
     return () => {
       cancelled = true;
     };
@@ -188,7 +202,7 @@ export function AccountGeneral() {
           <Card sx={{ pt: 6, pb: 5, px: 3, textAlign: 'center' }}>
             <Field.AvatarPicker
               name="avatarUrl"
-              options={OM_AVATARS}
+              options={avatarOptions}
               fallbackName={profile?.display_name ?? profile?.first_name ?? profile?.email}
               helperText={
                 <Typography
