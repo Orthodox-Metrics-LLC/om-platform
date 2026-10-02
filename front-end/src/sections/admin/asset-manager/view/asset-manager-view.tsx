@@ -13,6 +13,7 @@ import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 import { useAuthContext } from 'src/auth/hooks';
 
 import { DocumentsView } from '../documents-view';
+import { CloudFilesView } from '../cloud-files-view';
 import { ChurchFilesView } from '../church-files-view';
 import { AssetLibraryView } from '../asset-library-view';
 import { AdminFilesOverviewView } from '../admin-files-overview-view';
@@ -24,6 +25,7 @@ const TABS = [
   { value: 'assets', label: 'Media assets', icon: 'solar:gallery-wide-bold' },
   { value: 'documents', label: 'Documents', icon: 'solar:file-text-bold' },
   { value: 'church-files', label: 'Church files', icon: 'custom:cross-bold' },
+  { value: 'cloud-files', label: 'Cloud Files', icon: 'eva:cloud-upload-fill' },
 ] as const;
 
 type TabValue = (typeof TABS)[number]['value'];
@@ -61,6 +63,7 @@ export function AssetManagerView() {
           {tab === 'assets' && <AssetLibraryView />}
           {tab === 'documents' && <DocumentsView />}
           {tab === 'church-files' && <ChurchFilesView />}
+          {tab === 'cloud-files' && <CloudFilesView />}
         </>
       )}
     </DashboardContent>

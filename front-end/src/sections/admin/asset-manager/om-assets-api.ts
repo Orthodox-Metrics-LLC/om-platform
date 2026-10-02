@@ -705,3 +705,24 @@ export async function sendAssetsToWorkshop(payload: {
   }>(`${BASE}/workshop/send`, payload);
   return res;
 }
+
+// ----------------------------------------------------------------------
+// Cloud Files — real-time browse of the \\192.168.1.79\screenshots SMB share.
+// Not backed by om_assets; always reflects exactly what's on the share right
+// now, independent of the scheduled screenshots_share import.
+
+export type CloudFileEntry = {
+  name: string;
+  type: 'file' | 'directory';
+  size: number | null;
+  modified_at: string;
+  path: string;
+  file_url: string | null;
+};
+
+export async function fetchCloudFilesScreenshots(path = '') {
+  return apiClient.get<{ path: string; entries: CloudFileEntry[]; share: string }>(
+    `${BASE}/cloud-files/screenshots`,
+    { params: { path } }
+  );
+}
