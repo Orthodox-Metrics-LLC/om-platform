@@ -125,8 +125,8 @@ export function OcrDetailView({ churchId }: Props) {
       <CustomBreadcrumbs
         heading="OCR upload"
         links={[
-          { name: 'Dashboard', href: paths.dashboard.root },
-          { name: 'Upload Records', href: paths.dashboard.ocr.root },
+          { name: 'Portal', href: paths.portal.root },
+          { name: 'Upload Records', href: paths.portal.ocr.root },
           { name: job?.original_filename || 'Upload detail' },
         ]}
         action={
@@ -134,7 +134,7 @@ export function OcrDetailView({ churchId }: Props) {
             variant="outlined"
             color="inherit"
             startIcon={<Iconify icon={'solar:arrow-left-bold' as any} />}
-            onClick={() => navigate(paths.dashboard.ocr.root)}
+            onClick={() => navigate(paths.portal.ocr.root)}
           >
             Back
           </Button>
@@ -227,7 +227,7 @@ export function OcrDetailView({ churchId }: Props) {
                           label={`#${s.id}`}
                           size="small"
                           color={String(s.id) === String(job.id) ? 'primary' : 'default'}
-                          onClick={() => navigate(paths.dashboard.ocr.details(s.id))}
+                          onClick={() => navigate(paths.portal.ocr.details(s.id))}
                         />
                       ))}
                     </Stack>

@@ -123,7 +123,7 @@ function OverviewFileContent() {
             const folder = info.roots.find((r) => r.systemKey === root.key);
             return (
               <Grid key={root.key} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Box onClick={() => folder && (window.location.href = `${paths.dashboard.fileManager}?folder=${folder.rawId}${churchId ? `&church=${churchId}` : ''}`)} sx={{ cursor: 'pointer' }}>
+                <Box onClick={() => folder && (window.location.href = `${paths.portal.fileManager}?folder=${folder.rawId}${churchId ? `&church=${churchId}` : ''}`)} sx={{ cursor: 'pointer' }}>
                   <FileWidget title={`${root.name} · ${root.count} files`} value={root.bytes} total={ov.quota_bytes} icon={<Box component="img" alt={root.name} src={ROOT_ICON[root.key]} sx={{ width: 48, height: 48 }} />} />
                 </Box>
               </Grid>
@@ -149,7 +149,7 @@ function OverviewFileContent() {
             />
 
             <Box sx={{ mt: 5 }}>
-              <FileManagerPanel title="Folders" link={paths.dashboard.fileManager} onOpen={canWrite ? folderDialog.onTrue : undefined} />
+              <FileManagerPanel title="Folders" link={paths.portal.fileManager} onOpen={canWrite ? folderDialog.onTrue : undefined} />
               <Scrollbar sx={{ mb: 3, minHeight: 186 }}>
                 <Box sx={{ gap: 3, display: 'flex' }}>
                   {info.roots.map((folder) => (
@@ -158,7 +158,7 @@ function OverviewFileContent() {
                 </Box>
               </Scrollbar>
 
-              <FileManagerPanel title="Recent files" link={paths.dashboard.fileManager} onOpen={canWrite ? uploadDialog.onTrue : undefined} />
+              <FileManagerPanel title="Recent files" link={paths.portal.fileManager} onOpen={canWrite ? uploadDialog.onTrue : undefined} />
               <Box sx={{ gap: 2, display: 'flex', flexDirection: 'column' }}>
                 {ov.recent_files.slice(0, 5).map((file) => <FileRecentItem key={file.id} file={file} />)}
                 {!ov.recent_files.length && <EmptyContent title="No files yet" sx={{ py: 6 }} />}

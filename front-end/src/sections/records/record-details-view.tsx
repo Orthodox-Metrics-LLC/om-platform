@@ -70,7 +70,7 @@ export function RecordDetailsView({ type }: { type: RecordType }) {
     try { await omRecordsApi.setStatus(type, record.id, churchId, status); toast.success(`Status set to ${status.replace(/_/g, ' ')}`); load(); } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not change status'); } finally { setStatusBusy(false); }
   };
 
-  if (error) return <DashboardContent><EmptyContent filled title={error} action={<Button component={RouterLink} href={paths.dashboard.records.list(type)} variant="contained">Back to records</Button>} sx={{ py: 10 }} /></DashboardContent>;
+  if (error) return <DashboardContent><EmptyContent filled title={error} action={<Button component={RouterLink} href={paths.portal.records.list(type)} variant="contained">Back to records</Button>} sx={{ py: 10 }} /></DashboardContent>;
   if (!record) return <DashboardContent><LinearProgress /></DashboardContent>;
 
   const r = record.raw;
@@ -85,12 +85,12 @@ export function RecordDetailsView({ type }: { type: RecordType }) {
       <DashboardContent>
         <CustomBreadcrumbs
           heading={record.title}
-          links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: `${paths.dashboard.records.list(type)}${suffix}` }, { name: meta.plural, href: `${paths.dashboard.records.list(type)}${suffix}` }, { name: `#${record.id}` }]}
+          links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: `${paths.portal.records.list(type)}${suffix}` }, { name: meta.plural, href: `${paths.portal.records.list(type)}${suffix}` }, { name: `#${record.id}` }]}
           action={
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Button variant="outlined" color="inherit" startIcon={<Iconify icon="solar:export-bold" />} onClick={() => setExportOpen(true)}>Export</Button>
-              {type !== 'funeral' && <Button variant="outlined" color="inherit" component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${type}&record=${record.id}${platform ? `&church=${churchId}` : ''}`} startIcon={<Iconify icon="solar:verified-check-bold" />}>Certificate</Button>}
-              {canManage && <Button variant="contained" component={RouterLink} href={`${paths.dashboard.records.edit(type, record.id)}${suffix}`} startIcon={<Iconify icon="solar:pen-bold" />}>Edit</Button>}
+              {type !== 'funeral' && <Button variant="outlined" color="inherit" component={RouterLink} href={`${paths.portal.records.certificates}?type=${type}&record=${record.id}${platform ? `&church=${churchId}` : ''}`} startIcon={<Iconify icon="solar:verified-check-bold" />}>Certificate</Button>}
+              {canManage && <Button variant="contained" component={RouterLink} href={`${paths.portal.records.edit(type, record.id)}${suffix}`} startIcon={<Iconify icon="solar:pen-bold" />}>Edit</Button>}
             </Box>
           }
           sx={{ mb: { xs: 3, md: 5 } }}

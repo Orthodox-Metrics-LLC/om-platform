@@ -12,11 +12,11 @@ MUI port of the **OM-Record-Upload** Figma Make prototype, wired to the real OM 
 
 ## App routes (om-platform)
 
-- `/dashboard/ocr` — batch list (`OcrListView`)
-- `/dashboard/ocr/upload` — five-step wizard (`OcrWizardView`)
-- `/dashboard/ocr/:id` — job detail
+- `/portal/ocr` — batch list (`OcrListView`)
+- `/portal/ocr/upload` — five-step wizard (`OcrWizardView`)
+- `/portal/ocr/:id` — job detail
 
-Legacy shims: `/portal/ocr`, `/portal/ocr/upload`, `/ocr/upload` → dashboard OCR routes.
+Legacy shim: `/ocr/upload` → `/portal/ocr/upload`.
 
 ## Front-end integration
 

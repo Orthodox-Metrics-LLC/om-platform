@@ -27,7 +27,7 @@ export default function Page() {
       <title>{metadata.title}</title>
 
       {isPlatformAdmin && !churchId ? (
-        <FileManagerChurchPicker heading="File manager" basePath={paths.dashboard.fileManager} />
+        <FileManagerChurchPicker heading="File manager" basePath={paths.portal.fileManager} />
       ) : (
         <FileManagerView key={churchId ?? 'own'} churchId={churchId} />
       )}

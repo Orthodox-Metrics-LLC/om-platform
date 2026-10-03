@@ -101,7 +101,7 @@ export function RecordsDuplicatesPanel({ churchId, ast, canManage, onBack }: { c
               {g.records.map((r) => (
                 <Box key={`${r.recordType}-${r.sourceRecordId}`} sx={{ py: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                    <Typography variant="subtitle2" component={RouterLink} href={paths.dashboard.records.details(r.recordType, r.sourceRecordId)} sx={{ color: 'inherit', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>{r.primaryName}</Typography>
+                    <Typography variant="subtitle2" component={RouterLink} href={paths.portal.records.details(r.recordType, r.sourceRecordId)} sx={{ color: 'inherit', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>{r.primaryName}</Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>#{r.sourceRecordId} · {r.canonicalEventDateDisplay || (r.canonicalEventDate ? fDate(r.canonicalEventDate) : 'no date')} · {r.clergy || '—'}{r.location ? ` · ${r.location}` : ''}</Typography>
                   </Box>
                   {r.deletedAt ? (

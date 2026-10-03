@@ -59,7 +59,7 @@ export function NotificationsDrawer({ sx, ...other }: NotificationsDrawerProps) 
   const handleOpen = useCallback(
     async (n: OmNotification) => {
       if (n.isUnRead) markRead(n.id);
-      if (n.actionUrl && n.actionUrl.startsWith('/dashboard')) {
+      if (n.actionUrl && (n.actionUrl.startsWith('/dashboard') || n.actionUrl.startsWith('/portal'))) {
         onClose();
         router.push(n.actionUrl);
       } else if (n.typeName.startsWith('friend_')) {

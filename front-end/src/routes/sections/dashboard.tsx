@@ -70,25 +70,12 @@ const TourListPage = lazy(() => import('src/pages/dashboard/tour/list'));
 const TourCreatePage = lazy(() => import('src/pages/dashboard/tour/new'));
 const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
-const FileManagerPage = lazy(() => import('src/pages/dashboard/file-manager'));
 const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
 const MenuEditorPage = lazy(() => import('src/pages/dashboard/menu-editor'));
 const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-builder'));
 const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
 const PageBuilderEditPage = lazy(() => import('src/pages/dashboard/admin/page-builder/edit'));
-// Sacramental records
-const RecordsListPage = lazy(() => import('src/pages/dashboard/records/list'));
-const RecordNewPage = lazy(() => import('src/pages/dashboard/records/new'));
-const RecordDetailsPage = lazy(() => import('src/pages/dashboard/records/details'));
-const RecordEditPage = lazy(() => import('src/pages/dashboard/records/edit'));
-const RecordsCertificatesPage = lazy(() => import('src/pages/dashboard/records/certificates'));
-const CertificateTemplatesPage = lazy(() => import('src/pages/dashboard/records/certificate-templates'));
-const CertificateDesignerPage = lazy(() => import('src/pages/dashboard/records/certificate-designer'));
-const SacramentalCalendarPage = lazy(() => import('src/pages/dashboard/records/sacramental-calendar'));
-// OCR
-const OcrListPage = lazy(() => import('src/pages/dashboard/ocr'));
-const OcrUploadPage = lazy(() => import('src/pages/dashboard/ocr/upload'));
-const OcrDetailsPage = lazy(() => import('src/pages/dashboard/ocr/details'));
+const ParishSettingsPage = lazy(() => import('src/pages/dashboard/admin/parish-settings'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -102,6 +89,21 @@ const SubpathsPage = lazy(() => import('src/pages/dashboard/subpaths'));
 const BlankPage = lazy(() => import('src/pages/dashboard/blank'));
 // OM Parish Portal
 const PortalPage = lazy(() => import('src/pages/portal'));
+// Portal: sacramental records
+const RecordsListPage = lazy(() => import('src/pages/portal/records/list'));
+const RecordNewPage = lazy(() => import('src/pages/portal/records/new'));
+const RecordDetailsPage = lazy(() => import('src/pages/portal/records/details'));
+const RecordEditPage = lazy(() => import('src/pages/portal/records/edit'));
+const RecordsCertificatesPage = lazy(() => import('src/pages/portal/records/certificates'));
+const CertificateTemplatesPage = lazy(() => import('src/pages/portal/records/certificate-templates'));
+const CertificateDesignerPage = lazy(() => import('src/pages/portal/records/certificate-designer'));
+const SacramentalCalendarPage = lazy(() => import('src/pages/portal/records/sacramental-calendar'));
+// Portal: OCR
+const OcrListPage = lazy(() => import('src/pages/portal/ocr'));
+const OcrUploadPage = lazy(() => import('src/pages/portal/ocr/upload'));
+const OcrDetailsPage = lazy(() => import('src/pages/portal/ocr/details'));
+// Portal: file manager
+const PortalFileManagerPage = lazy(() => import('src/pages/portal/file-manager'));
 
 // ----------------------------------------------------------------------
 
@@ -224,7 +226,6 @@ export const dashboardRoutes: RouteObject[] = [
           { path: ':id/edit', element: <TourEditPage /> },
         ],
       },
-      { path: 'file-manager', element: <FileManagerPage /> },
       {
         path: 'asset-manager',
         element: (
@@ -255,26 +256,12 @@ export const dashboardRoutes: RouteObject[] = [
         ],
       },
       {
-        path: 'ocr',
-        children: [
-          { index: true, element: <OcrListPage /> },
-          { path: 'upload', element: <OcrUploadPage /> },
-          { path: ':id', element: <OcrDetailsPage /> },
-        ],
-      },
-      {
-        path: 'records',
-        children: [
-          { index: true, element: <Navigate to="/dashboard/records/baptism" replace /> },
-          { path: 'certificates', element: <RecordsCertificatesPage /> },
-          { path: 'certificates/templates', element: <CertificateTemplatesPage /> },
-          { path: 'certificates/designer/:id', element: <CertificateDesignerPage /> },
-          { path: 'sacramental-calendar', element: <SacramentalCalendarPage /> },
-          { path: ':type', element: <RecordsListPage /> },
-          { path: ':type/new', element: <RecordNewPage /> },
-          { path: ':type/:id', element: <RecordDetailsPage /> },
-          { path: ':type/:id/edit', element: <RecordEditPage /> },
-        ],
+        path: 'admin/parish-settings',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
+            <ParishSettingsPage />
+          </RoleRouteGuard>
+        ),
       },
       { path: 'mail', element: <MailPage /> },
       { path: 'chat', element: <ChatPage /> },
@@ -296,13 +283,39 @@ export const dashboardRoutes: RouteObject[] = [
     ],
   },
   /**
-   * OM Parish Portal — kept at OM's canonical `/portal` URL rather than under
-   * `/dashboard`, since migrated portal children (`/portal/records`, …) will
-   * hang off this route as they land.
+   * OM Parish Portal — OM's canonical, church-scoped URL. Records, OCR
+   * uploads, and the file manager live here (scoped to the user's active
+   * `om_church_##` membership) rather than under the generic `/dashboard`
+   * shell.
    */
   {
     path: 'portal',
     element: CONFIG.auth.skip ? dashboardLayout() : <AuthGuard>{dashboardLayout()}</AuthGuard>,
-    children: [{ index: true, element: <PortalPage /> }],
+    children: [
+      { index: true, element: <PortalPage /> },
+      {
+        path: 'ocr',
+        children: [
+          { index: true, element: <OcrListPage /> },
+          { path: 'upload', element: <OcrUploadPage /> },
+          { path: ':id', element: <OcrDetailsPage /> },
+        ],
+      },
+      {
+        path: 'records',
+        children: [
+          { index: true, element: <Navigate to="/portal/records/baptism" replace /> },
+          { path: 'certificates', element: <RecordsCertificatesPage /> },
+          { path: 'certificates/templates', element: <CertificateTemplatesPage /> },
+          { path: 'certificates/designer/:id', element: <CertificateDesignerPage /> },
+          { path: 'sacramental-calendar', element: <SacramentalCalendarPage /> },
+          { path: ':type', element: <RecordsListPage /> },
+          { path: ':type/new', element: <RecordNewPage /> },
+          { path: ':type/:id', element: <RecordDetailsPage /> },
+          { path: ':type/:id/edit', element: <RecordEditPage /> },
+        ],
+      },
+      { path: 'file-manager', element: <PortalFileManagerPage /> },
+    ],
   },
 ];

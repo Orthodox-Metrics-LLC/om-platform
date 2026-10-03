@@ -127,7 +127,7 @@ export function OmFilesProvider({ children, churchId = null, initialFolderId = n
       toggleFavorite: (item) => guard(async () => { await omFilesApi.toggleFavorite(churchId, item.id); }),
       setShares: (item, users) => guard(async () => { await omFilesApi.setShares(churchId, item.id, users); }, 'Sharing updated'),
       copyLink: (item) => {
-        const url = item.kind === 'file' ? `${window.location.origin}${item.url}` : `${window.location.origin}/dashboard/file-manager?folder=${item.rawId}${churchId ? `&church=${churchId}` : ''}`;
+        const url = item.kind === 'file' ? `${window.location.origin}${item.url}` : `${window.location.origin}/portal/file-manager?folder=${item.rawId}${churchId ? `&church=${churchId}` : ''}`;
         navigator.clipboard?.writeText(url).then(() => toast.success('Link copied')).catch(() => toast.error('Could not copy'));
       },
     }),

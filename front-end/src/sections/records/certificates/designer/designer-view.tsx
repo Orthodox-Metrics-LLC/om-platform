@@ -87,7 +87,7 @@ export function CertificateDesignerView() {
     try {
       const t = await omCertificatesApi.create({ scope: draft.scope, church_id: churchId, certificate_type: draft.certificate_type, name: draft.name.trim() || 'Untitled template', canvas_size: draft.canvas_size, orientation: draft.orientation });
       setNewDlg(false);
-      router.replace(`${paths.dashboard.records.certificateDesigner(t.id)}${platform && churchId ? `?church=${churchId}` : ''}`);
+      router.replace(`${paths.portal.records.certificateDesigner(t.id)}${platform && churchId ? `?church=${churchId}` : ''}`);
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Could not create template'); } finally { setBusy(null); }
   };
 
@@ -121,11 +121,11 @@ export function CertificateDesignerView() {
   const duplicate = async () => {
     if (!tpl) return;
     setBusy('dup');
-    try { const t = await omCertificatesApi.duplicate(tpl.id, { church_id: churchId, scope: tpl.scope === 'global' && meta?.canDesignGlobal && !churchId ? 'global' : 'church' }); toast.success(`Copied as "${t.name}"`); router.push(`${paths.dashboard.records.certificateDesigner(t.id)}${platform && churchId ? `?church=${churchId}` : ''}`); }
+    try { const t = await omCertificatesApi.duplicate(tpl.id, { church_id: churchId, scope: tpl.scope === 'global' && meta?.canDesignGlobal && !churchId ? 'global' : 'church' }); toast.success(`Copied as "${t.name}"`); router.push(`${paths.portal.records.certificateDesigner(t.id)}${platform && churchId ? `?church=${churchId}` : ''}`); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Duplicate failed'); } finally { setBusy(null); }
   };
 
-  if (error) return <DashboardContent><EmptyContent filled title={error} action={<Button variant="contained" onClick={() => router.push(paths.dashboard.records.certificateTemplates)}>Back to templates</Button>} sx={{ py: 10 }} /></DashboardContent>;
+  if (error) return <DashboardContent><EmptyContent filled title={error} action={<Button variant="contained" onClick={() => router.push(paths.portal.records.certificateTemplates)}>Back to templates</Button>} sx={{ py: 10 }} /></DashboardContent>;
   if (!loaded || !meta) return <DashboardContent><LinearProgress /></DashboardContent>;
 
   const readOnly = !!tpl && !canEdit;
@@ -135,7 +135,7 @@ export function CertificateDesignerView() {
     <Box sx={{ position: 'fixed', inset: 0, zIndex: (t) => t.zIndex.drawer + 2, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
       {/* toolbar */}
       <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: (t) => `1px solid ${t.vars.palette.divider}`, bgcolor: 'background.paper', flexWrap: 'wrap' }}>
-        <Tooltip title="Back to templates"><IconButton onClick={() => router.push(`${paths.dashboard.records.certificateTemplates}${platform && churchId ? `?church=${churchId}` : ''}`)}><Iconify icon="eva:arrow-ios-back-fill" /></IconButton></Tooltip>
+        <Tooltip title="Back to templates"><IconButton onClick={() => router.push(`${paths.portal.records.certificateTemplates}${platform && churchId ? `?church=${churchId}` : ''}`)}><Iconify icon="eva:arrow-ios-back-fill" /></IconButton></Tooltip>
         <TextField size="small" variant="standard" value={tpl?.name ?? ''} disabled={readOnly} onChange={(e) => { setTpl((p) => (p ? { ...p, name: e.target.value } : p)); d.setDirty(true); }} placeholder="Template name" slotProps={{ input: { disableUnderline: true, sx: { typography: 'h6' } } }} sx={{ minWidth: 220 }} />
         {tpl && <Label variant="soft" color={statusColor}>{tpl.status}</Label>}
         {tpl && <Label variant="outlined" color={tpl.scope === 'global' ? 'info' : 'primary'}>{tpl.scope === 'global' ? 'Orthodox Metrics' : 'Parish'}</Label>}
@@ -181,7 +181,7 @@ export function CertificateDesignerView() {
       <ConfirmDialog open={publishAsk} onClose={() => setPublishAsk(false)} title="Publish template" content={<>Publishing makes <strong>{tpl?.name}</strong> available for generating certificates{tpl?.scope === 'global' ? ' at every parish' : ' in your parish'}. {d.dirty && 'Your unsaved changes will be saved first.'}</>}
         action={<><Button variant="outlined" onClick={() => publish(false)}>Publish</Button><Button variant="contained" onClick={() => publish(true)}>Publish & make default</Button></>} />
 
-      <Dialog open={newDlg} onClose={() => router.push(paths.dashboard.records.certificateTemplates)} fullWidth maxWidth="xs">
+      <Dialog open={newDlg} onClose={() => router.push(paths.portal.records.certificateTemplates)} fullWidth maxWidth="xs">
         <DialogTitle>New certificate template</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px !important' }}>
           <TextField autoFocus label="Name" value={draft.name} onChange={(e) => setDraft((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Ss. Peter & Paul — Baptism 2026" />
@@ -194,7 +194,7 @@ export function CertificateDesignerView() {
             <TextField select label="Orientation" value={draft.orientation} onChange={(e) => setDraft((p) => ({ ...p, orientation: e.target.value as any }))}><MenuItem value="portrait">Portrait</MenuItem><MenuItem value="landscape">Landscape</MenuItem></TextField>
           </Box>
         </DialogContent>
-        <DialogActions><Button color="inherit" onClick={() => router.push(paths.dashboard.records.certificateTemplates)}>Cancel</Button><Button variant="contained" loading={busy === 'save'} onClick={create} disabled={!meta.canDesignGlobal && !meta.canDesignParish}>Create & open designer</Button></DialogActions>
+        <DialogActions><Button color="inherit" onClick={() => router.push(paths.portal.records.certificateTemplates)}>Cancel</Button><Button variant="contained" loading={busy === 'save'} onClick={create} disabled={!meta.canDesignGlobal && !meta.canDesignParish}>Create & open designer</Button></DialogActions>
       </Dialog>
     </Box>
   );

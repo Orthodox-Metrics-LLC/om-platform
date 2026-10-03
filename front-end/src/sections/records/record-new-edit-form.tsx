@@ -111,12 +111,12 @@ export function RecordNewEditForm({ type, currentRecord }: { type: RecordType; c
       if (currentRecord) {
         await omRecordsApi.update(type, currentRecord.id, payload);
         toast.success(`${meta.label} record updated`);
-        router.push(`${paths.dashboard.records.details(type, currentRecord.id)}${platform ? `?church=${churchId}` : ''}`);
+        router.push(`${paths.portal.records.details(type, currentRecord.id)}${platform ? `?church=${churchId}` : ''}`);
       } else {
         const r = await omRecordsApi.create(type, payload);
         const id = r.id ?? r.record?.id ?? r.data?.id;
         toast.success(`${meta.label} record created`);
-        router.push(id ? `${paths.dashboard.records.details(type, id)}${platform ? `?church=${churchId}` : ''}` : `${paths.dashboard.records.list(type)}${platform ? `?church=${churchId}` : ''}`);
+        router.push(id ? `${paths.portal.records.details(type, id)}${platform ? `?church=${churchId}` : ''}` : `${paths.portal.records.list(type)}${platform ? `?church=${churchId}` : ''}`);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not save record');

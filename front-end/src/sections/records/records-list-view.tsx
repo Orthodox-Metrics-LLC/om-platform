@@ -136,7 +136,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
 
   const columns = useMemo<GridColDef[]>(() => [
     { field: 'title', headerName: type === 'marriage' ? 'Groom & Bride' : 'Name', flex: 1, minWidth: 260, sortable: false, renderCell: (p) => (
-      <Box component={RouterLink} href={`${paths.dashboard.records.details(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} sx={{ py: 1, minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
+      <Box component={RouterLink} href={`${paths.portal.records.details(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} sx={{ py: 1, minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
         <Typography variant="subtitle2" noWrap sx={{ '&:hover': { textDecoration: 'underline' } }}>{p.row.title}</Typography>
         {p.row.subtitle && <Typography variant="caption" noWrap sx={{ color: 'text.disabled', display: 'block' }}>{p.row.subtitle}</Typography>}
       </Box>
@@ -147,9 +147,9 @@ export function RecordsListView({ type }: { type: RecordType }) {
     { field: 'place', headerName: type === 'baptism' ? 'Birthplace' : type === 'marriage' ? 'License' : 'Burial place', width: 180, sortable: false, renderCell: (p) => <Typography variant="body2" noWrap>{p.row.place}</Typography> },
     { field: 'status', headerName: 'Status', width: 120, renderCell: (p) => <Label variant="soft" color={STATUS_COLOR[p.row.status] || 'default'} sx={{ textTransform: 'capitalize' }}>{String(p.row.status).replace(/_/g, ' ')}</Label> },
     { field: 'actions', type: 'actions', headerName: ' ', width: 64, align: 'right', getActions: (p) => [
-      <CustomGridActionsCellItem key="view" showInMenu label="View" icon={<Iconify icon="solar:eye-bold" />} href={`${paths.dashboard.records.details(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />,
-      ...(canManage ? [<CustomGridActionsCellItem key="edit" showInMenu label="Edit" icon={<Iconify icon="solar:pen-bold" />} href={`${paths.dashboard.records.edit(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />] : []),
-      ...(type !== 'funeral' ? [<CustomGridActionsCellItem key="cert" showInMenu label="Certificate" icon={<Iconify icon="solar:verified-check-bold" />} href={`${paths.dashboard.records.certificates}?type=${type}&record=${p.row.id}${platform && churchId ? `&church=${churchId}` : ''}`} />] : []),
+      <CustomGridActionsCellItem key="view" showInMenu label="View" icon={<Iconify icon="solar:eye-bold" />} href={`${paths.portal.records.details(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />,
+      ...(canManage ? [<CustomGridActionsCellItem key="edit" showInMenu label="Edit" icon={<Iconify icon="solar:pen-bold" />} href={`${paths.portal.records.edit(type, p.row.id)}${platform && churchId ? `?church=${churchId}` : ''}`} />] : []),
+      ...(type !== 'funeral' ? [<CustomGridActionsCellItem key="cert" showInMenu label="Certificate" icon={<Iconify icon="solar:verified-check-bold" />} href={`${paths.portal.records.certificates}?type=${type}&record=${p.row.id}${platform && churchId ? `&church=${churchId}` : ''}`} />] : []),
       ...(canManage ? [<CustomGridActionsCellItem key="del" showInMenu label="Delete" icon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={() => { setDeleteTarget(p.row); confirmDelete.onTrue(); }} style={{ color: "var(--palette-error-main)" }} />] : []),
     ] },
   ], [type, platform, churchId, canManage, confirmDelete]);
@@ -157,7 +157,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
   const searchColumns = useMemo<GridColDef[]>(() => [
     { field: 'recordType', headerName: 'Type', width: 100, renderCell: (p) => <Label variant="soft" color={RECORD_TYPES.find((t) => t.value === p.row.recordType)?.color ?? 'default'} sx={{ textTransform: 'capitalize' }}>{p.row.recordType}</Label> },
     { field: 'primaryName', headerName: 'Name / Parties', flex: 1, minWidth: 240, renderCell: (p) => (
-      <Box component={RouterLink} href={`${paths.dashboard.records.details(p.row.recordType, p.row.sourceRecordId)}${platform && churchId ? `?church=${churchId}` : ''}`} sx={{ color: 'inherit', textDecoration: 'none' }}>
+      <Box component={RouterLink} href={`${paths.portal.records.details(p.row.recordType, p.row.sourceRecordId)}${platform && churchId ? `?church=${churchId}` : ''}`} sx={{ color: 'inherit', textDecoration: 'none' }}>
         <Typography variant="subtitle2" noWrap>{p.row.primaryName}</Typography>
         {p.row.matchLabel && <Typography variant="caption" sx={{ color: 'text.disabled' }}>{p.row.matchLabel}{p.row.matchConfidence != null ? ` · ${Math.round(p.row.matchConfidence * 100)}%` : ''}</Typography>}
         {p.row.deletedAt && <Label variant="soft" color="error" sx={{ ml: 1 }}>Deleted</Label>}
@@ -178,7 +178,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [mode, platform, churchId, canManage]);
 
-  if (platform && !churchId) return <FileManagerChurchPicker heading="Records" basePath={paths.dashboard.records.list(type)} />;
+  if (platform && !churchId) return <FileManagerChurchPicker heading="Records" basePath={paths.portal.records.list(type)} />;
   if (!churchId) return <DashboardContent><EmptyContent filled title="Your account is not assigned to a church" sx={{ py: 10 }} /></DashboardContent>;
 
   // list rows use numeric ids; search rows use "type:id"
@@ -219,7 +219,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
         </ToolbarLeftPanel>
         <ToolbarRightPanel>
           {!!selectedIds.length && selectedTypes.length <= 1 && (selectedTypes[0] ?? type) !== 'funeral' && (
-            <Button size="small" variant="soft" startIcon={<Iconify icon="solar:verified-check-bold" />} component={RouterLink} href={`${paths.dashboard.records.certificates}?type=${selectedTypes[0] ?? type}&records=${selectedIds.join(',')}${platform ? `&church=${churchId}` : ''}`}>Certificates ({selectedIds.length})</Button>
+            <Button size="small" variant="soft" startIcon={<Iconify icon="solar:verified-check-bold" />} component={RouterLink} href={`${paths.portal.records.certificates}?type=${selectedTypes[0] ?? type}&records=${selectedIds.join(',')}${platform ? `&church=${churchId}` : ''}`}>Certificates ({selectedIds.length})</Button>
           )}
           <Button size="small" startIcon={<Iconify icon="solar:export-bold" />} onClick={exportDialog.onTrue}>Export{selectedIds.length ? ` (${selectedIds.length})` : ''}</Button>
           <CustomToolbarColumnsButton />
@@ -238,7 +238,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
           action={
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button variant="outlined" color="inherit" startIcon={<Iconify icon="eva:star-fill" />} onClick={savedDrawer.onTrue}>Saved searches</Button>
-              {canManage && <Button component={RouterLink} href={`${paths.dashboard.records.new(type)}${platform ? `?church=${churchId}` : ''}`} variant="contained" startIcon={<Iconify icon="mingcute:add-line" />}>Add {meta.label.toLowerCase()}</Button>}
+              {canManage && <Button component={RouterLink} href={`${paths.portal.records.new(type)}${platform ? `?church=${churchId}` : ''}`} variant="contained" startIcon={<Iconify icon="mingcute:add-line" />}>Add {meta.label.toLowerCase()}</Button>}
             </Box>
           }
           sx={{ mb: { xs: 3, md: 4 } }}
@@ -252,7 +252,7 @@ export function RecordsListView({ type }: { type: RecordType }) {
           sx={{ mb: 3 }}
         />
 
-        <Tabs value={type} onChange={(_, v) => router.push(`${paths.dashboard.records.list(v)}${platform ? `?church=${churchId}` : ''}`)} sx={{ mb: 2 }}>
+        <Tabs value={type} onChange={(_, v) => router.push(`${paths.portal.records.list(v)}${platform ? `?church=${churchId}` : ''}`)} sx={{ mb: 2 }}>
           {RECORD_TYPES.map((t) => <Tab key={t.value} value={t.value} iconPosition="end" label={t.plural} icon={<Label variant={t.value === type ? 'filled' : 'soft'} color={t.color}>{counts[t.value] ?? '…'}</Label>} />)}
         </Tabs>
 

@@ -132,7 +132,7 @@ export function CertificatesView() {
     setHPage(0); loadHistory();
   };
 
-  if (platform && !churchId) return <FileManagerChurchPicker heading="Certificates" basePath={paths.dashboard.records.certificates} />;
+  if (platform && !churchId) return <FileManagerChurchPicker heading="Certificates" basePath={paths.portal.records.certificates} />;
   if (!churchId) return <DashboardContent><EmptyContent filled title="Your account is not assigned to a church" sx={{ py: 10 }} /></DashboardContent>;
 
   const tpl = templates.find((t) => t.id === templateId);
@@ -140,8 +140,8 @@ export function CertificatesView() {
 
   return (
     <DashboardContent maxWidth="xl">
-      <CustomBreadcrumbs heading="Certificates" links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.dashboard.records.root }, { name: 'Certificates' }]}
-        action={<Button component={RouterLink} href={`${paths.dashboard.records.certificateTemplates}${suffix}`} variant="outlined" color="inherit" startIcon={<Iconify icon="solar:pen-bold" />}>Templates & designer</Button>} sx={{ mb: 3 }} />
+      <CustomBreadcrumbs heading="Certificates" links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.portal.records.root }, { name: 'Certificates' }]}
+        action={<Button component={RouterLink} href={`${paths.portal.records.certificateTemplates}${suffix}`} variant="outlined" color="inherit" startIcon={<Iconify icon="solar:pen-bold" />}>Templates & designer</Button>} sx={{ mb: 3 }} />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>

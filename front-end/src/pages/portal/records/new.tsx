@@ -21,7 +21,7 @@ export default function Page() {
       <title>{metadata.title}</title>
 
       <DashboardContent>
-        <CustomBreadcrumbs heading={`Add ${t.label.toLowerCase()} record`} links={[{ name: 'Portal', href: paths.portal.root }, { name: t.plural, href: paths.dashboard.records.list(t.value) }, { name: 'New' }]} sx={{ mb: { xs: 3, md: 5 } }} />
+        <CustomBreadcrumbs heading={`Add ${t.label.toLowerCase()} record`} links={[{ name: 'Portal', href: paths.portal.root }, { name: t.plural, href: paths.portal.records.list(t.value) }, { name: 'New' }]} sx={{ mb: { xs: 3, md: 5 } }} />
         <RecordNewEditForm type={t.value} />
       </DashboardContent>
     </>

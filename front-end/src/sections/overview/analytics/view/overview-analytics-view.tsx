@@ -180,7 +180,7 @@ export function OverviewAnalyticsView() {
             </Box>
             <Stack spacing={1} sx={{ flexGrow: 1 }}>
               {(data.recentEvents ?? []).slice(0, 6).map((e) => (
-                <Box key={`${e.type}-${e.id}`} component={RouterLink} href={`${paths.dashboard.records.details(e.type, e.id)}${platform ? `?church=${churchId}` : ''}`} sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'inherit', textDecoration: 'none', '&:hover .name': { textDecoration: 'underline' } }}>
+                <Box key={`${e.type}-${e.id}`} component={RouterLink} href={`${paths.portal.records.details(e.type, e.id)}${platform ? `?church=${churchId}` : ''}`} sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'inherit', textDecoration: 'none', '&:hover .name': { textDecoration: 'underline' } }}>
                   <Label variant="soft" color={e.type === 'baptism' ? 'primary' : e.type === 'marriage' ? 'secondary' : 'warning'} sx={{ minWidth: 64, justifyContent: 'center', textTransform: 'capitalize' }}>{e.type}</Label>
                   <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                     <Typography className="name" variant="body2" noWrap>{e.name || '—'}</Typography>

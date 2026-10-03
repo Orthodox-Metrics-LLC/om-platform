@@ -24,7 +24,7 @@ import {
   wizardProcessingStepIndex,
   type OmOcrJob,
   type OmOcrRecordType,
-} from "../om-ocr-api"
+} from "./om-ocr-api"
 
 type Page = "upload" | "image-review" | "records" | "processing" | "record-review" | "final-audit"
 type Preset = "green" | "blue" | "purple" | "orange" | "red"
@@ -202,7 +202,7 @@ const iconPaths: Record<string, ReactNode> = {
   ),
 }
 
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
+export function Icon({ name, size = 20 }: { name: string; size?: number }) {
   return (
     <svg
       className="icon"
@@ -221,7 +221,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
   )
 }
 
-function Button({
+export function Button({
   children,
   variant = "contained",
   icon,
@@ -249,7 +249,7 @@ function Button({
   )
 }
 
-function IconButton({
+export function IconButton({
   icon,
   label,
   onClick,
@@ -272,7 +272,7 @@ function IconButton({
   )
 }
 
-function Select({
+export function Select({
   value,
   onChange,
   children,
@@ -294,7 +294,7 @@ function Select({
   )
 }
 
-function TextField({
+export function TextField({
   placeholder,
   value,
   onChange,
@@ -316,7 +316,7 @@ function TextField({
   )
 }
 
-function Card({
+export function Card({
   children,
   className = "",
 }: {
@@ -3862,7 +3862,7 @@ export function RecordUploadApp({ embedded = true }: { embedded?: boolean }) {
   }, [activeChurch])
 
   const openRecords = () => {
-    if (embedded) navigate(paths.dashboard.ocr.root)
+    if (embedded) navigate(paths.portal.ocr.root)
     else setPage("records")
   }
   const [settingsOpen, setSettingsOpen] = useState(false)

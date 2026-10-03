@@ -11,6 +11,7 @@ const ROOTS = {
   AUTH: '/auth',
   AUTH_DEMO: '/auth-demo',
   DASHBOARD: '/dashboard',
+  PORTAL: '/portal',
 };
 
 // ----------------------------------------------------------------------
@@ -115,16 +116,30 @@ export const paths = {
     },
   },
   /**
-   * OM Parish Portal — the authenticated church-facing surface being migrated
-   * page-by-page from prod (`/portal` is OM's canonical URL).
+   * OM Parish Portal — the authenticated, church-scoped surface (data is
+   * scoped to the user's active `om_church_##` membership). Records, OCR
+   * uploads, and the file manager all live here rather than under the
+   * generic `/dashboard` shell.
    */
   portal: {
-    root: '/portal',
-    /** Legacy prod URLs; route shims redirect these to `dashboard.ocr`. */
+    root: ROOTS.PORTAL,
     ocr: {
-      root: '/portal/ocr',
-      upload: '/portal/ocr/upload',
+      root: `${ROOTS.PORTAL}/ocr`,
+      upload: `${ROOTS.PORTAL}/ocr/upload`,
+      details: (id: string | number) => `${ROOTS.PORTAL}/ocr/${id}`,
     },
+    records: {
+      root: `${ROOTS.PORTAL}/records`,
+      list: (type: string) => `${ROOTS.PORTAL}/records/${type}`,
+      new: (type: string) => `${ROOTS.PORTAL}/records/${type}/new`,
+      details: (type: string, id: string | number) => `${ROOTS.PORTAL}/records/${type}/${id}`,
+      edit: (type: string, id: string | number) => `${ROOTS.PORTAL}/records/${type}/${id}/edit`,
+      certificates: `${ROOTS.PORTAL}/records/certificates`,
+      certificateTemplates: `${ROOTS.PORTAL}/records/certificates/templates`,
+      certificateDesigner: (id: string) => `${ROOTS.PORTAL}/records/certificates/designer/${id}`,
+      sacramentalCalendar: `${ROOTS.PORTAL}/records/sacramental-calendar`,
+    },
+    fileManager: `${ROOTS.PORTAL}/file-manager`,
   },
   // DASHBOARD
   dashboard: {
@@ -134,7 +149,6 @@ export const paths = {
     blank: `${ROOTS.DASHBOARD}/blank`,
     kanban: `${ROOTS.DASHBOARD}/kanban`,
     calendar: `${ROOTS.DASHBOARD}/calendar`,
-    fileManager: `${ROOTS.DASHBOARD}/file-manager`,
     assetManager: `${ROOTS.DASHBOARD}/asset-manager`,
     menuEditor: `${ROOTS.DASHBOARD}/menu-editor`,
     pageBuilder: {
@@ -142,22 +156,7 @@ export const paths = {
       new: `${ROOTS.DASHBOARD}/admin/page-builder/new`,
       edit: (id: string | number) => `${ROOTS.DASHBOARD}/admin/page-builder/${id}/edit`,
     },
-    ocr: {
-      root: `${ROOTS.DASHBOARD}/ocr`,
-      upload: `${ROOTS.DASHBOARD}/ocr/upload`,
-      details: (id: string | number) => `${ROOTS.DASHBOARD}/ocr/${id}`,
-    },
-    records: {
-      root: `${ROOTS.DASHBOARD}/records`,
-      list: (type: string) => `${ROOTS.DASHBOARD}/records/${type}`,
-      new: (type: string) => `${ROOTS.DASHBOARD}/records/${type}/new`,
-      details: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}`,
-      edit: (type: string, id: string | number) => `${ROOTS.DASHBOARD}/records/${type}/${id}/edit`,
-      certificates: `${ROOTS.DASHBOARD}/records/certificates`,
-      certificateTemplates: `${ROOTS.DASHBOARD}/records/certificates/templates`,
-      certificateDesigner: (id: string) => `${ROOTS.DASHBOARD}/records/certificates/designer/${id}`,
-      sacramentalCalendar: `${ROOTS.DASHBOARD}/records/sacramental-calendar`,
-    },
+    parishSettings: `${ROOTS.DASHBOARD}/admin/parish-settings`,
     permission: `${ROOTS.DASHBOARD}/permission`,
     general: {
       app: `${ROOTS.DASHBOARD}/app`,

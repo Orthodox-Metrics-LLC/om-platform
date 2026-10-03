@@ -97,7 +97,7 @@ export function SacramentalCalendarView() {
     <DashboardContent maxWidth="xl">
       <CustomBreadcrumbs
         heading="Sacramental calendar"
-        links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.dashboard.records.root }, { name: 'Sacramental calendar' }]}
+        links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.portal.records.root }, { name: 'Sacramental calendar' }]}
         action={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button color="inherit" onClick={() => setYear((y) => y - 1)}><Iconify icon="eva:arrow-ios-back-fill" /></Button>

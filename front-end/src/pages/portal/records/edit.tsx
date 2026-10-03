@@ -36,7 +36,7 @@ export default function Page() {
       <title>{metadata.title}</title>
 
       <DashboardContent>
-        <CustomBreadcrumbs heading={record ? `Edit ${record.title}` : 'Edit record'} links={[{ name: 'Portal', href: paths.portal.root }, { name: t.plural, href: paths.dashboard.records.list(t.value) }, { name: record ? `#${record.id}` : 'Edit' }]} sx={{ mb: { xs: 3, md: 5 } }} />
+        <CustomBreadcrumbs heading={record ? `Edit ${record.title}` : 'Edit record'} links={[{ name: 'Portal', href: paths.portal.root }, { name: t.plural, href: paths.portal.records.list(t.value) }, { name: record ? `#${record.id}` : 'Edit' }]} sx={{ mb: { xs: 3, md: 5 } }} />
         {error ? <EmptyContent filled title={error} sx={{ py: 10 }} /> : !record ? <LinearProgress /> : <RecordNewEditForm type={t.value} currentRecord={record} />}
       </DashboardContent>
     </>
