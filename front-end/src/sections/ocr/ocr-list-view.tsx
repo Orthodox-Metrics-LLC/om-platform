@@ -577,7 +577,6 @@ export function OcrListView({ churchId }: Props) {
                       setSelectedIds((prev) => (checked ? [...prev, row.id] : prev.filter((id) => id !== row.id)))
                     }
                     onToggleReady={(ready) => handleToggleReady(row, ready)}
-                    onView={() => navigate(paths.portal.ocr.details(row.primaryJobId))}
                     onRename={() => handleRename(row)}
                     onRetryOcr={() => handleRetryJobs(row, 'OCR re-run started')}
                     onReprocessBatch={() => handleRetryJobs(row, 'Batch reprocessing started')}
@@ -664,7 +663,6 @@ type RowProps = {
   busy: boolean;
   onToggleSelected: (checked: boolean) => void;
   onToggleReady: (ready: boolean) => void;
-  onView: () => void;
   onRename: () => void;
   onRetryOcr: () => void;
   onReprocessBatch: () => void;
@@ -682,7 +680,6 @@ function OcrBatchRow({
   busy,
   onToggleSelected,
   onToggleReady,
-  onView,
   onRename,
   onRetryOcr,
   onReprocessBatch,
@@ -691,9 +688,17 @@ function OcrBatchRow({
   onArchive,
   onDelete,
 }: RowProps) {
+  const navigate = useNavigate();
   const menu = usePopover();
   const pct = row.totalImages > 0 ? Math.round((row.completedImages / row.totalImages) * 100) : 0;
   const isProcessing = !row.allProcessed;
+
+  // Routes into the upload wizard at a specific step for this existing
+  // batch, instead of the plain job-detail/debug page.
+  const goToStep = (step: 'image-review' | 'processing' | 'record-review') => {
+    const jobIds = row.jobIds.join(',');
+    navigate(`${paths.portal.ocr.upload}?jobIds=${encodeURIComponent(jobIds)}&step=${step}`);
+  };
 
   return (
     <>
@@ -812,7 +817,7 @@ function OcrBatchRow({
             color={row.allProcessed ? 'primary' : 'inherit'}
             disabled={!row.allProcessed && !row.batchId && row.jobIds.length === 0}
             loading={pendingReady}
-            onClick={row.allProcessed ? onView : () => onToggleReady(true)}
+            onClick={row.allProcessed ? () => goToStep('image-review') : () => onToggleReady(true)}
           >
             {row.allProcessed ? 'Review images' : 'View progress'}
           </Button>
@@ -826,19 +831,19 @@ function OcrBatchRow({
 
       <CustomPopover open={menu.open} anchorEl={menu.anchorEl} onClose={menu.onClose}>
         <MenuList>
-          <MenuItem onClick={() => { menu.onClose(); onView(); }}>
+          <MenuItem onClick={() => { menu.onClose(); goToStep('image-review'); }}>
             <Iconify icon={"solar:folder-open-bold" as any} />
             Open batch
           </MenuItem>
-          <MenuItem onClick={() => { menu.onClose(); onView(); }}>
+          <MenuItem onClick={() => { menu.onClose(); goToStep('record-review'); }}>
             <Iconify icon={"solar:document-text-bold" as any} />
             Review records
           </MenuItem>
-          <MenuItem onClick={() => { menu.onClose(); onView(); }}>
+          <MenuItem onClick={() => { menu.onClose(); goToStep('image-review'); }}>
             <Iconify icon="solar:gallery-wide-bold" />
             View source images
           </MenuItem>
-          <MenuItem onClick={() => { menu.onClose(); onView(); }}>
+          <MenuItem onClick={() => { menu.onClose(); goToStep('processing'); }}>
             <Iconify icon={"solar:chart-2-bold" as any} />
             View processing details
           </MenuItem>

@@ -129,7 +129,7 @@
 .om-record-upload .button--text:hover { background: var(--hover); }
 .om-record-upload .button:disabled { opacity: .45; pointer-events: none; box-shadow: none; }
 .om-record-upload .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.om-record-upload .type-card { min-height: 126px; position: relative; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid var(--divider); border-radius: var(--radius-md); background: white; cursor: pointer; }
+.om-record-upload .type-card { min-height: 126px; position: relative; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; padding: 16px; border: 1px solid var(--divider); border-radius: var(--radius-md); background: var(--surface); cursor: pointer; }
 .om-record-upload .type-card:hover { border-color: rgba(var(--primary-rgb), .55); background: var(--primary-lighter); }
 .om-record-upload .type-card.selected { border: 2px solid var(--primary-main); background: var(--primary-lighter); box-shadow: 0 0 0 4px rgba(var(--primary-rgb), .08); }
 .om-record-upload .type-card > span:last-child { display: flex; flex-direction: column; gap: 2px; }
@@ -156,7 +156,7 @@
 .om-record-upload .upload-illustration::before, .om-record-upload .upload-illustration::after { content: ""; width: 40px; height: 14px; position: absolute; top: 35px; border-radius: 14px 14px 4px 4px; background: var(--grey-300); }
 .om-record-upload .upload-illustration::before { right: 34px; }
 .om-record-upload .upload-illustration::after { left: 34px; }
-.om-record-upload .file-sheet { width: 56px; height: 66px; z-index: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--grey-500); background: white; border: 1px solid var(--grey-300); box-shadow: 0 8px 16px rgba(145,158,171,.16); }
+.om-record-upload .file-sheet { width: 56px; height: 66px; z-index: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: var(--grey-500); background: var(--surface); border: 1px solid var(--grey-300); box-shadow: 0 8px 16px rgba(145,158,171,.16); }
 .om-record-upload .upload-circle { width: 34px; height: 34px; z-index: 2; position: absolute; right: -12px; bottom: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: white; background: var(--primary-main); }
 .om-record-upload .dropzone > b { font-size: 14px; }
 .om-record-upload .dropzone > p { margin-top: 3px; color: var(--text-secondary); font-size: 12px; }
@@ -188,7 +188,7 @@
 .om-record-upload .table-tools { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; }
 .om-record-upload .filters, .om-record-upload .table-actions { display: flex; align-items: center; gap: 10px; }
 .om-record-upload .filters .text-field { width: 290px; height: 42px; }
-.om-record-upload .select-field { width: 180px; height: 42px; position: relative; display: flex; align-items: center; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: white; }
+.om-record-upload .select-field { width: 180px; height: 42px; position: relative; display: flex; align-items: center; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--surface); }
 .om-record-upload .select-field select { width: 100%; height: 100%; appearance: none; border: 0; outline: 0; padding: 0 34px 0 12px; color: var(--text-primary); background: transparent; font-size: 12px; font-weight: 600; }
 .om-record-upload .select-arrow { position: absolute; right: 12px; pointer-events: none; color: var(--text-secondary); }
 .om-record-upload .selection-bar { height: 54px; display: flex; align-items: center; padding: 0 18px; color: var(--primary-dark); background: var(--primary-light); font-size: 13px; }
@@ -246,7 +246,7 @@
 .om-record-upload .processing-status .spinner { width: 15px; height: 15px; }
 .om-record-upload .workflow-stepper { display: flex; align-items: flex-start; margin: 0 0 20px; padding: 18px 24px; border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--shadow-card); list-style: none; }
 .om-record-upload .workflow-stepper li { min-width: 0; position: relative; flex: 1; display: flex; align-items: center; gap: 9px; color: var(--grey-500); }
-.om-record-upload .workflow-step-button { min-width: 0; z-index: 1; display: flex; align-items: center; gap: 9px; border: 0; padding: 0; color: inherit; background: white; cursor: default; }
+.om-record-upload .workflow-step-button { min-width: 0; z-index: 1; display: flex; align-items: center; gap: 9px; border: 0; padding: 0; color: inherit; background: var(--surface); cursor: default; }
 .om-record-upload .workflow-step-button:disabled { opacity: 1; }
 .om-record-upload .workflow-stepper li.clickable .workflow-step-button { cursor: pointer; }
 .om-record-upload .workflow-stepper li.clickable .workflow-step-button:hover b { color: var(--primary-dark); }
@@ -254,10 +254,10 @@
 .om-record-upload .workflow-stepper li > i { height: 2px; position: absolute; z-index: 0; top: 15px; right: 8px; left: 42px; background: var(--grey-300); }
 .om-record-upload .workflow-stepper li.complete > i { background: var(--success-main); }
 .om-record-upload .workflow-stepper li.active > i { background: linear-gradient(90deg, var(--primary-main), var(--grey-300)); }
-.om-record-upload .workflow-marker { width: 32px; height: 32px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--grey-300); border-radius: 50%; color: var(--grey-500); background: white; font-size: 11px; font-weight: 700; }
+.om-record-upload .workflow-marker { width: 32px; height: 32px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--grey-300); border-radius: 50%; color: var(--grey-500); background: var(--surface); font-size: 11px; font-weight: 700; }
 .om-record-upload .workflow-stepper li.complete .workflow-marker { color: white; border-color: var(--success-main); background: var(--success-main); }
 .om-record-upload .workflow-stepper li.active .workflow-marker { color: white; border-color: var(--primary-main); background: var(--primary-main); box-shadow: 0 0 0 5px rgba(var(--primary-rgb), .12); }
-.om-record-upload .workflow-stepper li b { position: relative; z-index: 1; padding-right: 14px; background: white; font-size: 11px; line-height: 16px; white-space: nowrap; }
+.om-record-upload .workflow-stepper li b { position: relative; z-index: 1; padding-right: 14px; background: var(--surface); font-size: 11px; line-height: 16px; white-space: nowrap; }
 .om-record-upload .workflow-stepper li.complete b { color: var(--text-primary); }
 .om-record-upload .workflow-stepper li.active b { color: var(--primary-dark); }
 .om-record-upload .workflow-stepper li:last-child { flex: 0 0 auto; }
@@ -267,14 +267,14 @@
 .om-record-upload .page--image-review { max-width: 1500px; }
 .om-record-upload .page--image-review .workflow-stepper { margin-bottom: 24px; }
 .om-record-upload .image-review-title { margin-bottom: 18px; }
-.om-record-upload .image-filter { display: flex; overflow: hidden; border-radius: 24px; padding: 4px; background: white; box-shadow: var(--shadow-card); }
+.om-record-upload .image-filter { display: flex; overflow: hidden; border-radius: 24px; padding: 4px; background: var(--surface); box-shadow: var(--shadow-card); }
 .om-record-upload .image-filter button { min-width: 130px; min-height: 40px; border: 0; border-radius: 20px; padding: 7px 14px; color: var(--text-secondary); background: transparent; cursor: pointer; font-size: 11px; font-weight: 700; }
 .om-record-upload .image-filter button.active { color: white; background: var(--primary-darker); box-shadow: 0 6px 12px rgba(var(--primary-rgb), .2); }
 .om-record-upload .image-change-alert { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; border-radius: var(--radius-md); padding: 11px 14px; color: var(--warning-dark); background: var(--warning-light); }
 .om-record-upload .image-change-alert > span { display: flex; flex-direction: column; }.om-record-upload .image-change-alert b { font-size: 11px; }.om-record-upload .image-change-alert small { margin-top: 2px; font-size: 9px; }
 .om-record-upload .image-review-layout { display: grid; grid-template-columns: 120px minmax(0, 1fr) 280px; align-items: start; gap: 14px; }
 .om-record-upload .page-thumbnails { min-height: 650px; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
-.om-record-upload .page-thumbnail { position: relative; display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--divider); border-radius: var(--radius-sm); padding: 6px; color: var(--text-primary); background: white; cursor: pointer; text-align: left; }
+.om-record-upload .page-thumbnail { position: relative; display: flex; flex-direction: column; gap: 5px; border: 1px solid var(--divider); border-radius: var(--radius-sm); padding: 6px; color: var(--text-primary); background: var(--surface); cursor: pointer; text-align: left; }
 .om-record-upload .page-thumbnail:hover { background: var(--primary-lighter); }
 .om-record-upload .page-thumbnail.selected { border: 2px solid var(--primary-main); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .1); }
 .om-record-upload .thumbnail-ledger { height: 118px; position: relative; overflow: hidden; border: 1px solid var(--grey-400); background: #f2efe5; filter: grayscale(1); }
@@ -342,7 +342,7 @@
 .om-record-upload .pipeline-state--warning { color: var(--warning-dark); background: var(--warning-light); border: 1px solid var(--warning-main); }
 .om-record-upload .pipeline-state--failed { color: white; background: var(--error-main); }
 .om-record-upload .pipeline-state--running { color: var(--primary-main); background: var(--primary-light); box-shadow: 0 0 0 5px rgba(var(--primary-rgb), .1); }
-.om-record-upload .pipeline-state--pending { border: 2px solid var(--grey-300); background: white; }
+.om-record-upload .pipeline-state--pending { border: 2px solid var(--grey-300); background: var(--surface); }
 .om-record-upload .pending-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--grey-400); }
 .om-record-upload .spinner { width: 17px; height: 17px; display: inline-block; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -477,7 +477,7 @@
 .om-record-upload .detailed-split { height: 100%; display: grid; min-width: 0; }
 .om-record-upload .source-viewer, .om-record-upload .detailed-record-panel { min-width: 0; overflow: hidden; }
 .om-record-upload .source-viewer { display: flex; flex-direction: column; border-right: 1px solid var(--divider); background: var(--grey-200); }
-.om-record-upload .viewer-toolbar { min-height: 50px; display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 7px 10px; border-bottom: 1px solid var(--divider); background: white; }
+.om-record-upload .viewer-toolbar { min-height: 50px; display: flex; align-items: center; gap: 4px; overflow-x: auto; padding: 7px 10px; border-bottom: 1px solid var(--divider); background: var(--surface); }
 .om-record-upload .viewer-toolbar > span { min-width: 38px; color: var(--text-secondary); font-size: 9px; text-align: center; }
 .om-record-upload .viewer-toolbar .icon-button { width: 34px; height: 34px; flex: 0 0 auto; border: 1px solid var(--divider); border-radius: var(--radius-sm); }
 .om-record-upload .viewer-toolbar .button { min-height: 34px; padding: 6px 10px; font-size: 9px; }
@@ -498,14 +498,14 @@
 .om-record-upload .split-handle { position: relative; z-index: 4; display: flex; align-items: center; justify-content: center; color: white; background: var(--grey-300); cursor: col-resize; touch-action: none; }
 .om-record-upload .split-handle span { width: 18px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: var(--primary-darker); font-size: 13px; }
 .om-record-upload .split-handle:focus { outline: 3px solid rgba(var(--primary-rgb), .25); outline-offset: 2px; }
-.om-record-upload .detailed-record-panel { display: flex; flex-direction: column; background: white; }
+.om-record-upload .detailed-record-panel { display: flex; flex-direction: column; background: var(--surface); }
 .om-record-upload .detailed-record-panel .review-fields { flex: 1; overflow-y: auto; grid-template-columns: repeat(2, minmax(150px, 1fr)); align-content: start; padding: 10px; }
 .om-record-upload .detailed-record-panel .review-field { min-height: 56px; padding: 7px 8px; }
 .om-record-upload .detailed-record-panel .review-field--large { min-height: 88px; }
 .om-record-upload .detailed-record-panel .review-field input, .om-record-upload .detailed-record-panel .review-field textarea { font-size: 9px; line-height: 14px; }
 
 .om-record-upload .dialog-scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(20,26,33,.52); backdrop-filter: blur(3px); }
-.om-record-upload .reject-dialog { width: 470px; max-width: 100%; overflow: hidden; border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-dialog); }
+.om-record-upload .reject-dialog { width: 470px; max-width: 100%; overflow: hidden; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-dialog); }
 .om-record-upload .dialog-header { display: flex; align-items: flex-start; gap: 12px; padding: 20px; border-bottom: 1px solid var(--divider); }
 .om-record-upload .dialog-header > div { flex: 1; }.om-record-upload .dialog-header h2 { font-size: 16px; }.om-record-upload .dialog-header p { margin-top: 3px; color: var(--text-secondary); font-size: 11px; line-height: 17px; }
 .om-record-upload .dialog-body { display: flex; flex-direction: column; gap: 9px; padding: 20px; }
@@ -588,12 +588,12 @@
 .om-record-upload .seed-success__counts > span { min-height: 70px; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: rgba(255,255,255,.72); }
 .om-record-upload .seed-success__counts b { color: var(--success-dark); font-family: "Barlow:Bold", var(--app-font); font-size: 22px; }.om-record-upload .seed-success__counts small { margin-top: 2px; color: var(--text-secondary); font-size: 9px; }
 .om-record-upload .audit-metadata { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; margin-top: 16px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--divider); }
-.om-record-upload .audit-metadata > span { min-width: 0; display: flex; flex-direction: column; padding: 11px; background: white; }
+.om-record-upload .audit-metadata > span { min-width: 0; display: flex; flex-direction: column; padding: 11px; background: var(--surface); }
 .om-record-upload .audit-metadata small { color: var(--text-secondary); font-size: 8px; text-transform: uppercase; letter-spacing: .35px; }.om-record-upload .audit-metadata b { margin-top: 3px; overflow-wrap: anywhere; font-size: 9px; line-height: 15px; }
 .om-record-upload .seed-success__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
 
 .om-record-upload .audit-drawer-scrim { position: fixed; inset: 0; z-index: 48; background: rgba(20,26,33,.48); }
-.om-record-upload .audit-drawer { width: 470px; max-width: 100%; position: fixed; z-index: 50; inset: 0 0 0 auto; display: flex; flex-direction: column; overflow-y: auto; background: white; box-shadow: var(--shadow-dialog); }
+.om-record-upload .audit-drawer { width: 470px; max-width: 100%; position: fixed; z-index: 50; inset: 0 0 0 auto; display: flex; flex-direction: column; overflow-y: auto; background: var(--surface); box-shadow: var(--shadow-dialog); }
 .om-record-upload .audit-source-preview { height: 250px; flex: 0 0 auto; overflow: hidden; border-bottom: 1px solid var(--divider); }
 .om-record-upload .audit-source-preview .ledger-stage { height: 100%; min-height: 0; padding: 10px; }
 .om-record-upload .audit-drawer__content { flex: 1; padding: 18px; }
@@ -610,35 +610,35 @@
 .om-record-upload .audit-drawer__actions { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 18px; border-top: 1px solid var(--divider); background: rgba(255,255,255,.94); backdrop-filter: blur(8px); }
 .om-record-upload .audit-drawer__actions .button { font-size: 10px; }
 
-.om-record-upload .seed-confirm-dialog { width: 660px; max-width: 100%; max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-dialog); }
+.om-record-upload .seed-confirm-dialog { width: 660px; max-width: 100%; max-height: calc(100dvh - 40px); overflow-y: auto; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-dialog); }
 .om-record-upload .seed-validation-summary { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; padding: 18px 18px 0; }
 .om-record-upload .validation-stat { min-height: 62px; display: flex; align-items: center; justify-content: center; flex-direction: column; border-radius: var(--radius-sm); background: var(--grey-100); }
 .om-record-upload .validation-stat b { font-family: "Barlow:Bold", var(--app-font); font-size: 18px; }.om-record-upload .validation-stat small { font-size: 8px; }
 .om-record-upload .validation-stat--success { color: var(--success-dark); background: var(--success-light); }.om-record-upload .validation-stat--info { color: var(--primary-dark); background: var(--primary-light); }.om-record-upload .validation-stat--error { color: var(--error-dark); background: var(--error-light); }
 .om-record-upload .seed-target-details { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 1px; overflow: hidden; margin: 14px 18px 0; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--divider); }
-.om-record-upload .seed-target-details > span { display: flex; flex-direction: column; padding: 10px; background: white; }
+.om-record-upload .seed-target-details > span { display: flex; flex-direction: column; padding: 10px; background: var(--surface); }
 .om-record-upload .seed-target-details small { color: var(--text-secondary); font-size: 8px; }.om-record-upload .seed-target-details b { margin-top: 3px; font-size: 9px; line-height: 15px; }
 .om-record-upload .seed-simulation { margin: 14px 18px 0; border-radius: var(--radius-sm); padding: 11px; background: var(--grey-100); }
-.om-record-upload .seed-simulation label { display: flex; align-items: center; gap: 12px; }.om-record-upload .seed-simulation label span { flex: 1; font-size: 9px; font-weight: 700; }.om-record-upload .seed-simulation select { min-height: 36px; border: 1px solid var(--divider); border-radius: var(--radius-sm); padding: 0 10px; color: var(--text-primary); background: white; font: inherit; font-size: 9px; }
+.om-record-upload .seed-simulation label { display: flex; align-items: center; gap: 12px; }.om-record-upload .seed-simulation label span { flex: 1; font-size: 9px; font-weight: 700; }.om-record-upload .seed-simulation select { min-height: 36px; border: 1px solid var(--divider); border-radius: var(--radius-sm); padding: 0 10px; color: var(--text-primary); background: var(--surface); font: inherit; font-size: 9px; }
 .om-record-upload .seed-simulation p { margin-top: 5px; color: var(--text-secondary); font-size: 8px; }
 .om-record-upload .validation-alert { display: flex; align-items: center; gap: 8px; margin: 14px 18px 0; border-radius: var(--radius-sm); padding: 10px; color: var(--success-dark); background: var(--success-light); font-size: 9px; font-weight: 700; }
 
 .om-record-upload .scrim { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; background: rgba(20,26,33,.48); transition: opacity .25s; }
 .om-record-upload .scrim.visible { pointer-events: auto; opacity: 1; }
-.om-record-upload .settings-drawer { width: 390px; max-width: 100%; position: fixed; z-index: 45; inset: 0 0 0 auto; overflow-y: auto; padding: 24px; background: white; box-shadow: var(--shadow-dialog); transform: translateX(105%); transition: transform .25s ease; }
+.om-record-upload .settings-drawer { width: 390px; max-width: 100%; position: fixed; z-index: 45; inset: 0 0 0 auto; overflow-y: auto; padding: 24px; background: var(--surface); box-shadow: var(--shadow-dialog); transform: translateX(105%); transition: transform .25s ease; }
 .om-record-upload .settings-drawer.open { transform: translateX(0); }
 .om-record-upload .drawer-header { display: flex; align-items: flex-start; justify-content: space-between; padding-bottom: 22px; border-bottom: 1px dashed var(--divider); }
 .om-record-upload .drawer-section { padding: 24px 0; border-bottom: 1px dashed var(--divider); }
 .om-record-upload .drawer-section h3, .om-record-upload .drawer-preview h3 { font-size: 14px; line-height: 22px; }
 .om-record-upload .drawer-section > p, .om-record-upload .drawer-preview p { margin: 2px 0 16px; color: var(--text-secondary); font-size: 12px; line-height: 19px; }
 .om-record-upload .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
-.om-record-upload .preset { height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: white; cursor: pointer; text-transform: capitalize; font-size: 12px; font-weight: 600; }
+.om-record-upload .preset { height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; text-transform: capitalize; font-size: 12px; font-weight: 600; }
 .om-record-upload .preset.active { border: 2px solid var(--preset-color); background: color-mix(in srgb, var(--preset-color) 8%, white); }
 .om-record-upload .preset > i { width: 20px; height: 20px; border-radius: 6px; background: var(--preset-color); box-shadow: 0 4px 8px color-mix(in srgb, var(--preset-color) 28%, transparent); }
 .om-record-upload .preset > span { flex: 1; text-align: left; }
 .om-record-upload .preset--green { --preset-color: #00a76f; }.om-record-upload .preset--blue { --preset-color: #078dee; }.om-record-upload .preset--purple { --preset-color: #8e33ff; }.om-record-upload .preset--orange { --preset-color: #f97316; }.om-record-upload .preset--red { --preset-color: #e11d48; }
 .om-record-upload .font-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
-.om-record-upload .font-list button { min-height: 68px; position: relative; display: flex; align-items: flex-start; justify-content: center; flex-direction: column; padding: 10px 12px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: white; cursor: pointer; }
+.om-record-upload .font-list button { min-height: 68px; position: relative; display: flex; align-items: flex-start; justify-content: center; flex-direction: column; padding: 10px 12px; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
 .om-record-upload .font-list button.active { border: 2px solid var(--primary-main); background: var(--primary-lighter); }
 .om-record-upload .font-list button > span { font-size: 20px; }.om-record-upload .font-list button b { font-size: 10px; }.om-record-upload .font-list button svg { position: absolute; top: 8px; right: 8px; color: var(--primary-main); }
 .om-record-upload .font-option--public-sans { font-family: "Public Sans:Regular", sans-serif; }
@@ -646,7 +646,7 @@
 .om-record-upload .font-option--dm-sans { font-family: "DM Sans", sans-serif; }
 .om-record-upload .font-option--nunito-sans { font-family: "Nunito Sans", sans-serif; }
 .om-record-upload .scale-control { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.om-record-upload .scale-control button { min-height: 52px; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: white; cursor: pointer; font-size: 11px; font-weight: 700; }
+.om-record-upload .scale-control button { min-height: 52px; display: flex; align-items: center; justify-content: center; flex-direction: column; border: 1px solid var(--divider); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; font-size: 11px; font-weight: 700; }
 .om-record-upload .scale-control button.active { color: var(--primary-dark); border: 2px solid var(--primary-main); background: var(--primary-lighter); }
 .om-record-upload .scale-control small { color: var(--text-secondary); font-size: 9px; font-weight: 400; }
 .om-record-upload .drawer-preview { margin-top: 24px; padding: 18px; border-radius: var(--radius-md); background: var(--grey-100); }

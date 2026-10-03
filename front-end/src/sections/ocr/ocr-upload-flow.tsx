@@ -20,6 +20,7 @@ import {
 import {
   fetchOcrJobs,
   isJobTerminal,
+  ocrJobImageUrl,
   uploadOcrFiles,
   fetchOcrSettings,
   wizardProcessingStepIndex,
@@ -1219,28 +1220,43 @@ type ReviewPageImage = {
   preview?: string
 }
 
-function pagesFromBatch(batch: BatchState): ReviewPageImage[] {
-  return batch.files.map((name, index) => ({
+function pagesFromBatch(batch: BatchState, churchId: number | null): ReviewPageImage[] {
+  if (batch.previews.length > 0) {
+    // Freshly-selected local files on this visit — use their blob previews.
+    return batch.files.map((name, index) => ({
+      id: index + 1,
+      name,
+      quality: "Good quality" as ImageQuality,
+      accepted: true,
+      preview: batch.previews[index],
+    }))
+  }
+  // Revisiting an already-uploaded batch (e.g. "Review images" from the
+  // Records list) — there are no local blobs, so load each page from the
+  // real job image endpoint instead.
+  return batch.jobIds.map((jobId, index) => ({
     id: index + 1,
-    name,
+    name: batch.files[index] || `Page ${index + 1}`,
     quality: "Good quality" as ImageQuality,
     accepted: true,
-    preview: batch.previews[index],
+    preview: churchId ? ocrJobImageUrl(churchId, jobId) : undefined,
   }))
 }
 
 function ImageReviewPage({
   batch,
   setBatch,
+  churchId,
   workflow = fallbackWorkflowNavigation,
   goToProcessing,
 }: {
   batch: BatchState
   setBatch: Dispatch<SetStateAction<BatchState>>
+  churchId: number | null
   workflow?: WorkflowNavigation
   goToProcessing: (reprocess: boolean) => void
 }) {
-  const [pages, setPages] = useState<ReviewPageImage[]>(() => pagesFromBatch(batch))
+  const [pages, setPages] = useState<ReviewPageImage[]>(() => pagesFromBatch(batch, churchId))
   const [selectedPageId, setSelectedPageId] = useState(1)
   const [filter, setFilter] = useState<"all" | "flagged">("all")
   const [zoom, setZoom] = useState(82)
@@ -1252,9 +1268,9 @@ function ImageReviewPage({
   const [changesDetected, setChangesDetected] = useState(false)
 
   useEffect(() => {
-    if (workflow.maxReached !== 0) return
-    setPages(pagesFromBatch(batch))
-  }, [batch.files, batch.previews, workflow.maxReached])
+    if (workflow.maxReached > 1) return
+    setPages(pagesFromBatch(batch, churchId))
+  }, [batch.files, batch.previews, batch.jobIds, churchId, workflow.maxReached])
 
   const selectedPage =
     pages.find((page) => page.id === selectedPageId) ?? pages[0]
@@ -3891,6 +3907,26 @@ export function RecordUploadApp({ embedded = true }: { embedded?: boolean }) {
   }
   const workflow = { maxReached, onNavigate: navigateWorkflow }
 
+  // Jump straight into an existing batch (e.g. "Review images" from the
+  // Records list links here with ?jobIds=1,2,3&step=image-review) instead
+  // of always landing on a blank new-upload screen.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const jobIdsParam = params.get("jobIds")
+    const stepParam = params.get("step") as Page | null
+    if (jobIdsParam) {
+      const ids = jobIdsParam.split(",").filter(Boolean)
+      setBatch((current) => ({ ...current, jobIds: ids }))
+    }
+    if (stepParam) {
+      const index = stepPages.indexOf(stepParam)
+      if (index >= 0) {
+        setMaxReached((current) => Math.max(current, index))
+        setPage(stepParam)
+      }
+    }
+  }, [])
+
   return (
     <div
       className={`app theme-${preset} font-${font.toLowerCase().replaceAll(" ", "-")} scale-${scale} ${
@@ -3937,6 +3973,7 @@ export function RecordUploadApp({ embedded = true }: { embedded?: boolean }) {
           <ImageReviewPage
             batch={batch}
             setBatch={setBatch}
+            churchId={churchId}
             workflow={workflow}
             goToProcessing={(reprocess) => {
               const firstRun = maxReached < 2
