@@ -31,7 +31,6 @@ export function AssetBulkActions() {
   const { selected, clearSelection, actions, directories, tags, collections, filters } = useAssetManager();
   const ids = [...selected];
   const confirmArchive = useBoolean();
-  const confirmPurge = useBoolean();
   const moveDialog = useBoolean();
   const tagsDialog = useBoolean();
   const scopeDialog = useBoolean();
@@ -56,7 +55,7 @@ export function AssetBulkActions() {
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:suitcase-tag-bold" />} onClick={collectionMenu.onOpen}>Collection</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:export-bold" />} onClick={workshopDialog.onTrue}>Send to Workshop</Button>
         <Button size="small" variant="soft" color="warning" startIcon={<Iconify icon="solar:archive-down-minimlistic-bold" />} onClick={confirmArchive.onTrue}>Archive</Button>
-        <Button size="small" variant="soft" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={confirmPurge.onTrue}>Delete</Button>
+        <Button size="small" variant="soft" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={() => actions.purge(ids).catch(() => {})}>Delete</Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button size="small" color="inherit" onClick={clearSelection}>Clear</Button>
       </Box>
@@ -78,14 +77,6 @@ export function AssetBulkActions() {
       </CustomPopover>
 
       <ConfirmDialog open={confirmArchive.value} onClose={confirmArchive.onFalse} title="Archive assets" content={<>Archive <strong>{ids.length}</strong> assets? They are hidden from the library but kept on disk.</>} action={<Button variant="contained" color="warning" onClick={() => { confirmArchive.onFalse(); actions.archive(ids).catch(() => {}); }}>Archive</Button>} />
-
-      <ConfirmDialog
-        open={confirmPurge.value}
-        onClose={confirmPurge.onFalse}
-        title="Delete assets permanently"
-        content={<>Permanently delete <strong>{ids.length}</strong> asset{ids.length === 1 ? '' : 's'}? The file{ids.length === 1 ? '' : 's'} and all metadata are removed immediately — <strong>this cannot be undone</strong>. If you just want to hide them, use Archive instead.</>}
-        action={<Button variant="contained" color="error" onClick={() => { confirmPurge.onFalse(); actions.purge(ids).catch(() => {}); }}>Delete permanently</Button>}
-      />
 
       <Dialog fullWidth maxWidth="xs" open={moveDialog.value} onClose={moveDialog.onFalse}>
         <DialogTitle>Move {ids.length} assets</DialogTitle>
