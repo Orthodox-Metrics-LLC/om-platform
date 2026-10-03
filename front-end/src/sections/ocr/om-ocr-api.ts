@@ -322,11 +322,12 @@ export async function fetchOcrSettings(churchId: number | string): Promise<OmOcr
 
 export async function fetchOcrJobs(
   churchId: number | string,
-  opts: { limit?: number; includeHiddenCompleted?: boolean } = {},
+  opts: { limit?: number; includeHiddenCompleted?: boolean; includeArchived?: boolean } = {},
 ): Promise<OmOcrJob[]> {
   const sp = new URLSearchParams();
   if (opts.limit) sp.set('limit', String(opts.limit));
   if (opts.includeHiddenCompleted) sp.set('include_hidden_completed', '1');
+  if (opts.includeArchived) sp.set('include_archived', '1');
   const qs = sp.toString();
   const res = await omApiFetch(`${BASE(churchId)}/jobs${qs ? `?${qs}` : ''}`, { method: 'GET' });
   const json = await parseJson<{ jobs?: OmOcrJob[] }>(res);
@@ -348,6 +349,58 @@ export function ocrJobImageUrl(
 ): string {
   const qs = opts.original ? '?original=true' : '';
   return `${BASE(churchId)}/jobs/${jobId}/image${qs}`;
+}
+
+export function ocrJobDownloadUrl(
+  churchId: number | string,
+  jobId: string | number,
+  format: 'txt' | 'json' = 'txt',
+): string {
+  return `${BASE(churchId)}/jobs/${jobId}/download?format=${format}`;
+}
+
+export async function retryOcrJob(churchId: number | string, jobId: string | number): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/jobs/${jobId}/retry`, { method: 'POST' });
+  await parseJson(res);
+}
+
+export async function updateOcrJobRecordType(
+  churchId: number | string,
+  jobId: string | number,
+  recordType: OmOcrRecordType,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/jobs/${jobId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ record_type: recordType }),
+  });
+  await parseJson(res);
+}
+
+export async function setOcrJobArchived(
+  churchId: number | string,
+  jobId: string | number,
+  archived: boolean,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/jobs/${jobId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ archived }),
+  });
+  await parseJson(res);
+}
+
+export async function setOcrBatchArchived(
+  churchId: number | string,
+  batchId: string,
+  archived: boolean,
+): Promise<void> {
+  const res = await omApiFetch(`${BASE(churchId)}/batches/${batchId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ archived }),
+  });
+  await parseJson(res);
 }
 
 export async function uploadOcrFiles(

@@ -21,6 +21,7 @@ import {
   fetchOcrJobs,
   isJobTerminal,
   uploadOcrFiles,
+  fetchOcrSettings,
   wizardProcessingStepIndex,
   type OmOcrJob,
   type OmOcrRecordType,
@@ -46,13 +47,6 @@ function recordTypeToApi(type: RecordType): OmOcrRecordType {
   if (type === "Marriage") return "marriage"
   if (type === "Funeral") return "funeral"
   return "custom"
-}
-
-function languageToApi(language: string): string {
-  if (language === "Greek") return "el"
-  if (language === "Church Slavonic") return "cu"
-  if (language === "Mixed languages") return "mixed"
-  return "en"
 }
 
 function makeBatchId(): string {
@@ -453,10 +447,12 @@ function Header({
   page,
   openSettings,
   openNav,
+  embedded,
 }: {
   page: Page
   openSettings: () => void
   openNav: () => void
+  embedded?: boolean
 }) {
   const pageNames: Record<Page, string> = {
     upload: "Upload records",
@@ -479,15 +475,20 @@ function Header({
         <Icon name="chevron" size={14} />
         <b>{pageNames[page]}</b>
       </div>
-      <div className="top-actions">
-        <IconButton icon="search" label="Search" />
-        <IconButton
-          icon="settings"
-          label="Appearance settings"
-          onClick={openSettings}
-        />
-        <span className="avatar avatar--small">NK</span>
-      </div>
+      {/* Appearance/search/avatar controls are the app's own header
+          (DashboardLayout) when embedded — this bar only needs the gear
+          in standalone/demo mode, where there's no outer chrome. */}
+      {!embedded && (
+        <div className="top-actions">
+          <IconButton icon="search" label="Search" />
+          <IconButton
+            icon="settings"
+            label="Appearance settings"
+            onClick={openSettings}
+          />
+          <span className="avatar avatar--small">NK</span>
+        </div>
+      )}
     </header>
   )
 }
@@ -511,8 +512,23 @@ function UploadPage({
   const [uploaded, setUploaded] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Record language is determined by how the church is configured, not a
+  // per-upload choice — no visible selector on this screen.
+  const [churchLanguage, setChurchLanguage] = useState("en")
   const inputRef = useRef<HTMLInputElement>(null)
   const { recordType: type, files } = batch
+
+  useEffect(() => {
+    if (!churchId) return
+    fetchOcrSettings(churchId)
+      .then((settings) => {
+        const lang = settings.defaultLanguage || settings.language
+        if (lang) setChurchLanguage(lang)
+      })
+      .catch(() => {
+        /* fall back to English if church settings can't be loaded */
+      })
+  }, [churchId])
 
   const addFiles = (event: ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(event.target.files ?? [])
@@ -557,7 +573,7 @@ function UploadPage({
     try {
       const result = await uploadOcrFiles(churchId, batch.fileBlobs, {
         recordType: recordTypeToApi(type),
-        language: languageToApi(batch.language),
+        language: churchLanguage,
         batchId: batch.batchId,
       })
       const jobIds = (result.jobs ?? []).map((job) => String(job.id))
@@ -668,24 +684,6 @@ function UploadPage({
           ))}
         </div>
       </Card>
-      <Card className="language-card">
-        <div className="section-heading">
-          <h2>Record language</h2>
-          <p>Select the primary language used in these source pages.</p>
-        </div>
-        <Select
-          label="Record language"
-          value={batch.language}
-          onChange={(language) =>
-            setBatch((current) => ({ ...current, language }))
-          }
-        >
-          <option>English</option>
-          <option>Greek</option>
-          <option>Church Slavonic</option>
-          <option>Mixed languages</option>
-        </Select>
-      </Card>
       <Card className="search-card">
         <div className="section-heading">
           <h2>Link an existing register</h2>
@@ -749,6 +747,7 @@ function UploadPage({
                   icon="close"
                   label={`Remove ${file}`}
                   onClick={() => removeAt(index)}
+                  className={uploading ? "is-disabled" : ""}
                 />
                 <small>{index + 1}</small>
               </div>
@@ -757,10 +756,20 @@ function UploadPage({
               type="button"
               className="add-more"
               onClick={() => inputRef.current?.click()}
+              disabled={uploading}
             >
               <Icon name="plus" />
               <span>Add more</span>
             </button>
+          </div>
+        )}
+        {uploading && (
+          <div className="upload-progress" role="status" aria-live="polite">
+            <span className="upload-progress-spinner" aria-hidden="true" />
+            <span>
+              Uploading {files.length} file{files.length === 1 ? "" : "s"} to the server — this can take a
+              moment for larger batches. Don&rsquo;t close this page.
+            </span>
           </div>
         )}
         <div className="upload-footer">
@@ -783,7 +792,7 @@ function UploadPage({
                   previews: [],
                 }))
               }}
-              disabled={!files.length}
+              disabled={!files.length || uploading}
             >
               Remove all
             </Button>
@@ -792,7 +801,7 @@ function UploadPage({
               disabled={!churchId || !batch.fileBlobs.length || uploading}
               onClick={startUpload}
             >
-              {uploading ? "Uploading..." : "Start upload"}
+              {uploading ? "Uploading…" : "Start upload"}
             </Button>
           </div>
         </div>
@@ -3904,6 +3913,7 @@ export function RecordUploadApp({ embedded = true }: { embedded?: boolean }) {
       <div className={embedded ? "shell shell--embedded" : "shell"}>
         <Header
           page={page}
+          embedded={embedded}
           openSettings={() => setSettingsOpen(true)}
           openNav={() => setMobileNavOpen(true)}
         />
