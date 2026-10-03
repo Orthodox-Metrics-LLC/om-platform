@@ -101,7 +101,7 @@ export function ParishSettingsView() {
         list.map(async (p) => ({
           ...p,
           userCount: await fetchParishUserCount(p.id).catch(() => undefined),
-          imageUrl: await parishAppearanceApi.get(p.id).then((a) => a.image_url).catch(() => null),
+          imageUrl: await parishAppearanceApi.get(p.id).then((a) => a.icon_url).catch(() => null),
         })),
       );
       setParishes(withCounts);

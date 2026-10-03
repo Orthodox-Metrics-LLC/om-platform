@@ -13,6 +13,8 @@ export type ParishAppearance = {
   city: string | null;
   state: string | null;
   image_url: string | null;
+  /** Small square church icon (favicon) — parish switcher chip + Parish Settings. */
+  icon_url: string | null;
   primary_color: string | null;
   can_write: boolean;
 };
@@ -30,7 +32,7 @@ export const PARISH_APPEARANCE_EVENT = 'om:parish-appearance-updated';
 
 export const parishAppearanceApi = {
   get: (churchId?: number | null) => call<{ appearance: ParishAppearance }>(`${A}${churchId ? `?church_id=${churchId}` : ''}`).then((r) => r.appearance),
-  update: (body: Partial<Pick<ParishAppearance, 'display_name' | 'city' | 'state' | 'image_url'>> & { church_id?: number | null }) =>
+  update: (body: Partial<Pick<ParishAppearance, 'display_name' | 'city' | 'state' | 'image_url' | 'icon_url'>> & { church_id?: number | null }) =>
     call<{ appearance: ParishAppearance }>(A, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => {
       window.dispatchEvent(new CustomEvent(PARISH_APPEARANCE_EVENT, { detail: r.appearance }));
       return r.appearance;

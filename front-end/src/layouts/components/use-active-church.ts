@@ -20,6 +20,8 @@ export type OmWorkspace = {
   state: string | null;
   jurisdiction: string | null;
   image_url: string | null;
+  /** Small square church icon (favicon), shown in the parish switcher chip. */
+  icon_url: string | null;
   plan: string;
   plan_status: string | null;
 };

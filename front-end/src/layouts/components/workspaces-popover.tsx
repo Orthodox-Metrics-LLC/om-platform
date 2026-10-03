@@ -72,7 +72,7 @@ export function WorkspacesPopover({ sx, ...other }: WorkspacesPopoverProps) {
 
   const renderButton = () => (
     <ButtonBase disableRipple onClick={onOpen} sx={[{ py: 0.5, gap: { xs: 0.5, [mediaQuery]: 1 }, '&::before': buttonBg }, ...(Array.isArray(sx) ? sx : [sx])]} {...other}>
-      <Avatar alt={active?.name} src={active?.image_url || fallbackLogo} sx={{ width: 24, height: 24, bgcolor: 'background.neutral', '& img': { objectFit: active?.image_url ? 'cover' : 'contain', p: active?.image_url ? 0 : 0.25 } }} />
+      <Avatar alt={active?.name} src={active?.icon_url || active?.image_url || fallbackLogo} sx={{ width: 24, height: 24, bgcolor: 'background.neutral', '& img': { objectFit: (active?.icon_url || active?.image_url) ? 'cover' : 'contain', p: (active?.icon_url || active?.image_url) ? 0 : 0.25 } }} />
       <Box component="span" sx={{ typography: 'subtitle2', display: { xs: 'none', [mediaQuery]: 'inline-block' }, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {active?.name ?? 'Choose a parish'}
       </Box>
@@ -96,7 +96,7 @@ export function WorkspacesPopover({ sx, ...other }: WorkspacesPopoverProps) {
         <MenuList>
           {workspaces.map((w) => (
             <MenuItem key={w.id} selected={w.id === active?.id} onClick={() => handleSelect(w.id)} sx={{ height: 52 }}>
-              <Avatar alt={w.name} src={w.image_url || fallbackLogo} sx={{ width: 28, height: 28, bgcolor: 'background.neutral', '& img': { objectFit: w.image_url ? 'cover' : 'contain', p: w.image_url ? 0 : 0.25 } }} />
+              <Avatar alt={w.name} src={w.icon_url || w.image_url || fallbackLogo} sx={{ width: 28, height: 28, bgcolor: 'background.neutral', '& img': { objectFit: (w.icon_url || w.image_url) ? 'cover' : 'contain', p: (w.icon_url || w.image_url) ? 0 : 0.25 } }} />
               <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                 <Typography noWrap component="span" variant="body2" sx={{ display: 'block', fontWeight: 'fontWeightMedium' }}>{w.name}</Typography>
                 <Typography noWrap component="span" variant="caption" sx={{ display: 'block', color: 'text.disabled' }}>

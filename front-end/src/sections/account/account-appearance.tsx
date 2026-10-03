@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -31,8 +32,10 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
   const { user } = useAuthContext();
   const { appearance, error, setAppearance } = useParishAppearance(true, churchId);
   const fileRef = useRef<HTMLInputElement>(null);
+  const iconFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ display_name: '', city: '', state: '' });
   const [uploading, setUploading] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -69,6 +72,21 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
       toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleIcon = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingIcon(true);
+    try {
+      const [uploaded] = await omSocialApi.upload([file], 'cover');
+      await save({ icon_url: uploaded.url });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setUploadingIcon(false);
     }
   };
 
@@ -112,6 +130,31 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
           )}
           <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.disabled' }}>
             Portrait images look best (3:4). Shown to every member of {appearance.name}.
+          </Typography>
+        </Card>
+
+        <Card sx={{ p: 3, mt: 3, textAlign: 'center' }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>Church icon</Typography>
+          <Avatar
+            variant="rounded"
+            src={appearance.icon_url || undefined}
+            sx={{ width: 64, height: 64, mx: 'auto', bgcolor: 'background.neutral', '& img': { objectFit: 'cover' } }}
+          >
+            <Iconify icon={"solar:church-bold" as any} width={32} sx={{ color: 'text.disabled' }} />
+          </Avatar>
+          {canWrite && (
+            <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'center' }}>
+              <Button variant="outlined" color="inherit" loading={uploadingIcon} startIcon={<Iconify icon="solar:camera-add-bold" />} onClick={() => iconFileRef.current?.click()}>
+                {appearance.icon_url ? 'Change icon' : 'Upload icon'}
+              </Button>
+              {appearance.icon_url && (
+                <Button color="error" onClick={() => save({ icon_url: null })}>Remove</Button>
+              )}
+              <input ref={iconFileRef} type="file" accept="image/*" hidden onChange={handleIcon} />
+            </Box>
+          )}
+          <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.disabled' }}>
+            A small square icon, like a favicon. Shown in the parish switcher at the top of the app and on Parish Settings.
           </Typography>
         </Card>
       </Grid>
