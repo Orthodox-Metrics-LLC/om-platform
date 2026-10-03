@@ -234,7 +234,7 @@ export function CloudFilesView() {
                         <FileThumbnail
                           file={entry.type === 'directory' ? 'folder' : entry.name}
                           showImage
-                          previewUrl={entry.type === 'file' ? entry.file_url ?? undefined : undefined}
+                          previewUrl={entry.type === 'file' ? (entry.thumb_url ?? entry.file_url ?? undefined) : undefined}
                           sx={{ width: 28, height: 28 }}
                         />
                         <Typography variant="body2" noWrap>

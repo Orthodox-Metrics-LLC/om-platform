@@ -729,6 +729,7 @@ export type CloudFileEntry = {
   modified_at: string;
   path: string;
   file_url: string | null;
+  thumb_url: string | null;
 };
 
 export async function fetchCloudFilesScreenshots(path = '') {
