@@ -53,10 +53,13 @@ export type AssetFilters = {
   sourceType: OmAssetSourceType | '';
   churchId: number | null;
   collectionId: number | null;
+  fileType: string;
+  dateFrom: string;
+  dateTo: string;
 };
 
 const DEFAULT_FILTERS: AssetFilters = {
-  scope: '', visibility: '', category: '', search: '', sort: 'created_desc', directory: '', tag: '', sourceType: '', churchId: null, collectionId: null,
+  scope: '', visibility: '', category: '', search: '', sort: 'created_desc', directory: '', tag: '', sourceType: '', churchId: null, collectionId: null, fileType: '', dateFrom: '', dateTo: '',
 };
 
 const PAGE_SIZE = 48;
@@ -161,6 +164,9 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
       source_type: filters.sourceType || undefined,
       church_id: filters.churchId ?? undefined,
       collection_id: filters.collectionId ?? undefined,
+      file_type: filters.fileType || undefined,
+      date_from: filters.dateFrom || undefined,
+      date_to: filters.dateTo || undefined,
     }),
     [filters]
   );

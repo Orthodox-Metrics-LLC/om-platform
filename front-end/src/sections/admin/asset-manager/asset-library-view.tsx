@@ -194,7 +194,7 @@ function AssetLibraryContent() {
             {visible.map((a) => <AssetCard key={a.id} asset={a} selected={am.selected.has(a.id)} onSelect={() => am.toggleSelect(a.id)} onOpen={() => open(a)} onAction={(act) => onAction(a, act)} />)}
           </Box>
         ) : (
-          <Card><AssetTable assets={visible} selected={am.selected} onToggle={(id) => am.toggleSelect(id)} onToggleAll={(on) => am.selectMany(visible.map((a) => a.id), on)} onOpen={(a) => open(a)} onAction={onAction} /></Card>
+          <Card><AssetTable assets={visible} selected={am.selected} onToggle={(id) => am.toggleSelect(id)} onToggleAll={(on) => am.selectMany(visible.map((a) => a.id), on)} onOpen={(a) => open(a)} onAction={onAction} currentSort={am.filters.sort} onSort={(sort) => am.setFilters({ sort })} /></Card>
         )}
         {am.hasMore && (
           <Box sx={{ mt: 3, textAlign: 'center' }}>

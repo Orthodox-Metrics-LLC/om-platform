@@ -10,7 +10,9 @@ import { omApiFetch } from 'src/auth/context/om-auth';
  */
 
 export type AssetSortField =
-  | 'name' | 'name_desc' | 'scope' | 'scope_desc' | 'size' | 'size_desc' | 'created' | 'created_desc';
+  | 'name' | 'name_desc' | 'scope' | 'scope_desc' | 'size' | 'size_desc'
+  | 'created' | 'created_desc' | 'updated' | 'updated_desc'
+  | 'category' | 'category_desc';
 
 export const ASSET_SORT_OPTIONS: { id: AssetSortField; label: string }[] = [
   { id: 'created_desc', label: 'Newest first' },
@@ -21,6 +23,10 @@ export const ASSET_SORT_OPTIONS: { id: AssetSortField; label: string }[] = [
   { id: 'size', label: 'Smallest first' },
   { id: 'scope', label: 'Scope A–Z' },
   { id: 'scope_desc', label: 'Scope Z–A' },
+  { id: 'updated_desc', label: 'Updated newest' },
+  { id: 'updated', label: 'Updated oldest' },
+  { id: 'category', label: 'Category A–Z' },
+  { id: 'category_desc', label: 'Category Z–A' },
 ];
 
 type ReqOpts = { params?: object; headers?: Record<string, string>; responseType?: 'blob'; signal?: AbortSignal };
@@ -166,6 +172,9 @@ export interface OmAssetListParams {
   folder?: string;
   tag?: string;
   sort?: AssetSortField;
+  file_type?: string;
+  date_from?: string;
+  date_to?: string;
   limit?: number;
   page?: number;
   page_size?: number;

@@ -1,4 +1,8 @@
-import { useState, useEffect } from 'react';
+import type { IDatePickerControl } from 'src/types/common';
+
+import dayjs from 'dayjs';
+import { useBoolean } from 'minimal-shared/hooks';
+import { useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -10,13 +14,28 @@ import ToggleButton from '@mui/material/ToggleButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
+import { fIsAfter, fDateRangeShortLabel } from 'src/utils/format-time';
+
 import { Iconify } from 'src/components/iconify';
+import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { ASSET_SORT_OPTIONS } from './om-assets-api';
 import { AssetChurchSelect } from './asset-church-select';
 import { ASSET_SCOPES, useAssetManager, ASSET_CATEGORIES, ASSET_SOURCE_TYPES, ASSET_VISIBILITIES } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
+
+const FILE_TYPE_OPTIONS = [
+  { value: 'png', label: 'PNG' },
+  { value: 'jpg', label: 'JPG' },
+  { value: 'webp', label: 'WebP' },
+  { value: 'gif', label: 'GIF' },
+  { value: 'svg', label: 'SVG' },
+  { value: 'mp4', label: 'MP4' },
+  { value: 'webm', label: 'WebM' },
+  { value: 'mov', label: 'MOV' },
+  { value: 'pdf', label: 'PDF' },
+];
 
 type Props = {
   view: 'grid' | 'list';
@@ -28,6 +47,11 @@ type Props = {
 export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport }: Props) {
   const { filters, setFilters, resetFilters, total, navLocation, collections } = useAssetManager();
   const [searchInput, setSearchInput] = useState(filters.search);
+  const dateRange = useBoolean();
+
+  const startDate: IDatePickerControl = filters.dateFrom ? dayjs(filters.dateFrom) : null;
+  const endDate: IDatePickerControl = filters.dateTo ? dayjs(filters.dateTo) : null;
+  const dateError = fIsAfter(startDate, endDate);
 
   useEffect(() => {
     const t = setTimeout(() => { if (searchInput.trim() !== filters.search) setFilters({ search: searchInput.trim() }); }, 350);
@@ -35,6 +59,15 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
   }, [searchInput, filters.search, setFilters]);
 
   useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
+
+  const handleStartDate = useCallback(
+    (d: IDatePickerControl) => setFilters({ dateFrom: d ? d.format('YYYY-MM-DD') : '' }),
+    [setFilters]
+  );
+  const handleEndDate = useCallback(
+    (d: IDatePickerControl) => setFilters({ dateTo: d ? d.format('YYYY-MM-DD') : '' }),
+    [setFilters]
+  );
 
   const activeChips: { label: string; onDelete: () => void }[] = [];
   if (filters.scope) activeChips.push({ label: `Scope: ${ASSET_SCOPES.find((s) => s.value === filters.scope)?.label}`, onDelete: () => setFilters({ scope: '' }) });
@@ -45,6 +78,8 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
   if (filters.directory) activeChips.push({ label: `Folder: ${filters.directory}`, onDelete: () => setFilters({ directory: '' }) });
   if (filters.tag) activeChips.push({ label: `Tag: ${filters.tag}`, onDelete: () => setFilters({ tag: '' }) });
   if (filters.collectionId) activeChips.push({ label: `Collection: ${collections.find((c) => c.id === filters.collectionId)?.name ?? filters.collectionId}`, onDelete: () => setFilters({ collectionId: null }) });
+  if (filters.fileType) activeChips.push({ label: `Type: ${filters.fileType.toUpperCase()}`, onDelete: () => setFilters({ fileType: '' }) });
+  if (filters.dateFrom && filters.dateTo) activeChips.push({ label: `Date: ${fDateRangeShortLabel(startDate, endDate)}`, onDelete: () => setFilters({ dateFrom: '', dateTo: '' }) });
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -61,6 +96,10 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
           <MenuItem value="">All</MenuItem>
           {ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}
         </TextField>
+        <TextField select size="small" label="File type" value={filters.fileType} onChange={(e) => setFilters({ fileType: e.target.value })} sx={{ minWidth: 120 }}>
+          <MenuItem value="">All</MenuItem>
+          {FILE_TYPE_OPTIONS.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
+        </TextField>
         <TextField select size="small" label="Visibility" value={filters.visibility} onChange={(e) => setFilters({ visibility: e.target.value as any })} sx={{ minWidth: 150 }}>
           <MenuItem value="">All</MenuItem>
           {ASSET_VISIBILITIES.map((v) => <MenuItem key={v.value} value={v.value}>{v.label}</MenuItem>)}
@@ -72,6 +111,14 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
         {filters.scope === 'church' && (
           <Box sx={{ minWidth: 220 }}><AssetChurchSelect size="small" allowNone value={filters.churchId} onChange={(id) => setFilters({ churchId: id })} /></Box>
         )}
+        <Button
+          size="small"
+          color="inherit"
+          onClick={dateRange.onTrue}
+          endIcon={<Iconify icon="eva:arrow-ios-downward-fill" sx={{ ml: -0.5 }} />}
+        >
+          {startDate && endDate ? fDateRangeShortLabel(startDate, endDate) : 'Select date'}
+        </Button>
         <TextField select size="small" label="Sort" value={filters.sort} onChange={(e) => setFilters({ sort: e.target.value as any })} sx={{ minWidth: 150 }}>
           {ASSET_SORT_OPTIONS.map((s) => <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>)}
         </TextField>
@@ -91,6 +138,18 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
           {activeChips.length > 0 && <Button size="small" color="error" startIcon={<Iconify icon="solar:trash-bin-trash-bold" />} onClick={resetFilters}>Clear</Button>}
         </Box>
       )}
+
+      <CustomDateRangePicker
+        variant="calendar"
+        startDate={startDate}
+        endDate={endDate}
+        onChangeStartDate={handleStartDate}
+        onChangeEndDate={handleEndDate}
+        open={dateRange.value}
+        onClose={dateRange.onFalse}
+        selected={!!startDate && !!endDate}
+        error={dateError}
+      />
     </Box>
   );
 }

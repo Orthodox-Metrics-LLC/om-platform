@@ -1,5 +1,5 @@
-import type { OmAsset } from './om-assets-api';
 import type { AssetMenuAction } from './asset-card';
+import type { OmAsset, AssetSortField } from './om-assets-api';
 
 import { usePopover } from 'minimal-shared/hooks';
 
@@ -14,6 +14,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import TableContainer from '@mui/material/TableContainer';
 
 import { fData } from 'src/utils/format-number';
@@ -29,6 +30,20 @@ import { isImageAsset, isVideoAsset } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
+/**
+ * Column definitions. `sortAsc` / `sortDesc` map to AssetSortField server
+ * sort keys. Columns without sort keys render a plain header cell.
+ */
+const COLUMNS: { id: string; label: string; sortAsc?: AssetSortField; sortDesc?: AssetSortField; align?: 'left' | 'right'; width?: number }[] = [
+  { id: 'name', label: 'Asset', sortAsc: 'name', sortDesc: 'name_desc' },
+  { id: 'scope', label: 'Scope', sortAsc: 'scope', sortDesc: 'scope_desc', width: 110 },
+  { id: 'category', label: 'Category', sortAsc: 'category', sortDesc: 'category_desc', width: 130 },
+  { id: 'folder', label: 'Folder', width: 140 },
+  { id: 'type', label: 'Type', width: 120 },
+  { id: 'size', label: 'Size', sortAsc: 'size', sortDesc: 'size_desc', align: 'right', width: 100 },
+  { id: 'updated', label: 'Updated', sortAsc: 'updated', sortDesc: 'updated_desc', width: 160 },
+];
+
 type Props = {
   assets: OmAsset[];
   selected: Set<number>;
@@ -36,11 +51,32 @@ type Props = {
   onToggleAll: (on: boolean) => void;
   onOpen: (a: OmAsset) => void;
   onAction: (a: OmAsset, action: AssetMenuAction) => void;
+  /** Current active server sort key — drives highlight + direction indicator */
+  currentSort?: AssetSortField;
+  /** Callback when a column header is clicked: receives the new AssetSortField to set */
+  onSort?: (sort: AssetSortField) => void;
 };
 
-export function AssetTable({ assets, selected, onToggle, onToggleAll, onOpen, onAction }: Props) {
+function sortDirection(colId: string, currentSort?: AssetSortField): 'asc' | 'desc' | undefined {
+  const col = COLUMNS.find((c) => c.id === colId);
+  if (!col?.sortAsc) return undefined;
+  if (currentSort === col.sortAsc) return 'asc';
+  if (currentSort === col.sortDesc) return 'desc';
+  return undefined;
+}
+
+export function AssetTable({ assets, selected, onToggle, onToggleAll, onOpen, onAction, currentSort, onSort }: Props) {
   const all = assets.length > 0 && assets.every((a) => selected.has(a.id));
   const some = assets.some((a) => selected.has(a.id));
+
+  const handleSort = (colId: string) => {
+    if (!onSort) return;
+    const col = COLUMNS.find((c) => c.id === colId);
+    if (!col?.sortAsc || !col?.sortDesc) return;
+    const dir = sortDirection(colId, currentSort);
+    // Toggle: if asc → desc, if desc → asc, if unset → asc
+    onSort(dir === 'asc' ? col.sortDesc : col.sortAsc);
+  };
 
   return (
     <TableContainer>
@@ -49,13 +85,19 @@ export function AssetTable({ assets, selected, onToggle, onToggleAll, onOpen, on
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox"><Checkbox checked={all} indeterminate={!all && some} onChange={(e) => onToggleAll(e.target.checked)} /></TableCell>
-              <TableCell>Asset</TableCell>
-              <TableCell>Scope</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Folder</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell align="right">Size</TableCell>
-              <TableCell>Updated</TableCell>
+              {COLUMNS.map((col) => {
+                const dir = sortDirection(col.id, currentSort);
+                const sortable = !!col.sortAsc && !!onSort;
+                return (
+                  <TableCell key={col.id} align={col.align} sx={col.width ? { width: col.width } : undefined}>
+                    {sortable ? (
+                      <TableSortLabel active={!!dir} direction={dir || 'asc'} onClick={() => handleSort(col.id)}>
+                        {col.label}
+                      </TableSortLabel>
+                    ) : col.label}
+                  </TableCell>
+                );
+              })}
               <TableCell />
             </TableRow>
           </TableHead>
