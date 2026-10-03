@@ -1,7 +1,7 @@
 import type { OmDocument, OmDocumentAudit, OmDocumentLifecycle } from './om-documents-api';
 
 import { useBoolean } from 'minimal-shared/hooks';
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -19,14 +19,15 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import InputAdornment from '@mui/material/InputAdornment';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
+import TableSortLabel from '@mui/material/TableSortLabel';
 
 import { fData } from 'src/utils/format-number';
 import { fDateTime } from 'src/utils/format-time';
@@ -48,6 +49,29 @@ const LIFECYCLE_COLOR: Record<string, 'default' | 'info' | 'warning' | 'success'
 };
 const isText = (d: OmDocument) => /^(text\/|application\/(json|xml|x-yaml|javascript))/.test(d.mimeType || '') || /\.(md|txt|json|ya?ml|csv|html?)$/i.test(d.primaryFile || '');
 
+type DocSortKey = 'title' | 'lifecycle' | 'source' | 'horizon' | 'sizeBytes' | 'updatedAt';
+const DOC_COLUMNS: { id: DocSortKey | ''; label: string; align?: 'left' | 'right'; sortable?: boolean }[] = [
+  { id: 'title', label: 'Document', sortable: true },
+  { id: 'lifecycle', label: 'Lifecycle', sortable: true },
+  { id: 'source', label: 'Source', sortable: true },
+  { id: 'horizon', label: 'Horizon', sortable: true },
+  { id: '', label: 'Filing' },
+  { id: 'sizeBytes', label: 'Size', align: 'right', sortable: true },
+  { id: 'updatedAt', label: 'Updated', sortable: true },
+];
+
+function compareDocuments(a: OmDocument, b: OmDocument, orderBy: DocSortKey): number {
+  switch (orderBy) {
+    case 'title': return a.title.localeCompare(b.title);
+    case 'lifecycle': return a.lifecycle.localeCompare(b.lifecycle);
+    case 'source': return (a.source || '').localeCompare(b.source || '');
+    case 'horizon': return (a.horizon || '').localeCompare(b.horizon || '');
+    case 'sizeBytes': return (a.sizeBytes ?? 0) - (b.sizeBytes ?? 0);
+    case 'updatedAt': return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+    default: return 0;
+  }
+}
+
 /** Documents section: OM Documents Manager (`/api/documents`) in Minimal UI. */
 export function DocumentsView() {
   const [lifecycle, setLifecycle] = useState<OmDocumentLifecycle | 'all'>('all');
@@ -62,6 +86,13 @@ export function DocumentsView() {
   const [current, setCurrent] = useState<OmDocument | null>(null);
   const uploadDialog = useBoolean();
   const pasteDialog = useBoolean();
+  const [orderBy, setOrderBy] = useState<DocSortKey>('updatedAt');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = useCallback((col: DocSortKey) => {
+    setOrder((prev) => (orderBy === col ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'));
+    setOrderBy(col);
+  }, [orderBy]);
 
   useEffect(() => { const t = setTimeout(() => setSearch(q.trim()), 300); return () => clearTimeout(t); }, [q]);
 
@@ -77,6 +108,11 @@ export function DocumentsView() {
   useEffect(() => { omDocumentsApi.horizons().then(setHorizons).catch(() => {}); }, []);
 
   const total = Object.values(counts).reduce((n, v) => n + (v || 0), 0);
+
+  const sortedItems = useMemo(() => {
+    const sorted = [...items].sort((a, b) => compareDocuments(a, b, orderBy));
+    return order === 'desc' ? sorted.reverse() : sorted;
+  }, [items, orderBy, order]);
 
   return (
     <>
@@ -118,9 +154,22 @@ export function DocumentsView() {
         {error ? <EmptyContent filled title={error} sx={{ py: 8 }} /> : !loading && !items.length ? <EmptyContent filled title="No documents" sx={{ py: 8 }} /> : (
           <TableContainer><Scrollbar>
             <Table size="small" sx={{ minWidth: 880 }}>
-              <TableHead><TableRow><TableCell>Document</TableCell><TableCell>Lifecycle</TableCell><TableCell>Source</TableCell><TableCell>Horizon</TableCell><TableCell>Filing</TableCell><TableCell align="right">Size</TableCell><TableCell>Updated</TableCell><TableCell /></TableRow></TableHead>
+              <TableHead>
+                <TableRow>
+                  {DOC_COLUMNS.map((col) => (
+                    <TableCell key={col.id || col.label} align={col.align}>
+                      {col.sortable && col.id ? (
+                        <TableSortLabel active={orderBy === col.id} direction={orderBy === col.id ? order : 'asc'} onClick={() => handleSort(col.id as DocSortKey)}>
+                          {col.label}
+                        </TableSortLabel>
+                      ) : col.label}
+                    </TableCell>
+                  ))}
+                  <TableCell />
+                </TableRow>
+              </TableHead>
               <TableBody>
-                {items.map((d) => (
+                {sortedItems.map((d) => (
                   <TableRow key={d.id} hover sx={{ cursor: 'pointer' }} onClick={() => setCurrent(d)}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

@@ -300,9 +300,9 @@ export function CloudFilesView() {
               onCloseDateRange={dateRange.onFalse}
             />
             <CloudFilesTypeFilter filters={filters} onResetPage={table.onResetPage} />
-            <ToggleButtonGroup size="small" value={displayMode} exclusive onChange={(_, v) => v && setDisplayMode(v)}>
-              <ToggleButton value="list"><Iconify icon="solar:list-bold" /></ToggleButton>
-              <ToggleButton value="grid"><Iconify icon="mingcute:dot-grid-fill" /></ToggleButton>
+            <ToggleButtonGroup size="small" value={displayMode} exclusive onChange={(_, v: string | null) => { if (v) setDisplayMode(v as 'list' | 'grid'); }}>
+              <ToggleButton value="list" selected={displayMode === 'list'}><Iconify icon="solar:list-bold" /></ToggleButton>
+              <ToggleButton value="grid" selected={displayMode === 'grid'}><Iconify icon="mingcute:dot-grid-fill" /></ToggleButton>
             </ToggleButtonGroup>
           </Box>
         </Box>

@@ -1,8 +1,9 @@
 import type { IDatePickerControl } from 'src/types/common';
 
 import dayjs from 'dayjs';
-import { useBoolean } from 'minimal-shared/hooks';
+import { varAlpha } from 'minimal-shared/utils';
 import { useState, useEffect, useCallback } from 'react';
+import { usePopover, useBoolean } from 'minimal-shared/hooks';
 
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -10,13 +11,17 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import ButtonBase from '@mui/material/ButtonBase';
 import ToggleButton from '@mui/material/ToggleButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 import { fIsAfter, fDateRangeShortLabel } from 'src/utils/format-time';
 
+import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
+import { CustomPopover } from 'src/components/custom-popover';
+import { FileThumbnail } from 'src/components/file-thumbnail';
 import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { ASSET_SORT_OPTIONS } from './om-assets-api';
@@ -25,17 +30,20 @@ import { ASSET_SCOPES, useAssetManager, ASSET_CATEGORIES, ASSET_SOURCE_TYPES, AS
 
 // ----------------------------------------------------------------------
 
-const FILE_TYPE_OPTIONS = [
-  { value: 'png', label: 'PNG' },
-  { value: 'jpg', label: 'JPG' },
-  { value: 'webp', label: 'WebP' },
-  { value: 'gif', label: 'GIF' },
-  { value: 'svg', label: 'SVG' },
-  { value: 'mp4', label: 'MP4' },
-  { value: 'webm', label: 'WebM' },
-  { value: 'mov', label: 'MOV' },
-  { value: 'pdf', label: 'PDF' },
-];
+const ASSET_FILE_TYPE_OPTIONS = ['image', 'video', 'pdf', 'word', 'excel', 'powerpoint', 'txt', 'zip', 'audio'];
+
+/** Map the icon-grid category labels to the server `file_type` values stored in om_assets */
+const TYPE_LABEL_TO_SERVER: Record<string, string[]> = {
+  image: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'tiff'],
+  video: ['mp4', 'webm', 'mov', 'm4v', 'ogv', 'ogg'],
+  pdf: ['pdf'],
+  word: ['doc', 'docx'],
+  excel: ['xls', 'xlsx', 'csv'],
+  powerpoint: ['ppt', 'pptx'],
+  txt: ['txt', 'md', 'json', 'xml', 'yaml', 'yml'],
+  zip: ['zip', 'rar', '7z', 'tar', 'gz'],
+  audio: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
+};
 
 type Props = {
   view: 'grid' | 'list';
@@ -48,6 +56,7 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
   const { filters, setFilters, resetFilters, total, navLocation, collections } = useAssetManager();
   const [searchInput, setSearchInput] = useState(filters.search);
   const dateRange = useBoolean();
+  const typePopover = usePopover();
 
   const startDate: IDatePickerControl = filters.dateFrom ? dayjs(filters.dateFrom) : null;
   const endDate: IDatePickerControl = filters.dateTo ? dayjs(filters.dateTo) : null;
@@ -69,6 +78,25 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
     [setFilters]
   );
 
+  // Resolve which category label is currently active (for highlighting in the popover)
+  const activeTypeCategory = ASSET_FILE_TYPE_OPTIONS.find(
+    (cat) => filters.fileType && TYPE_LABEL_TO_SERVER[cat]?.join(',') === filters.fileType
+  ) || '';
+  const typeDisplayLabel = activeTypeCategory
+    ? activeTypeCategory.charAt(0).toUpperCase() + activeTypeCategory.slice(1)
+    : '';
+
+  const handleTypeSelect = useCallback(
+    (cat: string) => {
+      const exts = TYPE_LABEL_TO_SERVER[cat];
+      if (!exts) return;
+      const csv = exts.join(',');
+      // Toggle: clicking the same category clears the filter
+      setFilters({ fileType: filters.fileType === csv ? '' : csv });
+    },
+    [setFilters, filters.fileType]
+  );
+
   const activeChips: { label: string; onDelete: () => void }[] = [];
   if (filters.scope) activeChips.push({ label: `Scope: ${ASSET_SCOPES.find((s) => s.value === filters.scope)?.label}`, onDelete: () => setFilters({ scope: '' }) });
   if (filters.churchId) activeChips.push({ label: `Church #${filters.churchId}`, onDelete: () => setFilters({ churchId: null }) });
@@ -78,7 +106,7 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
   if (filters.directory) activeChips.push({ label: `Folder: ${filters.directory}`, onDelete: () => setFilters({ directory: '' }) });
   if (filters.tag) activeChips.push({ label: `Tag: ${filters.tag}`, onDelete: () => setFilters({ tag: '' }) });
   if (filters.collectionId) activeChips.push({ label: `Collection: ${collections.find((c) => c.id === filters.collectionId)?.name ?? filters.collectionId}`, onDelete: () => setFilters({ collectionId: null }) });
-  if (filters.fileType) activeChips.push({ label: `Type: ${filters.fileType.toUpperCase()}`, onDelete: () => setFilters({ fileType: '' }) });
+  if (filters.fileType) activeChips.push({ label: `Type: ${typeDisplayLabel || filters.fileType}`, onDelete: () => setFilters({ fileType: '' }) });
   if (filters.dateFrom && filters.dateTo) activeChips.push({ label: `Date: ${fDateRangeShortLabel(startDate, endDate)}`, onDelete: () => setFilters({ dateFrom: '', dateTo: '' }) });
 
   return (
@@ -96,10 +124,14 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
           <MenuItem value="">All</MenuItem>
           {ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}
         </TextField>
-        <TextField select size="small" label="File type" value={filters.fileType} onChange={(e) => setFilters({ fileType: e.target.value })} sx={{ minWidth: 120 }}>
-          <MenuItem value="">All</MenuItem>
-          {FILE_TYPE_OPTIONS.map((t) => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
-        </TextField>
+        <Button
+          color="inherit"
+          onClick={typePopover.onOpen}
+          endIcon={<Iconify icon={typePopover.open ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'} sx={{ ml: -0.5 }} />}
+        >
+          {typeDisplayLabel || 'All type'}
+          {activeTypeCategory && <Label color="info" sx={{ ml: 1 }}>1</Label>}
+        </Button>
         <TextField select size="small" label="Visibility" value={filters.visibility} onChange={(e) => setFilters({ visibility: e.target.value as any })} sx={{ minWidth: 150 }}>
           <MenuItem value="">All</MenuItem>
           {ASSET_VISIBILITIES.map((v) => <MenuItem key={v.value} value={v.value}>{v.label}</MenuItem>)}
@@ -150,6 +182,36 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
         selected={!!startDate && !!endDate}
         error={dateError}
       />
+
+      <CustomPopover open={typePopover.open} anchorEl={typePopover.anchorEl} onClose={typePopover.onClose} slotProps={{ paper: { sx: { p: 2.5 } } }}>
+        <Box sx={{ gap: 1, display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' } }}>
+          {ASSET_FILE_TYPE_OPTIONS.map((type) => {
+            const selected = activeTypeCategory === type;
+            return (
+              <ButtonBase
+                key={type}
+                onClick={() => { handleTypeSelect(type); typePopover.onClose(); }}
+                sx={[(theme) => ({
+                  p: 1,
+                  gap: 1,
+                  borderRadius: 1,
+                  typography: 'caption',
+                  textTransform: 'capitalize',
+                  justifyContent: 'flex-start',
+                  border: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+                  ...(selected && { bgcolor: 'action.selected', fontWeight: 'fontWeightSemiBold' }),
+                })]}
+              >
+                <FileThumbnail file={type} sx={{ width: 24, height: 24 }} />
+                {type}
+              </ButtonBase>
+            );
+          })}
+        </Box>
+        <Box sx={{ mt: 2.5, gap: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <Button variant="outlined" color="inherit" onClick={() => { setFilters({ fileType: '' }); typePopover.onClose(); }}>Clear</Button>
+        </Box>
+      </CustomPopover>
     </Box>
   );
 }
