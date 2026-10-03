@@ -737,3 +737,8 @@ export async function fetchCloudFilesScreenshots(path = '') {
     { params: { path } }
   );
 }
+
+/** Permanently removes a file from the live share — no recovery, this is real personal data. */
+export async function deleteCloudFileScreenshot(filePath: string) {
+  await apiClient.delete(`${BASE}/cloud-files/screenshots/file`, { params: { path: filePath } });
+}
