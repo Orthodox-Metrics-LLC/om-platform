@@ -145,7 +145,6 @@ export function ParishSettingsView() {
           !selected && (
             <Button
               variant="contained"
-              color="warning"
               startIcon={<Iconify icon="mingcute:add-line" />}
               onClick={() => setAddOpen(true)}
             >
@@ -265,7 +264,7 @@ function ParishListPanel({
           </FormControl>
           <Button
             variant="outlined"
-            color="warning"
+            color="inherit"
             startIcon={<Iconify icon={"eva:refresh-fill" as any} />}
             onClick={onRefresh}
           >
@@ -344,7 +343,6 @@ function ParishListPanel({
                         <Button
                           size="small"
                           variant="outlined"
-                          color="warning"
                           endIcon={<Iconify icon="eva:external-link-fill" />}
                           onClick={() => onOpen(row.id)}
                         >
@@ -412,7 +410,6 @@ function ParishDetailPanel({ summary, onBack, onRefresh }: ParishDetailPanelProp
         startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
         onClick={onBack}
         sx={{ mb: 2 }}
-        color="warning"
       >
         Back to Parishes
       </Button>
@@ -449,19 +446,18 @@ function ParishDetailPanel({ summary, onBack, onRefresh }: ParishDetailPanelProp
             </Typography>
             <Button
               variant="contained"
-              color="warning"
               href={paths.portal.root}
               target="_blank"
               endIcon={<Iconify icon="eva:external-link-fill" />}
             >
               Open Church Portal
             </Button>
-            <Button variant="outlined" color="warning" endIcon={<Iconify icon="eva:external-link-fill" />}>
+            <Button variant="outlined" color="inherit" endIcon={<Iconify icon="eva:external-link-fill" />}>
               View Public Site
             </Button>
             <Button
               variant="outlined"
-              color="warning"
+              color="inherit"
               startIcon={<Iconify icon={"eva:refresh-fill" as any} />}
               onClick={() => {
                 load();
@@ -557,7 +553,7 @@ function OverviewTab({
                 Key information and statistics for this parish.
               </Typography>
             </Box>
-            <Button size="small" variant="outlined" color="warning" startIcon={<Iconify icon="solar:pen-bold" />} onClick={onEdit}>
+            <Button size="small" variant="outlined" color="inherit" startIcon={<Iconify icon="solar:pen-bold" />} onClick={onEdit}>
               Edit Details
             </Button>
           </Stack>
@@ -676,7 +672,7 @@ function AddParishDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="warning" onClick={handleSave} disabled={saving}>
+        <Button variant="contained" onClick={handleSave} disabled={saving}>
           {saving ? 'Creating…' : 'Create parish'}
         </Button>
       </DialogActions>
@@ -733,7 +729,7 @@ function EditParishDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" color="warning" onClick={handleSave} disabled={saving}>
+        <Button variant="contained" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving…' : 'Save changes'}
         </Button>
       </DialogActions>
