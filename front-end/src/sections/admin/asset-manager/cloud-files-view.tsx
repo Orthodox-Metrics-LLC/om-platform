@@ -20,6 +20,7 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import InputAdornment from '@mui/material/InputAdornment';
 import LinearProgress from '@mui/material/LinearProgress';
 import TableContainer from '@mui/material/TableContainer';
+import { tablePaginationClasses } from '@mui/material/TablePagination';
 
 import { fData } from 'src/utils/format-number';
 import { fDateTime } from 'src/utils/format-time';
@@ -30,6 +31,7 @@ import { Lightbox } from 'src/components/lightbox';
 import { Scrollbar } from 'src/components/scrollbar';
 import { EmptyContent } from 'src/components/empty-content';
 import { FileThumbnail } from 'src/components/file-thumbnail';
+import { useTable, TablePaginationCustom } from 'src/components/table';
 
 import { deleteCloudFileScreenshot, fetchCloudFilesScreenshots } from './om-assets-api';
 
@@ -60,6 +62,8 @@ export function CloudFilesView() {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [lightboxEpoch, setLightboxEpoch] = useState(0);
 
+  const table = useTable({ defaultRowsPerPage: 25, defaultDense: true });
+
   const load = useCallback(async (p: string) => {
     setLoading(true);
     try {
@@ -76,11 +80,27 @@ export function CloudFilesView() {
   useEffect(() => {
     load(path);
     setQuery('');
+    table.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, load]);
 
   const filteredEntries = useMemo(
     () => (query.trim() ? entries.filter((e) => e.name.toLowerCase().includes(query.trim().toLowerCase())) : entries),
     [entries, query]
+  );
+
+  // Reset to first page when the filter query changes
+  useEffect(() => {
+    table.setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  const paginatedEntries = useMemo(
+    () => filteredEntries.slice(
+      table.page * table.rowsPerPage,
+      table.page * table.rowsPerPage + table.rowsPerPage
+    ),
+    [filteredEntries, table.page, table.rowsPerPage]
   );
 
   const previewableEntries = useMemo(
@@ -210,69 +230,83 @@ export function CloudFilesView() {
       {error && <EmptyContent filled title={error} sx={{ py: 6 }} />}
 
       {!loading && !error && (
-        <TableContainer sx={{ border: (theme) => `1px solid ${theme.vars.palette.divider}`, borderRadius: 1.5 }}>
-          <Scrollbar>
-            <Table size="small" sx={{ minWidth: 720 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell align="right">Size</TableCell>
-                  <TableCell>Modified</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredEntries.map((entry) => (
-                  <TableRow
-                    key={entry.path}
-                    hover
-                    sx={{ cursor: entry.type === 'directory' || isImageEntry(entry) || isVideoEntry(entry) ? 'pointer' : 'default' }}
-                    onClick={() => openEntry(entry)}
-                  >
-                    <TableCell>
-                      <Box sx={{ gap: 1.5, display: 'flex', alignItems: 'center' }}>
-                        <FileThumbnail
-                          file={entry.type === 'directory' ? 'folder' : entry.name}
-                          showImage
-                          previewUrl={entry.type === 'file' ? (entry.thumb_url ?? entry.file_url ?? undefined) : undefined}
-                          sx={{ width: 28, height: 28 }}
-                        />
-                        <Typography variant="body2" noWrap>
-                          {entry.name}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right">{entry.size != null ? fData(entry.size) : '—'}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{fDateTime(entry.modified_at)}</TableCell>
-                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                      {entry.type === 'file' && (
-                        <>
-                          <Tooltip title="Download">
-                            <IconButton size="small" component="a" href={entry.file_url ?? undefined} download={entry.name}>
-                              <Iconify icon="eva:cloud-download-fill" width={18} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete from share">
-                            <IconButton size="small" color="error" onClick={() => deleteFile(entry)}>
-                              <Iconify icon="solar:trash-bin-trash-bold" width={18} />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!filteredEntries.length && (
+        <>
+          <TableContainer sx={{ border: (theme) => `1px solid ${theme.vars.palette.divider}`, borderRadius: 1.5 }}>
+            <Scrollbar>
+              <Table size="small" sx={{ minWidth: 720 }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={4}>
-                      <EmptyContent title={query ? 'No files match' : 'Nothing on the share yet'} sx={{ py: 6 }} />
-                    </TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell align="right">Size</TableCell>
+                    <TableCell>Modified</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </Scrollbar>
-        </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {paginatedEntries.map((entry) => (
+                    <TableRow
+                      key={entry.path}
+                      hover
+                      sx={{ cursor: entry.type === 'directory' || isImageEntry(entry) || isVideoEntry(entry) ? 'pointer' : 'default' }}
+                      onClick={() => openEntry(entry)}
+                    >
+                      <TableCell>
+                        <Box sx={{ gap: 1.5, display: 'flex', alignItems: 'center' }}>
+                          <FileThumbnail
+                            file={entry.type === 'directory' ? 'folder' : entry.name}
+                            showImage
+                            previewUrl={entry.type === 'file' ? (entry.thumb_url ?? entry.file_url ?? undefined) : undefined}
+                            sx={{ width: 28, height: 28 }}
+                          />
+                          <Typography variant="body2" noWrap>
+                            {entry.name}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">{entry.size != null ? fData(entry.size) : '—'}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{fDateTime(entry.modified_at)}</TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                        {entry.type === 'file' && (
+                          <>
+                            <Tooltip title="Download">
+                              <IconButton size="small" component="a" href={entry.file_url ?? undefined} download={entry.name}>
+                                <Iconify icon="eva:cloud-download-fill" width={18} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete from share">
+                              <IconButton size="small" color="error" onClick={() => deleteFile(entry)}>
+                                <Iconify icon="solar:trash-bin-trash-bold" width={18} />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!filteredEntries.length && (
+                    <TableRow>
+                      <TableCell colSpan={4}>
+                        <EmptyContent title={query ? 'No files match' : 'Nothing on the share yet'} sx={{ py: 6 }} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Scrollbar>
+          </TableContainer>
+
+          <TablePaginationCustom
+            page={table.page}
+            dense={table.dense}
+            rowsPerPage={table.rowsPerPage}
+            count={filteredEntries.length}
+            onPageChange={table.onChangePage}
+            onChangeDense={table.onChangeDense}
+            onRowsPerPageChange={table.onChangeRowsPerPage}
+            rowsPerPageOptions={[25, 50, 100]}
+            sx={{ [`& .${tablePaginationClasses.toolbar}`]: { borderTopColor: 'transparent' } }}
+          />
+        </>
       )}
 
       <Lightbox
