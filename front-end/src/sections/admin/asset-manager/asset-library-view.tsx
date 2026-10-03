@@ -293,7 +293,11 @@ function MarkForDeleteButton({
 
   return (
     <Tooltip title={marked ? 'Unmark for deletion' : 'Mark for deletion'}>
-      <IconButton className="yarl__button" onClick={() => onToggle(asset.id)} sx={{ color: marked ? 'error.light' : 'inherit' }}>
+      <IconButton
+        className="yarl__button"
+        onClick={() => onToggle(asset.id)}
+        sx={{ color: marked ? 'error.light' : 'common.white' }}
+      >
         <Iconify icon="solar:trash-bin-trash-bold" width={22} />
       </IconButton>
     </Tooltip>
