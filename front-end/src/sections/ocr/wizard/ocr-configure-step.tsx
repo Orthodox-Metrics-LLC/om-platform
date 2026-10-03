@@ -1,6 +1,9 @@
+import { useState } from 'react';
+
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,9 +13,11 @@ import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
 
 import { Label } from 'src/components/label';
+import { Upload } from 'src/components/upload';
 import { Iconify } from 'src/components/iconify';
 
 import {
+  uploadOcrFiles,
   WIZARD_RECORD_TYPES,
   type OmOcrRecordType,
   WIZARD_LAYOUT_OPTIONS,
@@ -28,17 +33,44 @@ export type OcrWizardConfig = {
 };
 
 type Props = {
+  churchId: number | null;
   config: OcrWizardConfig;
   onChange: (config: OcrWizardConfig) => void;
-  onNext: () => void;
+  batchId: string;
+  onUploaded: (jobIds: string[]) => void;
+  onViewRecords: () => void;
 };
 
-export function OcrConfigureStep({ config, onChange, onNext }: Props) {
+export function OcrConfigureStep({ churchId, config, onChange, batchId, onUploaded, onViewRecords }: Props) {
   const set = (patch: Partial<OcrWizardConfig>) => onChange({ ...config, ...patch });
   const activeLayout = WIZARD_LAYOUT_OPTIONS.find((option) => option.value === config.layoutMode);
 
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpload = async () => {
+    if (!churchId || files.length === 0) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const result = await uploadOcrFiles(churchId, files, {
+        recordType: config.recordType,
+        language: config.language,
+        recordLayoutMode: config.layoutMode,
+        batchId,
+      });
+      onUploaded(result.jobs.map((job) => String(job.id)));
+    } catch (err: any) {
+      setError(err?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Stack spacing={3}>
+      {/* Record type selection */}
       <Card>
         <CardHeader title="Record type" subheader="What kind of register are you uploading?" />
         <CardContent>
@@ -61,11 +93,31 @@ export function OcrConfigureStep({ config, onChange, onNext }: Props) {
                       borderColor: selected ? 'primary.main' : 'divider',
                       bgcolor: selected ? 'primary.lighter' : 'transparent',
                       borderWidth: selected ? 2 : 1,
+                      transition: 'all 0.15s ease',
+                      '&:hover': { borderColor: 'primary.light', bgcolor: 'primary.lighter' },
                     }}
                   >
+                    {selected && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 8,
+                          right: 8,
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          bgcolor: 'primary.main',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Iconify icon="eva:checkmark-fill" width={14} sx={{ color: 'white' }} />
+                      </Box>
+                    )}
                     <Iconify
                       icon={type.icon as any}
-                      width={32}
+                      width={40}
                       sx={{ color: selected ? 'primary.main' : 'text.secondary' }}
                     />
                     <Typography variant="subtitle2">{type.label}</Typography>
@@ -77,6 +129,7 @@ export function OcrConfigureStep({ config, onChange, onNext }: Props) {
         </CardContent>
       </Card>
 
+      {/* Language selection */}
       <Card>
         <CardHeader title="Language" subheader="Language the handwritten or typed text is in" />
         <CardContent>
@@ -96,6 +149,7 @@ export function OcrConfigureStep({ config, onChange, onNext }: Props) {
         </CardContent>
       </Card>
 
+      {/* Document layout */}
       <Card>
         <CardHeader title="Document layout" subheader="How the notebook pages appear in each photo" />
         <CardContent>
@@ -112,6 +166,8 @@ export function OcrConfigureStep({ config, onChange, onNext }: Props) {
                     cursor: 'pointer',
                     borderColor: selected ? 'primary.main' : 'divider',
                     borderWidth: selected ? 2 : 1,
+                    transition: 'all 0.15s ease',
+                    '&:hover': { borderColor: 'primary.light' },
                   }}
                 >
                   <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
@@ -160,9 +216,56 @@ export function OcrConfigureStep({ config, onChange, onNext }: Props) {
         </CardContent>
       </Card>
 
-      <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
-        <Button variant="contained" size="large" endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />} onClick={onNext}>
-          Continue to upload
+      {/* File upload */}
+      <Card>
+        <CardHeader title="Upload images or PDFs" subheader="JPEG, PNG, TIFF, and PDF are supported" />
+        <CardContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          {!churchId && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Select a parish before uploading.
+            </Alert>
+          )}
+          <Upload
+            multiple
+            value={files}
+            disabled={uploading}
+            accept={{
+              'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.bmp', '.tiff', '.webp'],
+              'application/pdf': ['.pdf'],
+            }}
+            onDrop={(accepted: File[]) => setFiles((prev) => [...prev, ...accepted])}
+            onRemove={(file) => setFiles((prev) => prev.filter((f) => f !== file))}
+            onRemoveAll={() => setFiles([])}
+            onUpload={!uploading && files.length > 0 && !!churchId ? handleUpload : undefined}
+            loading={uploading}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Actions */}
+      <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+        <Button
+          variant="outlined"
+          color="inherit"
+          startIcon={<Iconify icon={'solar:document-text-bold' as any} />}
+          onClick={onViewRecords}
+        >
+          View records
+        </Button>
+        <Button
+          variant="contained"
+          size="large"
+          endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
+          disabled={!churchId || files.length === 0 || uploading}
+          loading={uploading}
+          onClick={handleUpload}
+        >
+          Upload and continue
         </Button>
       </Stack>
     </Stack>

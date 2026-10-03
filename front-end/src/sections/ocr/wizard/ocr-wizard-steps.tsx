@@ -4,22 +4,26 @@ import Box from '@mui/material/Box';
 import Step from '@mui/material/Step';
 import Stepper from '@mui/material/Stepper';
 import { styled } from '@mui/material/styles';
+import StepButton from '@mui/material/StepButton';
 import StepLabel, { stepLabelClasses } from '@mui/material/StepLabel';
 import MuiStepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
-// Mirrors src/sections/checkout/checkout-steps.tsx — same stepper used by
-// the real /product/checkout page, reused here instead of a bespoke one.
+// Clickable stepper that lets users navigate back to completed steps.
+// Forward navigation is only allowed up to `maxReached` (the highest
+// step the user has actually visited).
 
-export const OCR_WIZARD_STEPS = ['Configure', 'Upload', 'Review Pages', 'Processing', 'Results'];
+export const OCR_WIZARD_STEPS = ['Upload', 'Image Review', 'Processing', 'Record Review', 'Final Audit'];
 
 type Props = StepperProps & {
   activeStep: number;
+  maxReached?: number;
+  onNavigate?: (step: number) => void;
 };
 
-export function OcrWizardSteps({ activeStep, sx, ...other }: Props) {
+export function OcrWizardSteps({ activeStep, maxReached = activeStep, onNavigate, sx, ...other }: Props) {
   return (
     <Stepper
       alternativeLabel
@@ -28,16 +32,37 @@ export function OcrWizardSteps({ activeStep, sx, ...other }: Props) {
       sx={[{ mb: { xs: 3, md: 5 } }, ...(Array.isArray(sx) ? sx : [sx])]}
       {...other}
     >
-      {OCR_WIZARD_STEPS.map((label) => (
-        <Step key={label}>
-          <StepLabel
-            slots={{ stepIcon: StepIcon }}
-            sx={{ [`& .${stepLabelClasses.label}`]: { fontWeight: 'fontWeightSemiBold' } }}
-          >
-            {label}
-          </StepLabel>
-        </Step>
-      ))}
+      {OCR_WIZARD_STEPS.map((label, index) => {
+        const reached = index <= maxReached;
+        const clickable = reached && index !== activeStep && !!onNavigate;
+        return (
+          <Step key={label} completed={index < activeStep}>
+            {clickable ? (
+              <StepButton onClick={() => onNavigate(index)}>
+                <StepLabel
+                  slots={{ stepIcon: StepIcon }}
+                  sx={{
+                    [`& .${stepLabelClasses.label}`]: {
+                      fontWeight: 'fontWeightSemiBold',
+                      cursor: 'pointer',
+                      '&:hover': { color: 'primary.main' },
+                    },
+                  }}
+                >
+                  {label}
+                </StepLabel>
+              </StepButton>
+            ) : (
+              <StepLabel
+                slots={{ stepIcon: StepIcon }}
+                sx={{ [`& .${stepLabelClasses.label}`]: { fontWeight: 'fontWeightSemiBold' } }}
+              >
+                {label}
+              </StepLabel>
+            )}
+          </Step>
+        );
+      })}
     </Stepper>
   );
 }

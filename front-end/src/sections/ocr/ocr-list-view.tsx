@@ -67,6 +67,14 @@ const RECORD_TYPE_FILTERS = [
   { value: 'custom', label: 'Custom' },
 ];
 
+const STATUS_FILTERS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'ready-for-review', label: 'Needs Review' },
+  { value: 'pending', label: 'Pending' },
+];
+
 function statusColor(status: OmOcrWizardStatus): 'default' | 'primary' | 'success' | 'warning' | 'error' {
   if (status === 'completed' || status === 'already-exists') return 'success';
   if (status === 'ready-for-review') return 'primary';
@@ -114,6 +122,7 @@ export function OcrListView({ churchId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingReadyId, setPendingReadyId] = useState<string | null>(null);
 
@@ -180,6 +189,13 @@ export function OcrListView({ churchId }: Props) {
 
   const filteredRows = rows.filter((row) => {
     if (typeFilter !== 'all' && row.recordType !== typeFilter) return false;
+    if (statusFilter !== 'all') {
+      const s = row.status;
+      if (statusFilter === 'completed' && s !== 'completed' && s !== 'already-exists') return false;
+      if (statusFilter === 'processing' && s !== 'processing' && s !== 'ready-for-image-review') return false;
+      if (statusFilter === 'ready-for-review' && s !== 'ready-for-review') return false;
+      if (statusFilter === 'pending' && s !== 'returned' && row.allProcessed) return false;
+    }
     if (!search.trim()) return true;
     const q = search.trim().toLowerCase();
     return row.displayName.toLowerCase().includes(q) || (row.originalName || '').toLowerCase().includes(q);
@@ -272,6 +288,16 @@ export function OcrListView({ churchId }: Props) {
             </Select>
           </FormControl>
 
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              {STATUS_FILTERS.map((s) => (
+                <MenuItem key={s.value} value={s.value}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Checkbox
               checked={allSelected}
@@ -297,9 +323,9 @@ export function OcrListView({ churchId }: Props) {
                 <TableCell>Images</TableCell>
                 <TableCell>Detected records</TableCell>
                 <TableCell>Processing mode</TableCell>
-                <TableCell sx={{ minWidth: 180 }}>Processing</TableCell>
+                <TableCell sx={{ minWidth: 180 }}>Processing status</TableCell>
                 <TableCell sx={{ minWidth: 200 }}>Review readiness</TableCell>
-                <TableCell sx={{ minWidth: 160 }}>Review action / progress</TableCell>
+                <TableCell sx={{ minWidth: 120 }}>Review action</TableCell>
                 <TableCell align="right" />
               </TableRow>
             </TableHead>
@@ -339,6 +365,18 @@ export function OcrListView({ churchId }: Props) {
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Divider />
+        <Box sx={{ px: 2, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Showing {filteredRows.length} of {rows.length} records
+          </Typography>
+          {selectedIds.length > 0 && (
+            <Typography variant="body2" color="primary.main" sx={{ fontWeight: 600 }}>
+              {selectedIds.length} selected
+            </Typography>
+          )}
+        </Box>
       </Card>
     </DashboardContent>
   );
@@ -371,7 +409,6 @@ function OcrBatchRow({
 }: RowProps) {
   const menu = usePopover();
   const pct = row.totalImages > 0 ? Math.round((row.completedImages / row.totalImages) * 100) : 0;
-  const reviewEnabled = row.allProcessed && row.reviewReady;
 
   return (
     <>
@@ -400,57 +437,84 @@ function OcrBatchRow({
           </Box>
         </TableCell>
         <TableCell>
-          <Label color={statusColor(row.status)} sx={{ textTransform: 'capitalize' }}>
+          <Label
+            color={row.recordType === 'baptism' ? 'info' : row.recordType === 'marriage' ? 'primary' : row.recordType === 'funeral' ? 'warning' : 'default'}
+            variant="soft"
+            sx={{ textTransform: 'capitalize' }}
+          >
             {row.recordType}
           </Label>
         </TableCell>
         <TableCell>{fDateTime(row.date)}</TableCell>
-        <TableCell>{row.totalImages}</TableCell>
-        <TableCell>{row.recordsDetected || '—'}</TableCell>
+        <TableCell><Typography variant="subtitle2">{row.totalImages}</Typography></TableCell>
+        <TableCell><Typography variant="subtitle2">{row.recordsDetected || '—'}</Typography></TableCell>
         <TableCell>
-          <Label color="info" variant="soft">
-            {processingModeLabel(row.mode)}
-          </Label>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                bgcolor: row.mode === 'automatic' ? 'primary.main' : 'text.secondary',
+                flexShrink: 0,
+              }}
+            />
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              {processingModeLabel(row.mode)}
+            </Typography>
+          </Box>
         </TableCell>
         <TableCell>
-          <Typography
-            variant="caption"
-            sx={{ fontWeight: 600, color: row.allProcessed ? 'success.main' : 'text.primary' }}
-          >
-            {batchProcessingLabel(row)}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Label
+              color={statusColor(row.status)}
+              variant="soft"
+              sx={{ flexShrink: 0 }}
+            >
+              {batchProcessingLabel(row)}
+            </Label>
+            <Typography variant="caption" color="text.secondary">{pct}%</Typography>
+          </Box>
           <LinearProgress
             variant="determinate"
             value={pct}
-            color={row.allProcessed ? 'success' : 'primary'}
-            sx={{ mt: 0.5, height: 6, borderRadius: 1 }}
+            color={row.allProcessed ? 'success' : row.status === 'failed' ? 'error' : 'primary'}
+            sx={{ mt: 0.5, height: 5, borderRadius: 1 }}
           />
         </TableCell>
         <TableCell>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-            <Checkbox
-              size="small"
-              checked={row.reviewReady}
-              disabled={!row.allProcessed || !row.batchId || pendingReady}
-              onChange={(e) => onToggleReady(e.target.checked)}
-            />
-            <Box>
-              <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                Ready for Image Review
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: row.reviewReady ? 'success.lighter' : !row.allProcessed ? 'grey.100' : 'warning.lighter',
+                flexShrink: 0,
+              }}
+            >
+              <Iconify
+                icon={row.reviewReady ? ('eva:checkmark-circle-2-fill' as any) : !row.allProcessed ? (ICON_LOCK as any) : ('solar:clock-circle-bold' as any)}
+                width={18}
+                sx={{ color: row.reviewReady ? 'success.dark' : !row.allProcessed ? 'text.disabled' : 'warning.dark' }}
+              />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>
+                {row.reviewReady ? 'Ready for review' : !row.allProcessed ? 'Not ready' : 'Needs review'}
               </Typography>
-              {row.reviewReady && row.readyByName ? (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                  By {row.readyByName}
-                </Typography>
-              ) : !row.allProcessed ? (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                >
-                  <Iconify icon={ICON_LOCK} width={12} /> Available once processing completes
-                </Typography>
-              ) : null}
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                {row.reviewReady && row.readyByName
+                  ? `OCR processing complete`
+                  : !row.allProcessed
+                    ? 'Processing in progress'
+                    : row.needsReview > 0
+                      ? `${row.needsReview} issues detected`
+                      : 'OCR processing complete'}
+              </Typography>
             </Box>
           </Box>
         </TableCell>
@@ -458,19 +522,13 @@ function OcrBatchRow({
           <Button
             size="small"
             fullWidth
-            variant={reviewEnabled ? 'contained' : 'outlined'}
-            color={reviewEnabled ? 'primary' : 'inherit'}
-            disabled={!reviewEnabled}
+            variant={row.allProcessed ? 'contained' : 'outlined'}
+            color={row.allProcessed ? 'primary' : 'inherit'}
+            disabled={!row.allProcessed}
             onClick={onView}
           >
-            Review Images
+            {row.allProcessed ? 'Review images' : 'View progress'}
           </Button>
-          {row.recordsDetected > 0 && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-              {row.recordsConfirmed} of {row.recordsDetected}{' '}
-              {row.needsReview > 0 ? `· ${row.needsReview} need attention` : 'auto-added'}
-            </Typography>
-          )}
         </TableCell>
         <TableCell align="right" sx={{ pr: 1 }} onClick={(e) => e.stopPropagation()}>
           <IconButton color={menu.open ? 'inherit' : 'default'} onClick={menu.onOpen}>
