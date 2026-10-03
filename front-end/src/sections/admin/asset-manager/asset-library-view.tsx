@@ -5,10 +5,13 @@ import type { AssetMenuAction } from './asset-card';
 import { varAlpha } from 'minimal-shared/utils';
 import { useBoolean } from 'minimal-shared/hooks';
 import { useMemo, useState, useCallback } from 'react';
+import { useLightboxState } from 'yet-another-react-lightbox';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 
@@ -234,6 +237,14 @@ function AssetLibraryContent() {
         index={Math.max(lightboxIndex, 0)}
         disableTotal={false}
         thumbnails={{ position: 'end' }}
+        toolbarExtraButtons={[
+          <MarkForDeleteButton
+            key="mark-for-delete"
+            assets={previewableAssets}
+            selected={am.selected}
+            onToggle={am.toggleSelect}
+          />,
+        ]}
       />
       <AssetUploadDialog open={uploadDialog.value} onClose={uploadDialog.onFalse} initialFiles={dropFiles} />
       <AssetZipImportDialog open={zipImportDialog.value} onClose={() => { setZipDropFile(null); zipImportDialog.onFalse(); }} initialFile={zipDropFile} />
@@ -251,5 +262,40 @@ function AssetLibraryContent() {
       />
       <ConfirmDialog open={confirmDupes.value} onClose={confirmDupes.onFalse} title="Remove duplicates" content="Archive every duplicate copy, keeping the oldest asset of each group?" action={<Button variant="contained" color="error" onClick={() => { confirmDupes.onFalse(); am.actions.deleteDuplicates().catch(() => {}); }}>Remove</Button>} />
     </Box>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+/**
+ * Lightbox toolbar button: mark/unmark the slide currently being viewed for
+ * deletion without leaving the preview. Reuses the same selection set as the
+ * grid/list checkboxes (useLightboxState reads the live slide index from the
+ * lightbox's own context, no manual index-tracking needed) — closing the
+ * lightbox after marking several images leaves them selected, so the
+ * existing bulk-actions bar's "Delete" button finishes the job in one step.
+ */
+function MarkForDeleteButton({
+  assets,
+  selected,
+  onToggle,
+}: {
+  assets: OmAsset[];
+  selected: Set<number>;
+  onToggle: (id: number) => void;
+}) {
+  const { currentIndex } = useLightboxState();
+  const asset = assets[currentIndex];
+
+  if (!asset) return null;
+
+  const marked = selected.has(asset.id);
+
+  return (
+    <Tooltip title={marked ? 'Unmark for deletion' : 'Mark for deletion'}>
+      <IconButton className="yarl__button" onClick={() => onToggle(asset.id)} sx={{ color: marked ? 'error.light' : 'inherit' }}>
+        <Iconify icon="solar:trash-bin-trash-bold" width={22} />
+      </IconButton>
+    </Tooltip>
   );
 }

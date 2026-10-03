@@ -11,4 +11,6 @@ export type LightboxProps = LightboxExternalProps & {
   disableThumbnails?: boolean;
   disableFullscreen?: boolean;
   onGetCurrentIndex?: (index: number) => void;
+  /** Extra buttons rendered in the toolbar, before the close button. */
+  toolbarExtraButtons?: React.ReactNode[];
 };

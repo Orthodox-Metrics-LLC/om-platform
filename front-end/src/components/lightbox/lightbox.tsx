@@ -21,6 +21,7 @@ export function Lightbox({
   disableThumbnails,
   disableFullscreen,
   onGetCurrentIndex,
+  toolbarExtraButtons,
   className,
   ...other
 }: LightboxProps) {
@@ -50,6 +51,7 @@ export function Lightbox({
       toolbar={{
         buttons: [
           <DisplayTotal key={0} totalItems={totalItems} disableTotal={disableTotal} />,
+          ...(toolbarExtraButtons ?? []),
           'close',
         ],
       }}
