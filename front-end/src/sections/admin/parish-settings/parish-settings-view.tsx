@@ -31,6 +31,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { paths } from 'src/routes/paths';
 
 import { DashboardContent } from 'src/layouts/dashboard';
+import { parishAppearanceApi } from 'src/layouts/components/use-parish-appearance';
 
 import { Label } from 'src/components/label';
 import { toast } from 'src/components/snackbar';
@@ -97,7 +98,11 @@ export function ParishSettingsView() {
     try {
       const list = await fetchParishes();
       const withCounts = await Promise.all(
-        list.map(async (p) => ({ ...p, userCount: await fetchParishUserCount(p.id).catch(() => undefined) })),
+        list.map(async (p) => ({
+          ...p,
+          userCount: await fetchParishUserCount(p.id).catch(() => undefined),
+          imageUrl: await parishAppearanceApi.get(p.id).then((a) => a.image_url).catch(() => null),
+        })),
       );
       setParishes(withCounts);
     } catch (err: any) {
@@ -313,7 +318,11 @@ function ParishListPanel({
                     <TableRow key={row.id} hover>
                       <TableCell>
                         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                          <Avatar variant="rounded" sx={{ width: 40, height: 40, bgcolor: 'background.neutral' }}>
+                          <Avatar
+                            variant="rounded"
+                            src={row.imageUrl || undefined}
+                            sx={{ width: 40, height: 40, bgcolor: 'background.neutral', '& img': { objectFit: 'cover' } }}
+                          >
                             <Iconify icon={"solar:church-bold" as any} sx={{ color: 'text.disabled' }} />
                           </Avatar>
                           <Box>
@@ -416,7 +425,11 @@ function ParishDetailPanel({ summary, onBack, onRefresh }: ParishDetailPanelProp
 
       <Card sx={{ p: 3, mb: 3 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ alignItems: { md: 'center' } }}>
-          <Avatar variant="rounded" sx={{ width: 72, height: 72, bgcolor: 'background.neutral' }}>
+          <Avatar
+            variant="rounded"
+            src={summary.imageUrl || undefined}
+            sx={{ width: 72, height: 72, bgcolor: 'background.neutral', '& img': { objectFit: 'cover' } }}
+          >
             <Iconify icon={"solar:church-bold" as any} width={36} sx={{ color: 'text.disabled' }} />
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>

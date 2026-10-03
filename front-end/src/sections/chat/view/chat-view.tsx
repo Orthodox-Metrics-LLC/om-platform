@@ -65,7 +65,6 @@ export function ChatView() {
 
   return (
     <DashboardContent
-      maxWidth={false}
       sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column' }}
     >
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>

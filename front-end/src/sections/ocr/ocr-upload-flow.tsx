@@ -16,6 +16,7 @@ import {
   useActiveChurchId,
   useWorkspaces,
 } from "src/layouts/components/use-active-church"
+import { CustomBreadcrumbs } from "src/components/custom-breadcrumbs"
 
 import {
   fetchOcrJobs,
@@ -463,6 +464,24 @@ function Header({
     "record-review": "Record review",
     "final-audit": "Final audit",
   }
+  // Embedded mode has no use for this bar at all: navigation toggle, search,
+  // settings, and avatar all duplicate the app's own header (DashboardLayout),
+  // and the breadcrumb below replaces the custom one-off div with the same
+  // CustomBreadcrumbs component/pattern every other dashboard page uses
+  // (e.g. /dashboard/user).
+  if (embedded) {
+    return (
+      <CustomBreadcrumbs
+        links={[
+          { name: "Portal", href: paths.portal.root },
+          { name: "Records", href: paths.portal.ocr.root },
+          { name: pageNames[page] },
+        ]}
+        sx={{ px: { xs: 2, md: 4 }, pt: 2 }}
+      />
+    )
+  }
+
   return (
     <header className="topbar">
       <IconButton
@@ -476,20 +495,15 @@ function Header({
         <Icon name="chevron" size={14} />
         <b>{pageNames[page]}</b>
       </div>
-      {/* Appearance/search/avatar controls are the app's own header
-          (DashboardLayout) when embedded — this bar only needs the gear
-          in standalone/demo mode, where there's no outer chrome. */}
-      {!embedded && (
-        <div className="top-actions">
-          <IconButton icon="search" label="Search" />
-          <IconButton
-            icon="settings"
-            label="Appearance settings"
-            onClick={openSettings}
-          />
-          <span className="avatar avatar--small">NK</span>
-        </div>
-      )}
+      <div className="top-actions">
+        <IconButton icon="search" label="Search" />
+        <IconButton
+          icon="settings"
+          label="Appearance settings"
+          onClick={openSettings}
+        />
+        <span className="avatar avatar--small">NK</span>
+      </div>
     </header>
   )
 }

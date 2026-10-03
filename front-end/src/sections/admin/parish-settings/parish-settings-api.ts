@@ -20,6 +20,8 @@ export interface ParishSummary {
   city: string | null;
   state_province: string | null;
   userCount?: number;
+  /** Parish icon/logo set on Account → Appearance (churches.logo_path). */
+  imageUrl?: string | null;
 }
 
 export interface ParishDetail {
