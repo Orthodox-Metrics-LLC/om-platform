@@ -22,7 +22,11 @@
     /* Linting */
     "strict": true,
     "noEmit": true,
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "paths": {
+      "@om/ocr": ["../ocr/src/index.ts"],
+      "@om/ocr/*": ["../ocr/src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"],

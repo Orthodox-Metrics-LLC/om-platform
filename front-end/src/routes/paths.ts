@@ -120,6 +120,11 @@ export const paths = {
    */
   portal: {
     root: '/portal',
+    /** Legacy prod URLs; route shims redirect these to `dashboard.ocr`. */
+    ocr: {
+      root: '/portal/ocr',
+      upload: '/portal/ocr/upload',
+    },
   },
   // DASHBOARD
   dashboard: {

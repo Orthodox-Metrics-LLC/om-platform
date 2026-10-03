@@ -67,6 +67,14 @@ export const routesSection: RouteObject[] = [
   // Components
   ...componentsRoutes,
 
+  /**
+   * Legacy OM OCR URLs → om-platform dashboard OCR (wizard lives under /dashboard/ocr/*).
+   * Without these, /ocr/upload and /portal/ocr/upload fall through to the 404 route.
+   */
+  { path: 'ocr/upload', element: <Navigate to={paths.dashboard.ocr.upload} replace /> },
+  { path: 'portal/ocr/upload', element: <Navigate to={paths.dashboard.ocr.upload} replace /> },
+  { path: 'portal/ocr', element: <Navigate to={paths.dashboard.ocr.root} replace /> },
+
   // Unknown paths → real 404 page
   { path: '*', element: <Navigate to={paths.page404} replace /> },
 ];

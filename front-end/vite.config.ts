@@ -42,6 +42,10 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: [
       {
+        find: '@om/ocr',
+        replacement: path.resolve(__dirname, '../ocr/src'),
+      },
+      {
         find: /^src(.+)/,
         replacement: path.resolve(process.cwd(), 'src/$1'),
       },

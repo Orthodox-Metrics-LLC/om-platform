@@ -1,0 +1,10 @@
+{
+  "description": "Streamlines Orthodox Metrics data management with a consistent, themeable UI built on Minimal UI design system for efficient record selection and review.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

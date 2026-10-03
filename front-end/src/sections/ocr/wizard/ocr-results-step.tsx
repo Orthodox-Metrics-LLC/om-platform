@@ -3,7 +3,6 @@ import { useMemo, useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Chip from '@mui/material/Chip';
-import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -24,6 +23,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 
+import { OcrFinalAuditStep } from './ocr-final-audit-step';
 import {
   fetchOcrJob,
   type OmOcrPage,
@@ -220,6 +220,20 @@ function RecordReviewView({ churchId, jobIds, onBack, onNext }: ReviewProps) {
     setRejectDetails('');
     if (currentIndex < filteredRecords.length - 1) setCurrentIndex(currentIndex + 1);
   };
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (rejectOpen || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      const key = event.key.toLowerCase();
+      if (key === 'a') confirmRecord();
+      if (key === 's') skipRecord();
+      if (key === 'r') setRejectOpen(true);
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shortcuts use latest record handlers
+  }, [rejectOpen, currentIndex, filteredRecords.length, records]);
 
   if (loading) {
     return (
@@ -520,22 +534,6 @@ function RecordFieldsPanel({
   );
 }
 
-// ====================================================================
-// FINAL AUDIT (step 4)
-// ====================================================================
-
-const STAT_TILES: {
-  key: keyof OmOcrSessionSummary;
-  label: string;
-  icon: string;
-  color: 'primary' | 'success' | 'warning' | 'error';
-}[] = [
-  { key: 'totalImages', label: 'Images uploaded', icon: 'solar:gallery-wide-bold-duotone', color: 'primary' },
-  { key: 'completed', label: 'Completed', icon: 'solar:check-circle-bold-duotone', color: 'success' },
-  { key: 'readyForReview', label: 'Ready for review', icon: 'solar:clipboard-check-bold-duotone', color: 'warning' },
-  { key: 'failed', label: 'Failed', icon: 'solar:close-circle-bold-duotone', color: 'error' },
-];
-
 type FinalAuditProps = {
   churchId: number | null;
   jobIds: string[];
@@ -545,94 +543,12 @@ type FinalAuditProps = {
   onGoToRecords?: () => void;
 };
 
-function FinalAuditView({ summary, onUploadMore, onGoToRecords }: FinalAuditProps) {
-  const safeSummary = summary ?? { totalImages: 0, readyForReview: 0, completed: 0, failed: 0, processing: 0, recordsFound: 0 };
-
-  return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="h5">Final Audit</Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-          Review the processing outcome before seeding records into the parish database.
-        </Typography>
-      </Box>
-
-      <Grid container spacing={2}>
-        {STAT_TILES.map((tile) => (
-          <Grid key={tile.key} size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card sx={{ p: 3, textAlign: 'center' }}>
-              <Box sx={{ width: 48, height: 48, mx: 'auto', mb: 2 }}>
-                <Iconify icon={tile.icon as any} width={48} sx={{ color: `${tile.color}.main` }} />
-              </Box>
-              <Typography variant="h3">{safeSummary[tile.key]}</Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {tile.label}
-              </Typography>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Audit groups */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
-        {[
-          { label: 'Auto-reviewed', count: safeSummary.completed, color: 'success', icon: 'solar:check-circle-bold', desc: 'Records automatically validated with high confidence.' },
-          { label: 'Parish-reviewed', count: safeSummary.readyForReview, color: 'warning', icon: 'solar:clipboard-check-bold', desc: 'Records reviewed and corrected by parish personnel.' },
-          { label: 'Failed', count: safeSummary.failed, color: 'error', icon: 'solar:close-circle-bold', desc: 'Records that could not be processed or were rejected.' },
-        ].map((group) => (
-          <Card key={group.label} sx={{ p: 2.5 }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 1.5 }}>
-              <Box sx={{ width: 36, height: 36, borderRadius: 1, bgcolor: `${group.color}.lighter`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Iconify icon={group.icon as any} width={20} sx={{ color: `${group.color}.dark` }} />
-              </Box>
-              <Box>
-                <Typography variant="subtitle2">{group.label}</Typography>
-                <Typography variant="caption" color="text.secondary">{group.desc}</Typography>
-              </Box>
-            </Stack>
-            <Typography variant="h4" sx={{ color: `${group.color}.dark` }}>{group.count}</Typography>
-          </Card>
-        ))}
-      </Box>
-
-      {/* Records summary */}
-      <Card sx={{ p: 3, textAlign: 'center' }}>
-        <Iconify icon={'solar:document-text-bold-duotone' as any} width={56} sx={{ color: 'primary.main', mb: 2 }} />
-        <Typography variant="h6">
-          {safeSummary.recordsFound > 0
-            ? `${safeSummary.recordsFound} record${safeSummary.recordsFound === 1 ? '' : 's'} ready for seeding`
-            : 'Your upload is on its way through OCR'}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-          Head to Upload Records to track processing and review detected records once they&apos;re ready.
-        </Typography>
-
-        <Stack direction="row" spacing={2} sx={{ justifyContent: 'center', mt: 3 }}>
-          {onUploadMore && (
-            <Button variant="outlined" color="inherit" startIcon={<Iconify icon="solar:add-circle-bold" />} onClick={onUploadMore}>
-              Upload more
-            </Button>
-          )}
-          {onGoToRecords && (
-            <Button variant="contained" endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />} onClick={onGoToRecords}>
-              Go to Upload Records
-            </Button>
-          )}
-        </Stack>
-      </Card>
-    </Stack>
-  );
-}
-
-// ====================================================================
-// Export — union type discriminated by isFinalAudit
-// ====================================================================
-
 type Props = ReviewProps | FinalAuditProps;
 
 export function OcrResultsStep(props: Props) {
   if ('isFinalAudit' in props && props.isFinalAudit) {
-    return <FinalAuditView {...(props as FinalAuditProps)} />;
+    const { summary, onUploadMore, onGoToRecords } = props as FinalAuditProps;
+    return <OcrFinalAuditStep summary={summary} onUploadMore={onUploadMore} onGoToRecords={onGoToRecords} />;
   }
   return <RecordReviewView {...(props as ReviewProps)} />;
 }

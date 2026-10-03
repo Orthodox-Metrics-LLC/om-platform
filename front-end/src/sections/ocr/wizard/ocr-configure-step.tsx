@@ -41,6 +41,52 @@ type Props = {
   onViewRecords: () => void;
 };
 
+function RegisterLinkCard({ recordType }: { recordType: OmOcrRecordType }) {
+  const [search, setSearch] = useState('');
+  const typeLabel = recordType.charAt(0).toUpperCase() + recordType.slice(1);
+
+  return (
+    <Card>
+      <CardHeader
+        title="Link an existing register"
+        subheader="Optional — connect this batch to a register already in your archive."
+      />
+      <CardContent>
+        <TextField
+          fullWidth
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search registers by parish, year, or title…"
+        />
+        {search.trim().length > 2 && (
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              mt: 2,
+              p: 2,
+              alignItems: 'center',
+              borderRadius: 1,
+              border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+            }}
+          >
+            <Iconify icon={'solar:document-text-bold' as any} width={32} sx={{ color: 'text.secondary' }} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="subtitle2">Saint Nicholas {typeLabel} register</Typography>
+              <Typography variant="caption" color="text.secondary">
+                1895–1910 · 214 records
+              </Typography>
+            </Box>
+            <Button variant="text" size="small">
+              Select
+            </Button>
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OcrConfigureStep({ churchId, config, onChange, batchId, onUploaded, onViewRecords }: Props) {
   const set = (patch: Partial<OcrWizardConfig>) => onChange({ ...config, ...patch });
   const activeLayout = WIZARD_LAYOUT_OPTIONS.find((option) => option.value === config.layoutMode);
@@ -215,6 +261,9 @@ export function OcrConfigureStep({ churchId, config, onChange, batchId, onUpload
           )}
         </CardContent>
       </Card>
+
+      {/* Optional register link (prototype parity; archive search TBD) */}
+      <RegisterLinkCard recordType={config.recordType} />
 
       {/* File upload */}
       <Card>
