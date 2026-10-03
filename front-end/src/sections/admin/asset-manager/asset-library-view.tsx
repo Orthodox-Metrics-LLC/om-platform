@@ -68,6 +68,8 @@ function AssetLibraryContent() {
   const [zipDropFile, setZipDropFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [lightboxEpoch, setLightboxEpoch] = useState(0);
+  const [purgedIds, setPurgedIds] = useState<Set<number>>(new Set());
 
   const visible: OmAsset[] =
     am.navLocation === 'duplicates' ? am.duplicateGroups.flatMap((g) => g.assets)
@@ -77,8 +79,12 @@ function AssetLibraryContent() {
   // Images/videos preview inline (large view + a filmstrip of neighboring
   // assets on the right) instead of popping the metadata drawer. Other file
   // types (documents, etc.) still open the drawer — a lightbox doesn't make
-  // sense for those.
-  const previewableAssets = useMemo(() => visible.filter((a) => isImageAsset(a) || isVideoAsset(a)), [visible]);
+  // sense for those. purgedIds hides assets deleted from inside the preview
+  // right away, without waiting on the full list to refetch from the server.
+  const previewableAssets = useMemo(
+    () => visible.filter((a) => (isImageAsset(a) || isVideoAsset(a)) && !purgedIds.has(a.id)),
+    [visible, purgedIds]
+  );
   const lightboxSlides: Slide[] = useMemo(
     () =>
       previewableAssets.map((a): Slide =>
@@ -107,6 +113,24 @@ function AssetLibraryContent() {
       details.onTrue();
     },
     [details, previewableAssets]
+  );
+
+  // Delete the slide currently being viewed, right away — remove it from the
+  // preview immediately (optimistic, via purgedIds) rather than waiting on
+  // the grid's own reload, then land on whatever slide is now at that index
+  // (i.e. what used to be "next"), or close if nothing is left to show.
+  const deleteFromPreview = useCallback(
+    (asset: OmAsset, viewedIndex: number) => {
+      setPurgedIds((prev) => new Set(prev).add(asset.id));
+      const newLength = previewableAssets.length - 1;
+      setLightboxIndex(newLength <= 0 ? -1 : Math.min(viewedIndex, newLength - 1));
+      setLightboxEpoch((e) => e + 1);
+      am.actions.purge([asset.id]).catch(() => {
+        // purge failed — bring it back into view instead of losing it silently
+        setPurgedIds((prev) => { const next = new Set(prev); next.delete(asset.id); return next; });
+      });
+    },
+    [am.actions, previewableAssets.length]
   );
 
   const onAction = useCallback(
@@ -231,6 +255,7 @@ function AssetLibraryContent() {
 
       <AssetDetailsDrawer asset={current} open={details.value} editing={editing} onClose={details.onFalse} onTransform={transformDialog.onTrue} onSplit={splitDialog.onTrue} onCopyTo={copyDialog.onTrue} onWorkshop={workshopDialog.onTrue} onArchive={confirmArchive.onTrue} onPurge={confirmPurge.onTrue} />
       <Lightbox
+        key={`${lightboxIndex}-${lightboxEpoch}`}
         open={lightboxIndex >= 0}
         close={() => setLightboxIndex(-1)}
         slides={lightboxSlides}
@@ -238,11 +263,10 @@ function AssetLibraryContent() {
         disableTotal={false}
         thumbnails={{ position: 'end' }}
         toolbarExtraButtons={[
-          <MarkForDeleteButton
-            key="mark-for-delete"
+          <DeleteFromPreviewButton
+            key="delete-from-preview"
             assets={previewableAssets}
-            selected={am.selected}
-            onToggle={am.toggleSelect}
+            onDelete={deleteFromPreview}
           />,
         ]}
       />
@@ -268,35 +292,30 @@ function AssetLibraryContent() {
 // ----------------------------------------------------------------------
 
 /**
- * Lightbox toolbar button: mark/unmark the slide currently being viewed for
- * deletion without leaving the preview. Reuses the same selection set as the
- * grid/list checkboxes (useLightboxState reads the live slide index from the
- * lightbox's own context, no manual index-tracking needed) — closing the
- * lightbox after marking several images leaves them selected, so the
- * existing bulk-actions bar's "Delete" button finishes the job in one step.
+ * Lightbox toolbar button: deletes the slide currently being viewed right
+ * away, without leaving the preview. useLightboxState reads the live slide
+ * index from the lightbox's own context, so no manual index-tracking state
+ * is needed here — the parent (deleteFromPreview) handles removing the
+ * slide from view and landing on the next one.
  */
-function MarkForDeleteButton({
+function DeleteFromPreviewButton({
   assets,
-  selected,
-  onToggle,
+  onDelete,
 }: {
   assets: OmAsset[];
-  selected: Set<number>;
-  onToggle: (id: number) => void;
+  onDelete: (asset: OmAsset, viewedIndex: number) => void;
 }) {
   const { currentIndex } = useLightboxState();
   const asset = assets[currentIndex];
 
   if (!asset) return null;
 
-  const marked = selected.has(asset.id);
-
   return (
-    <Tooltip title={marked ? 'Unmark for deletion' : 'Mark for deletion'}>
+    <Tooltip title="Delete this">
       <IconButton
         className="yarl__button"
-        onClick={() => onToggle(asset.id)}
-        sx={{ color: marked ? 'error.light' : 'common.white' }}
+        onClick={() => onDelete(asset, currentIndex)}
+        sx={{ color: 'common.white' }}
       >
         <Iconify icon="solar:trash-bin-trash-bold" width={22} />
       </IconButton>
