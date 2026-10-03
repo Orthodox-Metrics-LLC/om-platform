@@ -28,6 +28,8 @@ type Props = {
   open: boolean;
   onClose: () => void;
   onPick: (asset: OmAsset) => void;
+  /** Initial scope filter, e.g. 'church' when opened from a church-scoped upload. */
+  defaultScope?: '' | 'public' | 'church' | 'site' | 'internal';
 };
 
 const SCOPE_OPTIONS: { value: '' | 'public' | 'church' | 'site' | 'internal'; label: string }[] = [
@@ -39,14 +41,16 @@ const SCOPE_OPTIONS: { value: '' | 'public' | 'church' | 'site' | 'internal'; la
 ];
 
 /**
- * Asset picker for the Page Builder. Browses the full Asset Manager catalog,
- * defaults to newest-first, and supports smart search (video / image / document
- * synonyms plus year/date-range filters).
+ * Shared "browse church storage" dialog — any upload surface in the app can
+ * let a user pick an already-uploaded asset instead of their local computer.
+ * Browses the full Asset Manager catalog, defaults to newest-first, and
+ * supports smart search (video / image / document synonyms plus
+ * year/date-range filters).
  */
-export function PageBuilderAssetPickerDialog({ open, onClose, onPick }: Props) {
+export function AssetPickerDialog({ open, onClose, onPick, defaultScope = '' }: Props) {
   const [assets, setAssets] = useState<OmAsset[]>([]);
   const [search, setSearch] = useState('');
-  const [scope, setScope] = useState<'' | 'public' | 'church' | 'site' | 'internal'>('');
+  const [scope, setScope] = useState<'' | 'public' | 'church' | 'site' | 'internal'>(defaultScope);
   const [sort, setSort] = useState<AssetSortField>('created_desc');
   const [pageNumber, setPageNumber] = useState(1);
   const [pageCount, setPageCount] = useState(1);

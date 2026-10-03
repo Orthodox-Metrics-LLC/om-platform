@@ -35,12 +35,12 @@ import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+import { AssetPickerDialog } from 'src/components/asset-picker-dialog/asset-picker-dialog';
 
 import { PageBuilderPublicItem } from 'src/sections/latest-news/page-builder-public-item';
 
 import { templateFor } from './page-builder-templates';
 import { omPagesApi, PAGE_TYPES } from './om-pages-api';
-import { PageBuilderAssetPickerDialog } from './page-builder-asset-picker-dialog';
 import {
   componentDefinition,
   componentsForPageType,
@@ -613,7 +613,7 @@ export function PageBuilderEditView({ id }: Props) {
         </Card>
       )}
 
-      <PageBuilderAssetPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={handlePick} />
+      <AssetPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={handlePick} />
     </DashboardContent>
   );
 }

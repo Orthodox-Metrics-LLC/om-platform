@@ -1,6 +1,6 @@
 import type { ParishAppearance } from 'src/layouts/components/use-parish-appearance';
 
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -16,6 +16,7 @@ import { parishAppearanceApi, useParishAppearance } from 'src/layouts/components
 import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { EmptyContent } from 'src/components/empty-content';
+import { FileSourceButton } from 'src/components/file-source-button/file-source-button';
 
 import { omSocialApi } from 'src/sections/user/om-social-api';
 
@@ -31,8 +32,6 @@ import { isChurchRole } from 'src/auth/context/om-auth';
 export function AccountAppearance({ churchId = null }: { churchId?: number | null }) {
   const { user } = useAuthContext();
   const { appearance, error, setAppearance } = useParishAppearance(true, churchId);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const iconFileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ display_name: '', city: '', state: '' });
   const [uploading, setUploading] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
@@ -60,10 +59,7 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
     }
   };
 
-  const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const handleImageFile = async (file: File) => {
     setUploading(true);
     try {
       const [uploaded] = await omSocialApi.upload([file], 'cover');
@@ -75,10 +71,7 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
     }
   };
 
-  const handleIcon = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const handleIconFile = async (file: File) => {
     setUploadingIcon(true);
     try {
       const [uploaded] = await omSocialApi.upload([file], 'cover');
@@ -119,13 +112,16 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
           {preview}
           {canWrite && (
             <Box sx={{ mt: 3, display: 'flex', gap: 1, justifyContent: 'center' }}>
-              <Button variant="outlined" color="inherit" loading={uploading} startIcon={<Iconify icon="solar:camera-add-bold" />} onClick={() => fileRef.current?.click()}>
-                {appearance.image_url ? 'Change image' : 'Upload image'}
-              </Button>
+              <FileSourceButton
+                label={appearance.image_url ? 'Change image' : 'Upload image'}
+                loading={uploading}
+                assetScope="church"
+                onLocalFile={handleImageFile}
+                onAssetPicked={(asset) => save({ image_url: asset.url })}
+              />
               {appearance.image_url && (
                 <Button color="error" onClick={() => save({ image_url: null })}>Remove</Button>
               )}
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleImage} />
             </Box>
           )}
           <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.disabled' }}>
@@ -144,13 +140,16 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
           </Avatar>
           {canWrite && (
             <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'center' }}>
-              <Button variant="outlined" color="inherit" loading={uploadingIcon} startIcon={<Iconify icon="solar:camera-add-bold" />} onClick={() => iconFileRef.current?.click()}>
-                {appearance.icon_url ? 'Change icon' : 'Upload icon'}
-              </Button>
+              <FileSourceButton
+                label={appearance.icon_url ? 'Change icon' : 'Upload icon'}
+                loading={uploadingIcon}
+                assetScope="church"
+                onLocalFile={handleIconFile}
+                onAssetPicked={(asset) => save({ icon_url: asset.url })}
+              />
               {appearance.icon_url && (
                 <Button color="error" onClick={() => save({ icon_url: null })}>Remove</Button>
               )}
-              <input ref={iconFileRef} type="file" accept="image/*" hidden onChange={handleIcon} />
             </Box>
           )}
           <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.disabled' }}>
