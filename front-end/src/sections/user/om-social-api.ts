@@ -117,5 +117,6 @@ export const omSocialApi = {
     const r = await call<{ files: OmUploadedFile[] }>(`${S}/media?usage=${usage}`, { method: 'POST', body: form });
     return r.files;
   },
-  setCover: (banner_url: string | null) => call(`${S}/me/cover`, { method: 'PUT', ...json({ banner_url }) }),
+  setCover: (banner_id: number | null) =>
+    call<{ success: boolean; banner_url: string | null }>(`${S}/me/cover`, { method: 'PUT', ...json({ banner_id }) }),
 };

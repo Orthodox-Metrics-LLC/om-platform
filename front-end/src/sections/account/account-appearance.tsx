@@ -23,6 +23,8 @@ import { omSocialApi } from 'src/sections/user/om-social-api';
 import { useAuthContext } from 'src/auth/hooks';
 import { isChurchRole } from 'src/auth/context/om-auth';
 
+import { AccountProfileBanners } from './account-profile-banners';
+
 // ----------------------------------------------------------------------
 
 /**
@@ -171,6 +173,10 @@ export function AccountAppearance({ churchId = null }: { churchId?: number | nul
             {canWrite && <Button variant="contained" loading={saving} disabled={!form.display_name.trim()} onClick={() => save()}>Save changes</Button>}
           </Box>
         </Card>
+      </Grid>
+
+      <Grid size={{ xs: 12 }}>
+        <AccountProfileBanners churchId={appearance.church_id} />
       </Grid>
     </Grid>
   );

@@ -30,6 +30,7 @@ import { ProfileCover } from '../profile-cover';
 import { ProfileFriends } from '../profile-friends';
 import { ProfileGallery } from '../profile-gallery';
 import { ProfileFollowers } from '../profile-followers';
+import { ProfileBannerDialog } from '../profile-banner-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -64,6 +65,7 @@ export function UserProfileView() {
   const [error, setError] = useState<string | null>(null);
   const [followBusy, setFollowBusy] = useState(false);
   const [searchFriends, setSearchFriends] = useState('');
+  const [bannerOpen, setBannerOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -152,6 +154,7 @@ export function UserProfileView() {
               name={profile.name}
               avatarUrl={profile.avatar_url ?? ''}
               coverUrl={profile.banner_url || DEFAULT_COVER}
+              onCoverClick={profile.is_self && profile.church_id ? () => setBannerOpen(true) : undefined}
             />
 
             <Box
@@ -196,6 +199,16 @@ export function UserProfileView() {
             />
           )}
           {selectedTab === 'gallery' && <ProfileGallery key={`ga-${profile.id}`} userId={profile.id} isSelf={profile.is_self} />}
+
+          {profile.is_self && profile.church_id && (
+            <ProfileBannerDialog
+              open={bannerOpen}
+              churchId={profile.church_id}
+              currentUrl={profile.banner_url}
+              onClose={() => setBannerOpen(false)}
+              onApplied={(bannerUrl) => setProfile((current) => (current ? { ...current, banner_url: bannerUrl } : current))}
+            />
+          )}
         </>
       )}
     </DashboardContent>

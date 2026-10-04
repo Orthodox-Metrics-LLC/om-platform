@@ -26,9 +26,37 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   return json as T;
 }
 
-const A = '/api/church-branding/appearance';
+const BRANDING = '/api/church-branding';
+const A = `${BRANDING}/appearance`;
 
 export const PARISH_APPEARANCE_EVENT = 'om:parish-appearance-updated';
+
+export type ChurchProfileBanner = {
+  id: number;
+  url: string;
+  sort_order: number;
+};
+
+export type ChurchProfileBannerList = {
+  banners: ChurchProfileBanner[];
+  can_write: boolean;
+  max: number;
+};
+
+const churchQuery = (churchId?: number | null) => (churchId ? `?church_id=${churchId}` : '');
+
+export const churchBannerApi = {
+  list: (churchId?: number | null) =>
+    call<ChurchProfileBannerList>(`${BRANDING}/profile-banners${churchQuery(churchId)}`),
+  add: (file_url: string, churchId?: number | null) =>
+    call<ChurchProfileBannerList>(`${BRANDING}/profile-banners`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file_url, church_id: churchId ?? undefined }),
+    }),
+  remove: (id: number, churchId?: number | null) =>
+    call<ChurchProfileBannerList>(`${BRANDING}/profile-banners/${id}${churchQuery(churchId)}`, { method: 'DELETE' }),
+};
 
 export const parishAppearanceApi = {
   get: (churchId?: number | null) => call<{ appearance: ParishAppearance }>(`${A}${churchId ? `?church_id=${churchId}` : ''}`).then((r) => r.appearance),

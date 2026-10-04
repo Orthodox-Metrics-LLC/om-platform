@@ -15,10 +15,15 @@ export function ProfileCover({
   role,
   coverUrl,
   avatarUrl,
+  onCoverClick,
   ...other
-}: BoxProps & IUserProfileCover) {
+}: BoxProps & IUserProfileCover & { onCoverClick?: () => void }) {
   return (
     <Box
+      component={onCoverClick ? 'button' : 'div'}
+      type={onCoverClick ? 'button' : undefined}
+      onClick={onCoverClick}
+      aria-label={onCoverClick ? 'Choose profile banner' : undefined}
       sx={[
         (theme) => ({
           ...theme.mixins.bgGradient({
@@ -28,12 +33,39 @@ export function ProfileCover({
             ],
           }),
           height: 1,
+          width: 1,
+          position: 'relative',
           color: 'common.white',
+          ...(onCoverClick && {
+            p: 0,
+            border: 0,
+            display: 'block',
+            font: 'inherit',
+            textAlign: 'inherit',
+            cursor: 'pointer',
+            '&:focus-visible': { outline: `2px solid ${theme.vars.palette.common.white}`, outlineOffset: -6 },
+          }),
         }),
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
       {...other}
     >
+      {onCoverClick && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            px: 1.25,
+            py: 0.5,
+            borderRadius: 1,
+            typography: 'caption',
+            bgcolor: 'rgba(0,0,0,0.45)',
+          }}
+        >
+          Change banner
+        </Box>
+      )}
       <Box
         sx={{
           display: 'flex',
