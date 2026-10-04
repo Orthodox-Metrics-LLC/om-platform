@@ -464,6 +464,7 @@ export function PageBuilderEditView({ id }: Props) {
                 </Typography>
                 <PageBuilderComponentConfig
                   item={item}
+                  pageType={page.page_type}
                   onChange={(component_config) => updateItem(item, { component_config })}
                 />
               </Box>

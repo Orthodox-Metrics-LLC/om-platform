@@ -83,11 +83,15 @@ export function componentsForPageType(pageType: PageType): BuilderComponent[] {
 type ConfigEditorProps = {
   item: PageItem;
   onChange: (config: PageItemConfig) => void;
+  /** Shows the Onboarding fee fields only for 'card' items on the pricing page. */
+  pageType?: PageType;
 };
 
-export function PageBuilderComponentConfig({ item, onChange }: ConfigEditorProps) {
+export function PageBuilderComponentConfig({ item, onChange, pageType }: ConfigEditorProps) {
   const config = item.component_config || {};
   const set = (key: string, value: unknown) => onChange({ ...config, [key]: value });
+  const setOnboarding = (key: string, value: number) =>
+    onChange({ ...config, onboarding: { ...(config.onboarding || {}), [key]: value } });
 
   const jsonList = (key: 'steps' | 'timeline', fallback: unknown[]) => (
     <TextField
@@ -118,6 +122,41 @@ export function PageBuilderComponentConfig({ item, onChange }: ConfigEditorProps
   );
 
   switch (item.layout_type) {
+    case 'card': {
+      if (pageType !== 'pricing') {
+        return (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            This component uses its content and attached Asset Manager media; no additional configuration is required.
+          </Typography>
+        );
+      }
+      const onboarding = config.onboarding || {};
+      return (
+        <Stack spacing={2}>
+          <Typography variant="subtitle2">Onboarding fee</Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="Self Service fee ($)" value={Number(onboarding.self_service_fee || 0)} onChange={(value) => setOnboarding('self_service_fee', value)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="Self Service record cap" value={Number(onboarding.self_service_cap || 0)} onChange={(value) => setOnboarding('self_service_cap', value)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="Self Service — additional fee ($)" value={Number(onboarding.self_service_additional_fee || 0)} onChange={(value) => setOnboarding('self_service_additional_fee', value)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="Self Service — per how many additional records" value={Number(onboarding.self_service_additional_block || 0)} onChange={(value) => setOnboarding('self_service_additional_block', value)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="OM Service fee ($)" value={Number(onboarding.om_service_fee || 0)} onChange={(value) => setOnboarding('om_service_fee', value)} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <NumberField label="OM Service record cap" value={Number(onboarding.om_service_cap || 0)} onChange={(value) => setOnboarding('om_service_cap', value)} />
+            </Grid>
+          </Grid>
+        </Stack>
+      );
+    }
     case 'animate':
       return (
         <SelectField label="Animation preset" value={String(config.variant || 'fadeInUp')} onChange={(value) => set('variant', value)} options={['fadeIn', 'fadeInUp', 'fadeInLeft', 'zoomIn', 'scaleIn', 'rotateIn', 'bounceIn']} />

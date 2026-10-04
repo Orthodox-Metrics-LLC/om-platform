@@ -179,7 +179,53 @@ function ContentText({ item, hideBody = false }: { item: PageItem; hideBody?: bo
       <Typography variant="h4">{item.title}</Typography>
       {item.subtitle && <Typography variant="subtitle1" sx={{ mt: 0.5, color: 'text.secondary' }}>{item.subtitle}</Typography>}
       {!hideBody && item.body && <Typography sx={{ mt: 2, whiteSpace: 'pre-line' }}>{item.body}</Typography>}
+      <OnboardingFee item={item} />
       {item.cta_label && item.cta_url && <Button href={item.cta_url} variant="contained" sx={{ mt: 2 }}>{item.cta_label}</Button>}
+    </Box>
+  );
+}
+
+function formatUsd(value: number) {
+  return `$${value.toLocaleString('en-US')}`;
+}
+
+/** Pricing cards — a one-time onboarding fee, shown separately from the monthly price/features. */
+function OnboardingFee({ item }: { item: PageItem }) {
+  const onboarding = item.component_config?.onboarding;
+  if (!onboarding || (!onboarding.self_service_fee && !onboarding.om_service_fee)) return null;
+
+  return (
+    <Box sx={{ mt: 2.5, p: 2, borderRadius: 1.5, bgcolor: 'background.neutral' }}>
+      <Typography variant="subtitle2">Onboarding Fee</Typography>
+      <Stack spacing={1} sx={{ mt: 1 }}>
+        {!!onboarding.self_service_fee && (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              Self Service — {formatUsd(onboarding.self_service_fee)}
+            </Typography>
+            {!!onboarding.self_service_cap && (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Up to {onboarding.self_service_cap.toLocaleString('en-US')} records
+                {!!onboarding.self_service_additional_fee && !!onboarding.self_service_additional_block && (
+                  <>, then {formatUsd(onboarding.self_service_additional_fee)} per additional {onboarding.self_service_additional_block.toLocaleString('en-US')} records</>
+                )}
+              </Typography>
+            )}
+          </Box>
+        )}
+        {!!onboarding.om_service_fee && (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              OM Service — {formatUsd(onboarding.om_service_fee)}
+            </Typography>
+            {!!onboarding.om_service_cap && (
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                Up to {onboarding.om_service_cap.toLocaleString('en-US')} records
+              </Typography>
+            )}
+          </Box>
+        )}
+      </Stack>
     </Box>
   );
 }

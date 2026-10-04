@@ -61,6 +61,17 @@ export type PageItemConfig = Record<string, unknown> & {
   tableEndpoint?: string;
   tableColumns?: PageTableColumn[];
   tableRowsPath?: string;
+  /** Pricing cards — onboarding fee, shown separately from the monthly price. */
+  onboarding?: PricingOnboardingConfig;
+};
+
+export type PricingOnboardingConfig = {
+  self_service_fee?: number;
+  self_service_cap?: number;
+  self_service_additional_fee?: number;
+  self_service_additional_block?: number;
+  om_service_fee?: number;
+  om_service_cap?: number;
 };
 
 export type PageEffectsConfig = {
