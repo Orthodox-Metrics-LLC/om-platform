@@ -150,6 +150,14 @@ export interface OmAssetSimilarGroup {
   assets: OmAsset[];
 }
 
+/** A file whose name starts with a category it is not currently filed under. */
+export interface OmAssetCategorySuggestion {
+  id: number;
+  name: string;
+  category: string;
+  suggested_category: string;
+}
+
 export interface ImageTransformPayload {
   rotate?: number;
   width?: number;
@@ -592,6 +600,19 @@ export async function bulkSetOmAssetTags(ids: number[], tags: string[], mode: 's
     mode,
   });
   return res.assets;
+}
+
+export async function bulkChangeOmAssetCategory(ids: number[], category: string) {
+  const res = await apiClient.post<{ success: boolean; assets: OmAsset[] }>(`${BASE}/bulk-category`, {
+    ids,
+    category,
+  });
+  return res.assets;
+}
+
+export async function fetchOmAssetCategorySuggestions() {
+  const res = await apiClient.get<{ suggestions: OmAssetCategorySuggestion[] }>(`${BASE}/category-suggestions`);
+  return res?.suggestions ?? [];
 }
 
 export async function fetchOmAssetTags(params?: { scope?: OmAssetScope; church_id?: number }) {

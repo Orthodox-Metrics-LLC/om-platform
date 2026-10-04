@@ -23,15 +23,17 @@ import { CustomPopover } from 'src/components/custom-popover';
 import { AssetChurchSelect } from './asset-church-select';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
 import { ASSET_SCOPES, useAssetManager } from './asset-manager-context';
+import { categoryLabel, AssetCategoryDialog } from './asset-category-dialog';
 
 // ----------------------------------------------------------------------
 
-/** Floating bar shown when assets are selected: archive, move, tags, scope, collections, workshop. */
+/** Floating bar shown when assets are selected: archive, move, category, tags, scope, collections, workshop. */
 export function AssetBulkActions() {
-  const { selected, clearSelection, actions, directories, tags, collections, filters } = useAssetManager();
+  const { selected, clearSelection, actions, directories, tags, collections, filters, categorySuggestions } = useAssetManager();
   const ids = [...selected];
   const confirmArchive = useBoolean();
   const moveDialog = useBoolean();
+  const categoryDialog = useBoolean();
   const tagsDialog = useBoolean();
   const scopeDialog = useBoolean();
   const workshopDialog = useBoolean();
@@ -43,6 +45,13 @@ export function AssetBulkActions() {
   const [scope, setScope] = useState<OmAssetScope>('public');
   const [churchId, setChurchId] = useState<number | null>(null);
 
+  const suggestedForSelection = (() => {
+    const byId = new Map(categorySuggestions.map((item) => [item.id, item.suggested_category]));
+    const hits = ids.map((id) => byId.get(id)).filter((value): value is string => !!value);
+    if (hits.length === ids.length && hits.every((value) => value === hits[0])) return hits[0];
+    return null;
+  })();
+
   if (!ids.length) return null;
 
   return (
@@ -50,6 +59,7 @@ export function AssetBulkActions() {
       <Box sx={(theme) => ({ p: 1.5, mb: 2, gap: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', borderRadius: 1.5, bgcolor: 'primary.lighter', color: 'primary.darker', boxShadow: theme.vars.customShadows.z8 })}>
         <Typography variant="subtitle2" sx={{ mr: 1 }}>{ids.length} selected</Typography>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:add-folder-bold" />} onClick={moveDialog.onTrue}>Move to folder</Button>
+        <Button size="small" variant="soft" startIcon={<Iconify icon="solar:bookmark-square-bold" />} onClick={categoryDialog.onTrue}>Change category</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:tag-horizontal-bold-duotone" />} onClick={tagsDialog.onTrue}>Tags</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:global-bold-duotone" />} onClick={scopeDialog.onTrue}>Change scope</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:suitcase-tag-bold" />} onClick={collectionMenu.onOpen}>Collection</Button>
@@ -88,6 +98,18 @@ export function AssetBulkActions() {
           <Button variant="contained" disabled={!dir.trim()} onClick={() => { moveDialog.onFalse(); actions.moveToDirectory(ids, dir.trim()).then(clearSelection).catch(() => {}); }}>Move</Button>
         </DialogActions>
       </Dialog>
+
+      <AssetCategoryDialog
+        open={categoryDialog.value}
+        onClose={categoryDialog.onFalse}
+        title={`Change category of ${ids.length} ${ids.length === 1 ? 'asset' : 'assets'}`}
+        hint={suggestedForSelection ? `These file names start with “${categoryLabel(suggestedForSelection)}”.` : undefined}
+        suggestedCategory={suggestedForSelection}
+        onApply={(category) => {
+          categoryDialog.onFalse();
+          actions.changeCategory(ids, category).then(clearSelection).catch(() => {});
+        }}
+      />
 
       <Dialog fullWidth maxWidth="xs" open={tagsDialog.value} onClose={tagsDialog.onFalse}>
         <DialogTitle>Tags for {ids.length} assets</DialogTitle>

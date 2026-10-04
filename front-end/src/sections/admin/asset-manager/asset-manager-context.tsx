@@ -7,6 +7,7 @@ import type {
   OmAssetVisibility,
   OmAssetSimilarGroup,
   OmAssetDuplicateGroup,
+  OmAssetCategorySuggestion,
 } from './om-assets-api';
 
 import { useMemo, useState, useEffect, useContext, useCallback, createContext } from 'react';
@@ -32,10 +33,12 @@ import {
   deleteOmAssetCollection,
   createOmAssetCollection,
   updateOmAssetCollection,
+  bulkChangeOmAssetCategory,
   fetchOmAssetSimilarGroups,
   assignOmAssetsToCollection,
   bulkDeleteOmAssetDuplicates,
   removeOmAssetsFromCollection,
+  fetchOmAssetCategorySuggestions,
 } from './om-assets-api';
 
 // ----------------------------------------------------------------------
@@ -87,6 +90,7 @@ type State = {
   collections: OmAssetCollection[];
   duplicateGroups: OmAssetDuplicateGroup[];
   similarGroups: OmAssetSimilarGroup[];
+  categorySuggestions: OmAssetCategorySuggestion[];
   reloadMeta: () => Promise<void>;
 
   selected: Set<number>;
@@ -100,6 +104,8 @@ type State = {
     purge: (ids: number[]) => Promise<void>;
     moveToDirectory: (ids: number[], directory: string) => Promise<void>;
     applyTags: (ids: number[], tags: string[], mode: 'add' | 'remove' | 'set') => Promise<void>;
+    changeCategory: (ids: number[], category: string) => Promise<void>;
+    changeCategories: (groups: { ids: number[]; category: string }[]) => Promise<void>;
     changeScope: (ids: number[], scope: OmAssetScope, churchId?: number | null) => Promise<void>;
     copy: (id: number, payload: Parameters<typeof copyOmAsset>[1]) => Promise<void>;
     createDirectory: (scope: OmAssetScope, path: string, churchId?: number | null) => Promise<void>;
@@ -142,6 +148,7 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
   const [collections, setCollections] = useState<OmAssetCollection[]>([]);
   const [duplicateGroups, setDuplicateGroups] = useState<OmAssetDuplicateGroup[]>([]);
   const [similarGroups, setSimilarGroups] = useState<OmAssetSimilarGroup[]>([]);
+  const [categorySuggestions, setCategorySuggestions] = useState<OmAssetCategorySuggestion[]>([]);
 
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
@@ -206,18 +213,20 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
 
   const reloadMeta = useCallback(async () => {
     const scopeArg = filters.scope ? { scope: filters.scope, church_id: filters.churchId ?? undefined } : undefined;
-    const [dirs, tg, cols, dups, sims] = await Promise.allSettled([
+    const [dirs, tg, cols, dups, sims, suggestions] = await Promise.allSettled([
       fetchOmAssetDirectories(scopeArg),
       fetchOmAssetTags(scopeArg),
       fetchOmAssetCollections(),
       fetchOmAssetDuplicates(),
       fetchOmAssetSimilarGroups(),
+      fetchOmAssetCategorySuggestions(),
     ]);
     if (dirs.status === 'fulfilled') setDirectories(dirs.value);
     if (tg.status === 'fulfilled') setTags(tg.value);
     if (cols.status === 'fulfilled') setCollections(cols.value);
     if (dups.status === 'fulfilled') setDuplicateGroups(dups.value);
     if (sims.status === 'fulfilled') setSimilarGroups(sims.value);
+    if (suggestions.status === 'fulfilled') setCategorySuggestions(suggestions.value);
   }, [filters.scope, filters.churchId]);
 
   useEffect(() => {
@@ -266,6 +275,15 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
       purge: (ids) => run(async () => { if (ids.length === 1) await purgeOmAsset(ids[0]); else await bulkPurgeOmAssets(ids); setSelected(new Set()); }, `${ids.length === 1 ? 'Asset' : `${ids.length} assets`} permanently deleted`, true),
       moveToDirectory: (ids, directory) => run(async () => { await bulkMoveOmAssets(ids, directory); }, 'Moved', true),
       applyTags: (ids, tg, mode) => run(async () => { await bulkSetOmAssetTags(ids, tg, mode); }, 'Tags updated', true),
+      changeCategory: (ids, category) => run(async () => { await bulkChangeOmAssetCategory(ids, category); }, ids.length === 1 ? 'Category updated' : `Moved ${ids.length} assets`, true),
+      changeCategories: (groups) => {
+        const count = groups.reduce((sum, group) => sum + group.ids.length, 0);
+        return run(async () => {
+          for (const group of groups) {
+            if (group.ids.length) await bulkChangeOmAssetCategory(group.ids, group.category);
+          }
+        }, count === 1 ? 'Category updated' : `Moved ${count} assets`, true);
+      },
       changeScope: (ids, scope, churchId) => run(async () => { await bulkChangeOmAssetScope(ids, scope, churchId); }, 'Scope changed', true),
       copy: (id, payload) => run(async () => { await copyOmAsset(id, payload); }, 'Asset copied', true),
       createDirectory: (scope, path, churchId) => run(async () => { await createOmAssetDirectory(scope, path, churchId); }, 'Folder created', true),
@@ -287,10 +305,10 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
     () => ({
       filters, setFilters, resetFilters, navLocation, setNavLocation,
       assets, total, hasMore, loading, loadingMore, error, loadMore, reload,
-      scopeCounts, folderCounts, directories, tags, collections, duplicateGroups, similarGroups, reloadMeta,
+      scopeCounts, folderCounts, directories, tags, collections, duplicateGroups, similarGroups, categorySuggestions, reloadMeta,
       selected, toggleSelect, selectMany, clearSelection, actions,
     }),
-    [filters, setFilters, resetFilters, navLocation, setNavLocation, assets, total, hasMore, loading, loadingMore, error, loadMore, reload, scopeCounts, folderCounts, directories, tags, collections, duplicateGroups, similarGroups, reloadMeta, selected, toggleSelect, selectMany, clearSelection, actions]
+    [filters, setFilters, resetFilters, navLocation, setNavLocation, assets, total, hasMore, loading, loadingMore, error, loadMore, reload, scopeCounts, folderCounts, directories, tags, collections, duplicateGroups, similarGroups, categorySuggestions, reloadMeta, selected, toggleSelect, selectMany, clearSelection, actions]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

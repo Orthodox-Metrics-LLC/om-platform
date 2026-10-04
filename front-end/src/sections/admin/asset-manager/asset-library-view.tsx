@@ -35,6 +35,8 @@ import { AssetManagerSidebar } from './asset-manager-sidebar';
 import { AssetManagerToolbar } from './asset-manager-toolbar';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
 import { AssetZipImportDialog } from './asset-zip-import-dialog';
+import { AssetCategorySuggestions } from './asset-category-suggestions';
+import { categoryLabel, AssetCategoryDialog } from './asset-category-dialog';
 import { AssetSplitDialog, AssetTransformDialog } from './asset-transform-dialog';
 import { isImageAsset, isVideoAsset, useAssetManager, AssetManagerProvider } from './asset-manager-context';
 
@@ -70,6 +72,7 @@ function AssetLibraryContent() {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
   const [lightboxEpoch, setLightboxEpoch] = useState(0);
   const [purgedIds, setPurgedIds] = useState<Set<number>>(new Set());
+  const [previewCategoryAsset, setPreviewCategoryAsset] = useState<OmAsset | null>(null);
 
   const visible: OmAsset[] =
     am.navLocation === 'duplicates' ? am.duplicateGroups.flatMap((g) => g.assets)
@@ -228,6 +231,10 @@ function AssetLibraryContent() {
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <AssetManagerToolbar view={view} onChangeView={setView} onUpload={() => { setDropFiles([]); uploadDialog.onTrue(); }} onZipImport={zipImportDialog.onTrue} />
         <Box sx={{ mt: 3 }}>
+          <AssetCategorySuggestions
+            suggestions={am.categorySuggestions}
+            onMove={(groups) => { am.actions.changeCategories(groups).catch(() => {}); }}
+          />
           <AssetBulkActions />
           {renderBody()}
         </Box>
@@ -263,12 +270,43 @@ function AssetLibraryContent() {
         disableTotal={false}
         thumbnails={{ position: 'end' }}
         toolbarExtraButtons={[
+          <ChangeCategoryFromPreviewButton
+            key="category-from-preview"
+            assets={previewableAssets}
+            suggestions={am.categorySuggestions}
+            onOpen={setPreviewCategoryAsset}
+            onMove={(asset, category) => {
+              const leavingFilter = Boolean(am.filters.category) && am.filters.category !== category;
+              am.actions.changeCategory([asset.id], category).then(() => {
+                if (leavingFilter) setLightboxIndex(-1);
+              }).catch(() => {});
+            }}
+          />,
           <DeleteFromPreviewButton
             key="delete-from-preview"
             assets={previewableAssets}
             onDelete={deleteFromPreview}
           />,
         ]}
+      />
+      <AssetCategoryDialog
+        elevate
+        open={!!previewCategoryAsset}
+        onClose={() => setPreviewCategoryAsset(null)}
+        title="Change category"
+        currentCategory={previewCategoryAsset?.category}
+        suggestedCategory={am.categorySuggestions.find((item) => item.id === previewCategoryAsset?.id)?.suggested_category}
+        hint={previewCategoryAsset ? previewCategoryHint(previewCategoryAsset, am.categorySuggestions) : undefined}
+        applyLabel="Move"
+        onApply={(category) => {
+          const asset = previewCategoryAsset;
+          setPreviewCategoryAsset(null);
+          if (!asset) return;
+          const leavingFilter = Boolean(am.filters.category) && am.filters.category !== category;
+          am.actions.changeCategory([asset.id], category).then(() => {
+            if (leavingFilter) setLightboxIndex(-1);
+          }).catch(() => {});
+        }}
       />
       <AssetUploadDialog open={uploadDialog.value} onClose={uploadDialog.onFalse} initialFiles={dropFiles} />
       <AssetZipImportDialog open={zipImportDialog.value} onClose={() => { setZipDropFile(null); zipImportDialog.onFalse(); }} initialFile={zipDropFile} />
@@ -290,6 +328,54 @@ function AssetLibraryContent() {
 }
 
 // ----------------------------------------------------------------------
+
+function previewCategoryHint(asset: OmAsset, suggestions: { id: number; suggested_category: string }[]) {
+  const suggested = suggestions.find((item) => item.id === asset.id)?.suggested_category;
+  const current = categoryLabel(asset.category);
+  if (!suggested) return `Currently ${current}.`;
+  return `Currently ${current}. The file name starts with “${categoryLabel(suggested)}”.`;
+}
+
+function ChangeCategoryFromPreviewButton({
+  assets,
+  suggestions,
+  onOpen,
+  onMove,
+}: {
+  assets: OmAsset[];
+  suggestions: { id: number; suggested_category: string }[];
+  onOpen: (asset: OmAsset) => void;
+  onMove: (asset: OmAsset, category: string) => void;
+}) {
+  const { currentIndex } = useLightboxState();
+  const asset = assets[currentIndex];
+  const suggested = suggestions.find((item) => item.id === asset?.id)?.suggested_category;
+
+  if (!asset) return null;
+
+  return (
+    <>
+      {suggested && (
+        <Tooltip title={`File name starts with “${categoryLabel(suggested)}”`}>
+          <Button
+            size="small"
+            variant="contained"
+            color="warning"
+            onClick={() => onMove(asset, suggested)}
+            sx={{ mx: 0.5, textTransform: 'capitalize' }}
+          >
+            Move to {categoryLabel(suggested)}
+          </Button>
+        </Tooltip>
+      )}
+      <Tooltip title={`Change category (currently ${categoryLabel(asset.category)})`}>
+        <IconButton className="yarl__button" onClick={() => onOpen(asset)} sx={{ color: 'common.white' }}>
+          <Iconify icon="solar:bookmark-square-bold" width={22} />
+        </IconButton>
+      </Tooltip>
+    </>
+  );
+}
 
 /**
  * Lightbox toolbar button: deletes the slide currently being viewed right
