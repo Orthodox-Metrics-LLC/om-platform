@@ -370,7 +370,7 @@ function ChangeCategoryFromPreviewButton({
       )}
       <Tooltip title={`Change category (currently ${categoryLabel(asset.category)})`}>
         <IconButton className="yarl__button" onClick={() => onOpen(asset)} sx={{ color: 'common.white' }}>
-          <Iconify icon="solar:bookmark-square-bold" width={22} />
+          <Iconify icon="solar:palette-bold" width={22} />
         </IconButton>
       </Tooltip>
     </>

@@ -59,7 +59,7 @@ export function AssetBulkActions() {
       <Box sx={(theme) => ({ p: 1.5, mb: 2, gap: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', borderRadius: 1.5, bgcolor: 'primary.lighter', color: 'primary.darker', boxShadow: theme.vars.customShadows.z8 })}>
         <Typography variant="subtitle2" sx={{ mr: 1 }}>{ids.length} selected</Typography>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:add-folder-bold" />} onClick={moveDialog.onTrue}>Move to folder</Button>
-        <Button size="small" variant="soft" startIcon={<Iconify icon="solar:bookmark-square-bold" />} onClick={categoryDialog.onTrue}>Change category</Button>
+        <Button size="small" variant="soft" startIcon={<Iconify icon="solar:palette-bold" />} onClick={categoryDialog.onTrue}>Change category</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:tag-horizontal-bold-duotone" />} onClick={tagsDialog.onTrue}>Tags</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:global-bold-duotone" />} onClick={scopeDialog.onTrue}>Change scope</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:suitcase-tag-bold" />} onClick={collectionMenu.onOpen}>Collection</Button>
