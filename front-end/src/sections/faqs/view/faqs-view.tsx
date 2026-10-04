@@ -3,6 +3,7 @@ import Container from '@mui/material/Container';
 
 import { HomeFAQs } from 'src/sections/home/home-faqs';
 import { ContactForm } from 'src/sections/contact/contact-form';
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
 // ----------------------------------------------------------------------
 
@@ -16,11 +17,15 @@ import { ContactForm } from 'src/sections/contact/contact-form';
  *
  * The "still have questions" form is the real contact form rather than the
  * template's `FaqsForm`, which had no submit handler at all.
+ *
+ * Wrapped with PublicPageBuilderOverride (pageType="faq") so admins can edit
+ * the Q&A list through Page Builder without a code change; until a published
+ * "faq" page exists, the hardcoded HomeFAQs list below remains the fallback.
  */
 export function FaqsView() {
   return (
     <>
-      <HomeFAQs />
+      <PublicPageBuilderOverride pageType="faq" fallback={<HomeFAQs />} />
 
       <Container component="section" sx={{ pb: { xs: 10, md: 15 } }}>
         <Box sx={{ maxWidth: 640, mx: 'auto' }}>

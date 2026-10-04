@@ -7,6 +7,8 @@ import { usePathname } from 'src/routes/hooks';
 import { BackToTopButton } from 'src/components/animate/back-to-top-button';
 import { ScrollProgress, useScrollProgress } from 'src/components/animate/scroll-progress';
 
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
+
 import { HomeHero } from '../home-hero';
 import { HomeFAQs } from '../home-faqs';
 import { HomeMinimal } from '../home-minimal';
@@ -44,7 +46,11 @@ export function HomeView() {
       <Stack sx={{ position: 'relative', bgcolor: 'background.default' }}>
         <HomeMinimal />
 
-        <HomeHugePackElements id="record-capabilities" />
+        <PublicPageBuilderOverride
+          pageType="records"
+          id="record-capabilities"
+          fallback={<HomeHugePackElements id="record-capabilities" />}
+        />
 
         <HomeForDesigner id="paper-to-digital" />
 

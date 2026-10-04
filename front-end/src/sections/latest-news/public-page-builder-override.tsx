@@ -18,7 +18,16 @@ import { PageBuilderPublicItem } from './page-builder-public-item';
  * remains intact. Draft editor changes never appear here because the API serves
  * the campaign's published version snapshot.
  */
-export function PublicPageBuilderOverride({ pageType, fallback }: { pageType: PageType; fallback: ReactNode }) {
+export function PublicPageBuilderOverride({
+  pageType,
+  fallback,
+  id,
+}: {
+  pageType: PageType;
+  fallback: ReactNode;
+  /** Preserves the section's deep-link anchor (e.g. /records) once a published override replaces the fallback. */
+  id?: string;
+}) {
   const [page, setPage] = useState<Page | null>(null);
 
   useEffect(() => {
@@ -33,7 +42,7 @@ export function PublicPageBuilderOverride({ pageType, fallback }: { pageType: Pa
   if (!page) return fallback;
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
+    <Container id={id} maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
       <Box sx={{ mb: 5, textAlign: 'center' }}>
         <Typography variant="h2">{page.title}</Typography>
         {page.summary && <Typography sx={{ mt: 1.5, color: 'text.secondary' }}>{page.summary}</Typography>}

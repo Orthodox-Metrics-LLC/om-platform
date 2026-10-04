@@ -35,8 +35,9 @@ import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
-import { AssetPickerDialog } from 'src/components/asset-picker-dialog/asset-picker-dialog';
+import { FileSourceButton } from 'src/components/file-source-button/file-source-button';
 
+import { uploadOmAsset } from 'src/sections/admin/asset-manager/om-assets-api';
 import { PageBuilderPublicItem } from 'src/sections/latest-news/page-builder-public-item';
 
 import { templateFor } from './page-builder-templates';
@@ -77,8 +78,7 @@ export function PageBuilderEditView({ id }: Props) {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [versions, setVersions] = useState<PageVersion[]>([]);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerTargetItemId, setPickerTargetItemId] = useState<number | null>(null);
+
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -170,15 +170,8 @@ export function PageBuilderEditView({ id }: Props) {
     try { await omPagesApi.deleteItem(item.id); } catch (e: any) { toast.error(e.message); }
   };
 
-  const openPicker = (itemId: number | null) => {
+  const attachAsset = async (asset: OmAsset, targetItemId: number | null) => {
     if (!id) { toast.error('Save the page first'); return; }
-    setPickerTargetItemId(itemId);
-    setPickerOpen(true);
-  };
-
-  const handlePick = async (asset: OmAsset) => {
-    setPickerOpen(false);
-    if (!id) return;
     try {
       const fileUrl = asset.url || asset.public_url || `/api/assets/${asset.id}/file`;
       const { media } = await omPagesApi.attachAssetMedia({
@@ -186,20 +179,35 @@ export function PageBuilderEditView({ id }: Props) {
         om_asset_id: asset.id,
         file_url: fileUrl,
         file_type: asset.file_type === 'video' ? 'video' : asset.file_type === 'document' ? 'document' : 'image',
-        item_id: pickerTargetItemId,
+        item_id: targetItemId,
         alt_text: asset.alt_text || undefined,
       });
       setPage((p) => {
-        if (pickerTargetItemId) {
+        if (targetItemId) {
           return {
             ...p,
-            items: (p.items || []).map((i) => (i.id === pickerTargetItemId ? { ...i, media: [...(i.media || []), media] } : i)),
+            items: (p.items || []).map((i) => (i.id === targetItemId ? { ...i, media: [...(i.media || []), media] } : i)),
           };
         }
         return { ...p, media: [...(p.media || []), media] };
       });
       toast.success('Media attached');
     } catch (e: any) { toast.error(e.message || 'Failed to attach media'); }
+  };
+
+  /** "Upload from my computer" path: upload into the Asset Manager catalog first
+   * (so it behaves identically to anything picked from church/site storage —
+   * same gallery, same reuse later), then attach the resulting asset. */
+  const handleLocalFile = async (file: File, targetItemId: number | null) => {
+    if (!id) { toast.error('Save the page first'); return; }
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('scope', 'site');
+      fd.append('category', 'page-builder');
+      const asset = await uploadOmAsset(fd);
+      await attachAsset(asset, targetItemId);
+    } catch (e: any) { toast.error(e.message || 'Upload failed'); }
   };
 
   const patchMedia = async (mediaId: number, patch: Partial<Page['media'][number]>) => {
@@ -479,9 +487,13 @@ export function PageBuilderEditView({ id }: Props) {
                     </IconButton>
                   </Box>
                 ))}
-                <Button size="small" variant="outlined" startIcon={<Iconify icon="solar:gallery-add-bold" />} onClick={() => openPicker(item.id)}>
-                  Add media
-                </Button>
+                <FileSourceButton
+                  label="Add media"
+                  size="small"
+                  assetScope="site"
+                  onLocalFile={(file) => handleLocalFile(file, item.id)}
+                  onAssetPicked={(asset) => attachAsset(asset, item.id)}
+                />
               </Stack>
 
               <Stack direction="row" sx={{ justifyContent: 'flex-end', mt: 1.5 }}>
@@ -507,7 +519,14 @@ export function PageBuilderEditView({ id }: Props) {
                 </Typography>
               </Box>
               <Button variant="outlined" href={paths.dashboard.assetManager} target="_blank" component="a">Open Asset Manager</Button>
-              <Button variant="contained" startIcon={<Iconify icon="solar:gallery-add-bold" />} onClick={() => openPicker(null)}>Attach media</Button>
+              <FileSourceButton
+                label="Attach media"
+                variant="contained"
+                color="primary"
+                assetScope="site"
+                onLocalFile={(file) => handleLocalFile(file, null)}
+                onAssetPicked={(asset) => attachAsset(asset, null)}
+              />
             </Stack>
           </Card>
           <Grid container spacing={2}>
@@ -612,8 +631,6 @@ export function PageBuilderEditView({ id }: Props) {
           )}
         </Card>
       )}
-
-      <AssetPickerDialog open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={handlePick} />
     </DashboardContent>
   );
 }

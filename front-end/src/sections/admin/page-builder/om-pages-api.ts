@@ -13,7 +13,7 @@ import { omApiFetch } from 'src/auth/context/om-auth';
 
 export type PageType =
   | 'latest_news' | 'coming_soon' | 'maintenance' | 'error_404' | 'error_403' | 'error_500'
-  | 'checkout' | 'payment' | 'pricing';
+  | 'checkout' | 'payment' | 'pricing' | 'records' | 'faq';
 
 export const PAGE_TYPES: { value: PageType; label: string }[] = [
   { value: 'latest_news', label: 'Latest News' },
@@ -25,6 +25,8 @@ export const PAGE_TYPES: { value: PageType; label: string }[] = [
   { value: 'checkout', label: 'Checkout' },
   { value: 'payment', label: 'Payment' },
   { value: 'pricing', label: 'Pricing' },
+  { value: 'records', label: 'Records (public page)' },
+  { value: 'faq', label: 'FAQ' },
 ];
 
 export type PageStatus = 'draft' | 'scheduled' | 'live' | 'expired' | 'archived';
