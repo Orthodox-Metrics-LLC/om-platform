@@ -25,8 +25,8 @@ export const ASSET_SORT_OPTIONS: { id: AssetSortField; label: string }[] = [
   { id: 'scope_desc', label: 'Scope Z–A' },
   { id: 'updated_desc', label: 'Updated newest' },
   { id: 'updated', label: 'Updated oldest' },
-  { id: 'category', label: 'Category A–Z' },
-  { id: 'category_desc', label: 'Category Z–A' },
+  { id: 'category', label: 'Type A–Z' },
+  { id: 'category_desc', label: 'Type Z–A' },
 ];
 
 type ReqOpts = { params?: object; headers?: Record<string, string>; responseType?: 'blob'; signal?: AbortSignal };
@@ -110,6 +110,8 @@ export interface OmAsset {
   church_name?: string | null;
   church_label?: string | null;
   category: string;
+  primary_tag?: string | null;
+  secondary_tag?: string | null;
   folder?: string | null;
   source_type?: OmAssetSourceType;
   owner_system?: OmAssetOwnerSystem;
@@ -150,12 +152,22 @@ export interface OmAssetSimilarGroup {
   assets: OmAsset[];
 }
 
-/** A file whose name starts with a category it is not currently filed under. */
+/** A file whose name starts with a type or tag it is not currently filed as. */
 export interface OmAssetCategorySuggestion {
   id: number;
   name: string;
   category: string;
+  primary_tag?: string | null;
+  secondary_tag?: string | null;
   suggested_category: string;
+  suggested_primary_tag?: string | null;
+  suggested_secondary_tag?: string | null;
+}
+
+export interface OmAssetClassification {
+  category: string;
+  primary_tag?: string | null;
+  secondary_tag?: string | null;
 }
 
 export interface ImageTransformPayload {
@@ -174,6 +186,8 @@ export interface OmAssetListParams {
   source_type?: OmAssetSourceType;
   owner_system?: OmAssetOwnerSystem;
   category?: string;
+  primary_tag?: string;
+  secondary_tag?: string;
   church_id?: number;
   search?: string;
   directory?: string;
@@ -465,6 +479,8 @@ export interface SmartUploadSuggestion {
   display_name: string;
   title: string;
   category: string;
+  primary_tag?: string | null;
+  secondary_tag?: string | null;
   category_label: string;
   category_confidence: number;
   classification_source: 'manual' | 'smart' | 'edited' | 'content' | 'filename' | 'context' | 'fallback' | 'heuristic';
@@ -521,7 +537,7 @@ export async function updateOmAsset(
   id: number,
   payload: Partial<Pick<OmAsset,
     'name' | 'title' | 'description' | 'alt_text' | 'caption' | 'credit' |
-    'category' | 'licensing_note' | 'status' | 'tags' | 'directory' | 'folder' |
+    'category' | 'primary_tag' | 'secondary_tag' | 'licensing_note' | 'status' | 'tags' | 'directory' | 'folder' |
     'visibility' | 'collection_id' | 'source_type' | 'owner_system' | 'scope'
   >>,
 ) {
@@ -602,10 +618,10 @@ export async function bulkSetOmAssetTags(ids: number[], tags: string[], mode: 's
   return res.assets;
 }
 
-export async function bulkChangeOmAssetCategory(ids: number[], category: string) {
+export async function bulkChangeOmAssetCategory(ids: number[], classification: OmAssetClassification) {
   const res = await apiClient.post<{ success: boolean; assets: OmAsset[] }>(`${BASE}/bulk-category`, {
     ids,
-    category,
+    ...classification,
   });
   return res.assets;
 }

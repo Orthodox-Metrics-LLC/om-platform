@@ -36,8 +36,8 @@ import { AssetManagerToolbar } from './asset-manager-toolbar';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
 import { AssetZipImportDialog } from './asset-zip-import-dialog';
 import { AssetCategorySuggestions } from './asset-category-suggestions';
-import { categoryLabel, AssetCategoryDialog } from './asset-category-dialog';
 import { AssetSplitDialog, AssetTransformDialog } from './asset-transform-dialog';
+import { classificationLabel, AssetCategoryDialog } from './asset-category-dialog';
 import { isImageAsset, isVideoAsset, useAssetManager, AssetManagerProvider } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
@@ -275,9 +275,9 @@ function AssetLibraryContent() {
             assets={previewableAssets}
             suggestions={am.categorySuggestions}
             onOpen={setPreviewCategoryAsset}
-            onMove={(asset, category) => {
-              const leavingFilter = Boolean(am.filters.category) && am.filters.category !== category;
-              am.actions.changeCategory([asset.id], category).then(() => {
+            onMove={(asset, classification) => {
+              const leavingFilter = Boolean(am.filters.category) && am.filters.category !== classification.category;
+              am.actions.changeCategory([asset.id], classification).then(() => {
                 if (leavingFilter) setLightboxIndex(-1);
               }).catch(() => {});
             }}
@@ -293,17 +293,20 @@ function AssetLibraryContent() {
         elevate
         open={!!previewCategoryAsset}
         onClose={() => setPreviewCategoryAsset(null)}
-        title="Change category"
-        currentCategory={previewCategoryAsset?.category}
-        suggestedCategory={am.categorySuggestions.find((item) => item.id === previewCategoryAsset?.id)?.suggested_category}
+        title="Change type"
+        current={previewCategoryAsset ? { category: previewCategoryAsset.category, primary_tag: previewCategoryAsset.primary_tag, secondary_tag: previewCategoryAsset.secondary_tag } : null}
+        suggested={(() => {
+          const hit = am.categorySuggestions.find((item) => item.id === previewCategoryAsset?.id);
+          return hit ? { category: hit.suggested_category, primary_tag: hit.suggested_primary_tag, secondary_tag: hit.suggested_secondary_tag } : null;
+        })()}
         hint={previewCategoryAsset ? previewCategoryHint(previewCategoryAsset, am.categorySuggestions) : undefined}
-        applyLabel="Move"
-        onApply={(category) => {
+        applyLabel="Apply"
+        onApply={(classification) => {
           const asset = previewCategoryAsset;
           setPreviewCategoryAsset(null);
           if (!asset) return;
-          const leavingFilter = Boolean(am.filters.category) && am.filters.category !== category;
-          am.actions.changeCategory([asset.id], category).then(() => {
+          const leavingFilter = Boolean(am.filters.category) && am.filters.category !== classification.category;
+          am.actions.changeCategory([asset.id], classification).then(() => {
             if (leavingFilter) setLightboxIndex(-1);
           }).catch(() => {});
         }}
@@ -329,11 +332,12 @@ function AssetLibraryContent() {
 
 // ----------------------------------------------------------------------
 
-function previewCategoryHint(asset: OmAsset, suggestions: { id: number; suggested_category: string }[]) {
-  const suggested = suggestions.find((item) => item.id === asset.id)?.suggested_category;
-  const current = categoryLabel(asset.category);
-  if (!suggested) return `Currently ${current}.`;
-  return `Currently ${current}. The file name starts with “${categoryLabel(suggested)}”.`;
+function previewCategoryHint(asset: OmAsset, suggestions: { id: number; suggested_category: string; suggested_primary_tag?: string | null; suggested_secondary_tag?: string | null }[]) {
+  const hit = suggestions.find((item) => item.id === asset.id);
+  const current = classificationLabel(asset);
+  if (!hit) return `Currently ${current}.`;
+  const suggested = classificationLabel({ category: hit.suggested_category, primary_tag: hit.suggested_primary_tag, secondary_tag: hit.suggested_secondary_tag });
+  return `Currently ${current}. The file name looks like ${suggested}.`;
 }
 
 function ChangeCategoryFromPreviewButton({
@@ -343,20 +347,21 @@ function ChangeCategoryFromPreviewButton({
   onMove,
 }: {
   assets: OmAsset[];
-  suggestions: { id: number; suggested_category: string }[];
+  suggestions: { id: number; suggested_category: string; suggested_primary_tag?: string | null; suggested_secondary_tag?: string | null }[];
   onOpen: (asset: OmAsset) => void;
-  onMove: (asset: OmAsset, category: string) => void;
+  onMove: (asset: OmAsset, classification: { category: string; primary_tag?: string | null; secondary_tag?: string | null }) => void;
 }) {
   const { currentIndex } = useLightboxState();
   const asset = assets[currentIndex];
-  const suggested = suggestions.find((item) => item.id === asset?.id)?.suggested_category;
+  const hit = suggestions.find((item) => item.id === asset?.id);
+  const suggested = hit ? { category: hit.suggested_category, primary_tag: hit.suggested_primary_tag, secondary_tag: hit.suggested_secondary_tag } : null;
 
   if (!asset) return null;
 
   return (
     <>
       {suggested && (
-        <Tooltip title={`File name starts with “${categoryLabel(suggested)}”`}>
+        <Tooltip title={`File name looks like ${classificationLabel(suggested)}`}>
           <Button
             size="small"
             variant="contained"
@@ -364,11 +369,11 @@ function ChangeCategoryFromPreviewButton({
             onClick={() => onMove(asset, suggested)}
             sx={{ mx: 0.5, textTransform: 'capitalize' }}
           >
-            Move to {categoryLabel(suggested)}
+            File as {classificationLabel(suggested)}
           </Button>
         </Tooltip>
       )}
-      <Tooltip title={`Change category (currently ${categoryLabel(asset.category)})`}>
+      <Tooltip title={`Change type (currently ${classificationLabel(asset)})`}>
         <IconButton className="yarl__button" onClick={() => onOpen(asset)} sx={{ color: 'common.white' }}>
           <Iconify icon="solar:palette-bold" width={22} />
         </IconButton>

@@ -25,7 +25,7 @@ import { Scrollbar } from 'src/components/scrollbar';
 import { omAssetDirectUrl } from './om-assets-api';
 import { AssetThumb, SCOPE_COLOR } from './asset-card';
 import { AssetChurchSelect } from './asset-church-select';
-import { ASSET_SCOPES, isImageAsset, useAssetManager, ASSET_CATEGORIES, ASSET_VISIBILITIES } from './asset-manager-context';
+import { ASSET_TYPES, ASSET_SCOPES, isImageAsset, useAssetManager, ASSET_TAG_VOCAB, ASSET_VISIBILITIES } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose,
     if (asset) {
       setForm({
         name: asset.name, title: asset.title ?? '', description: asset.description ?? '', alt_text: asset.alt_text ?? '', caption: asset.caption ?? '', credit: asset.credit ?? '',
-        category: asset.category, scope: asset.scope, visibility: asset.visibility ?? '', church_id: asset.church_id, collection_id: asset.collection_id ?? '',
+        category: asset.category, primary_tag: asset.primary_tag ?? '', secondary_tag: asset.secondary_tag ?? '', scope: asset.scope, visibility: asset.visibility ?? '', church_id: asset.church_id, collection_id: asset.collection_id ?? '',
         folder: asset.folder ?? asset.directory ?? '', tags: asset.tags ?? [], licensing_note: asset.licensing_note ?? '',
       });
     }
@@ -67,7 +67,7 @@ export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose,
     try {
       const updated = await actions.update(asset.id, {
         name: form.name, title: form.title || null, description: form.description || null, alt_text: form.alt_text || null, caption: form.caption || null, credit: form.credit || null,
-        category: form.category, scope: form.scope, visibility: form.visibility || undefined, church_id: form.scope === 'church' ? form.church_id : null,
+        category: form.category, primary_tag: form.primary_tag || null, secondary_tag: form.secondary_tag || null, scope: form.scope, visibility: form.visibility || undefined, church_id: form.scope === 'church' ? form.church_id : null,
         collection_id: form.collection_id === '' ? null : Number(form.collection_id), folder: form.folder || null, tags: form.tags, licensing_note: form.licensing_note || null,
       } as any);
       actions.replaceAsset(updated);
@@ -100,7 +100,7 @@ export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose,
               <Typography variant="subtitle1" sx={{ wordBreak: 'break-word' }}>{asset.title || asset.name}</Typography>
               <Box sx={{ gap: 0.75, display: 'flex', flexWrap: 'wrap' }}>
                 <Label variant="soft" color={SCOPE_COLOR[asset.scope]} sx={{ textTransform: 'capitalize' }}>{asset.scope}{asset.church_name ? ` · ${asset.church_name}` : asset.church_id ? ` #${asset.church_id}` : ''}</Label>
-                <Label variant="outlined" sx={{ textTransform: 'capitalize' }}>{asset.category.replace(/_/g, ' ')}</Label>
+                <Label variant="outlined" sx={{ textTransform: 'capitalize' }}>{[asset.category, asset.primary_tag, asset.secondary_tag].filter(Boolean).join(' · ').replace(/_/g, ' ')}</Label>
                 {asset.visibility && <Label variant="outlined">{asset.visibility}</Label>}
                 {asset.status === 'archived' && <Label variant="soft" color="error">Archived</Label>}
               </Box>
@@ -118,7 +118,9 @@ export function AssetDetailsDrawer({ asset, open, editing: editingProp, onClose,
             <TextField label="Alt text" value={form.alt_text} onChange={set('alt_text')} />
             <TextField label="Caption" value={form.caption} onChange={set('caption')} />
             <TextField label="Credit" value={form.credit} onChange={set('credit')} />
-            <TextField select label="Category" value={form.category} onChange={set('category')}>{ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}</TextField>
+            <TextField select label="Type" value={form.category} onChange={set('category')}>{ASSET_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}</TextField>
+            <Autocomplete freeSolo options={ASSET_TAG_VOCAB} value={form.primary_tag} onInputChange={(_, v) => setForm((p: any) => ({ ...p, primary_tag: v }))} renderInput={(p) => <TextField {...p} label="Primary tag" />} />
+            <Autocomplete freeSolo options={ASSET_TAG_VOCAB} value={form.secondary_tag} onInputChange={(_, v) => setForm((p: any) => ({ ...p, secondary_tag: v }))} renderInput={(p) => <TextField {...p} label="Secondary tag" />} />
             <TextField select label="Scope" value={form.scope} onChange={set('scope')}>{ASSET_SCOPES.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}</TextField>
             {form.scope === 'church' && <AssetChurchSelect value={form.church_id} onChange={(id) => setForm((p: any) => ({ ...p, church_id: id }))} />}
             <TextField select label="Visibility" value={form.visibility} onChange={set('visibility')}><MenuItem value="">Default</MenuItem>{ASSET_VISIBILITIES.map((v) => <MenuItem key={v.value} value={v.value}>{v.label}</MenuItem>)}</TextField>

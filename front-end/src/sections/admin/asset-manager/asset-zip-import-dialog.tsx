@@ -207,7 +207,7 @@ export function AssetZipImportDialog({ open, onClose, initialFile = null }: Prop
               <b>{analysis.archive_filename}</b>: {entries.length} files · category <b>{category}</b> · folder <b>{folder}</b>. Review every generated filename before importing.
             </Alert>
             <Box sx={{ display: 'grid', gap: 2, mb: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' } }}>
-              <TextField select label="Category" value={category} onChange={(event) => setCategory(event.target.value)}>{ASSET_CATEGORIES.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}</TextField>
+              <TextField select label="Type" value={category} onChange={(event) => setCategory(event.target.value)}>{ASSET_CATEGORIES.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}</TextField>
               <TextField label="Asset folder" value={folder} onChange={(event) => setFolder(event.target.value)} />
               <FormControlLabel control={<Switch checked={skipDuplicates} onChange={(event) => setSkipDuplicates(event.target.checked)} />} label="Skip duplicate files" />
             </Box>

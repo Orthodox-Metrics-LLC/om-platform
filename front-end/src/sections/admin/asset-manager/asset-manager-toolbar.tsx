@@ -26,7 +26,7 @@ import { CustomDateRangePicker } from 'src/components/custom-date-range-picker';
 
 import { ASSET_SORT_OPTIONS } from './om-assets-api';
 import { AssetChurchSelect } from './asset-church-select';
-import { ASSET_SCOPES, useAssetManager, ASSET_CATEGORIES, ASSET_SOURCE_TYPES, ASSET_VISIBILITIES } from './asset-manager-context';
+import { ASSET_TYPES, ASSET_SCOPES, useAssetManager, ASSET_TAG_VOCAB, ASSET_SOURCE_TYPES, ASSET_VISIBILITIES } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
@@ -100,13 +100,14 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
   const activeChips: { label: string; onDelete: () => void }[] = [];
   if (filters.scope) activeChips.push({ label: `Scope: ${ASSET_SCOPES.find((s) => s.value === filters.scope)?.label}`, onDelete: () => setFilters({ scope: '' }) });
   if (filters.churchId) activeChips.push({ label: `Church #${filters.churchId}`, onDelete: () => setFilters({ churchId: null }) });
-  if (filters.category) activeChips.push({ label: `Category: ${filters.category}`, onDelete: () => setFilters({ category: '' }) });
+  if (filters.category) activeChips.push({ label: `Type: ${filters.category}`, onDelete: () => setFilters({ category: '' }) });
+  if (filters.primaryTag) activeChips.push({ label: `Primary: ${filters.primaryTag.replace(/_/g, ' ')}`, onDelete: () => setFilters({ primaryTag: '' }) });
   if (filters.visibility) activeChips.push({ label: `Visibility: ${filters.visibility}`, onDelete: () => setFilters({ visibility: '' }) });
   if (filters.sourceType) activeChips.push({ label: `Source: ${filters.sourceType}`, onDelete: () => setFilters({ sourceType: '' }) });
   if (filters.directory) activeChips.push({ label: `Folder: ${filters.directory}`, onDelete: () => setFilters({ directory: '' }) });
   if (filters.tag) activeChips.push({ label: `Tag: ${filters.tag}`, onDelete: () => setFilters({ tag: '' }) });
   if (filters.collectionId) activeChips.push({ label: `Collection: ${collections.find((c) => c.id === filters.collectionId)?.name ?? filters.collectionId}`, onDelete: () => setFilters({ collectionId: null }) });
-  if (filters.fileType) activeChips.push({ label: `Type: ${typeDisplayLabel || filters.fileType}`, onDelete: () => setFilters({ fileType: '' }) });
+  if (filters.fileType) activeChips.push({ label: `File: ${typeDisplayLabel || filters.fileType}`, onDelete: () => setFilters({ fileType: '' }) });
   if (filters.dateFrom && filters.dateTo) activeChips.push({ label: `Date: ${fDateRangeShortLabel(startDate, endDate)}`, onDelete: () => setFilters({ dateFrom: '', dateTo: '' }) });
 
   return (
@@ -120,16 +121,20 @@ export function AssetManagerToolbar({ view, onChangeView, onUpload, onZipImport 
           slotProps={{ input: { startAdornment: <InputAdornment position="start"><Iconify icon="eva:search-fill" sx={{ color: 'text.disabled' }} /></InputAdornment> } }}
           sx={{ minWidth: 240, flexGrow: 1, maxWidth: 420 }}
         />
-        <TextField select size="small" label="Category" value={filters.category} onChange={(e) => setFilters({ category: e.target.value })} sx={{ minWidth: 160 }}>
+        <TextField select size="small" label="Type" value={filters.category} onChange={(e) => setFilters({ category: e.target.value })} sx={{ minWidth: 140 }}>
           <MenuItem value="">All</MenuItem>
-          {ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}
+          {ASSET_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+        </TextField>
+        <TextField select size="small" label="Primary tag" value={filters.primaryTag} onChange={(e) => setFilters({ primaryTag: e.target.value })} sx={{ minWidth: 160 }}>
+          <MenuItem value="">All</MenuItem>
+          {ASSET_TAG_VOCAB.map((tag) => <MenuItem key={tag} value={tag} sx={{ textTransform: 'capitalize' }}>{tag.replace(/_/g, ' ')}</MenuItem>)}
         </TextField>
         <Button
           color="inherit"
           onClick={typePopover.onOpen}
           endIcon={<Iconify icon={typePopover.open ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'} sx={{ ml: -0.5 }} />}
         >
-          {typeDisplayLabel || 'All type'}
+          {typeDisplayLabel || 'File type'}
           {activeTypeCategory && <Label color="info" sx={{ ml: 1 }}>1</Label>}
         </Button>
         <TextField select size="small" label="Visibility" value={filters.visibility} onChange={(e) => setFilters({ visibility: e.target.value as any })} sx={{ minWidth: 150 }}>

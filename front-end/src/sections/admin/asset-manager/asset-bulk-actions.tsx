@@ -23,7 +23,7 @@ import { CustomPopover } from 'src/components/custom-popover';
 import { AssetChurchSelect } from './asset-church-select';
 import { AssetWorkshopDialog } from './asset-workshop-dialog';
 import { ASSET_SCOPES, useAssetManager } from './asset-manager-context';
-import { categoryLabel, AssetCategoryDialog } from './asset-category-dialog';
+import { classificationLabel, AssetCategoryDialog } from './asset-category-dialog';
 
 // ----------------------------------------------------------------------
 
@@ -46,10 +46,16 @@ export function AssetBulkActions() {
   const [churchId, setChurchId] = useState<number | null>(null);
 
   const suggestedForSelection = (() => {
-    const byId = new Map(categorySuggestions.map((item) => [item.id, item.suggested_category]));
-    const hits = ids.map((id) => byId.get(id)).filter((value): value is string => !!value);
-    if (hits.length === ids.length && hits.every((value) => value === hits[0])) return hits[0];
-    return null;
+    const byId = new Map(categorySuggestions.map((item) => [item.id, item]));
+    const hits = ids.map((id) => byId.get(id)).filter((item) => !!item);
+    if (hits.length !== ids.length || !hits[0]) return null;
+    const key = (item: (typeof hits)[number]) => [item.suggested_category, item.suggested_primary_tag || '', item.suggested_secondary_tag || ''].join('|');
+    if (!hits.every((item) => key(item) === key(hits[0]))) return null;
+    return {
+      category: hits[0].suggested_category,
+      primary_tag: hits[0].suggested_primary_tag || null,
+      secondary_tag: hits[0].suggested_secondary_tag || null,
+    };
   })();
 
   if (!ids.length) return null;
@@ -59,7 +65,7 @@ export function AssetBulkActions() {
       <Box sx={(theme) => ({ p: 1.5, mb: 2, gap: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', borderRadius: 1.5, bgcolor: 'primary.lighter', color: 'primary.darker', boxShadow: theme.vars.customShadows.z8 })}>
         <Typography variant="subtitle2" sx={{ mr: 1 }}>{ids.length} selected</Typography>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:add-folder-bold" />} onClick={moveDialog.onTrue}>Move to folder</Button>
-        <Button size="small" variant="soft" startIcon={<Iconify icon="solar:palette-bold" />} onClick={categoryDialog.onTrue}>Change category</Button>
+        <Button size="small" variant="soft" startIcon={<Iconify icon="solar:palette-bold" />} onClick={categoryDialog.onTrue}>Change type</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:tag-horizontal-bold-duotone" />} onClick={tagsDialog.onTrue}>Tags</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:global-bold-duotone" />} onClick={scopeDialog.onTrue}>Change scope</Button>
         <Button size="small" variant="soft" startIcon={<Iconify icon="solar:suitcase-tag-bold" />} onClick={collectionMenu.onOpen}>Collection</Button>
@@ -102,12 +108,12 @@ export function AssetBulkActions() {
       <AssetCategoryDialog
         open={categoryDialog.value}
         onClose={categoryDialog.onFalse}
-        title={`Change category of ${ids.length} ${ids.length === 1 ? 'asset' : 'assets'}`}
-        hint={suggestedForSelection ? `These file names start with “${categoryLabel(suggestedForSelection)}”.` : undefined}
-        suggestedCategory={suggestedForSelection}
-        onApply={(category) => {
+        title={`Change type of ${ids.length} ${ids.length === 1 ? 'asset' : 'assets'}`}
+        hint={suggestedForSelection ? `These file names look like ${classificationLabel(suggestedForSelection)}.` : undefined}
+        suggested={suggestedForSelection}
+        onApply={(classification) => {
           categoryDialog.onFalse();
-          actions.changeCategory(ids, category).then(clearSelection).catch(() => {});
+          actions.changeCategory(ids, classification).then(clearSelection).catch(() => {});
         }}
       />
 

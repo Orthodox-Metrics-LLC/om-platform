@@ -45,7 +45,7 @@ export function AssetCollectionDialog({ open, onClose, collection }: Props) {
         <TextField label="Description" value={form.description} onChange={set('description')} multiline rows={2} />
         <TextField select label="Scope" value={form.scope} onChange={set('scope')}>{ASSET_SCOPES.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}</TextField>
         <TextField select label="Visibility" value={form.visibility} onChange={set('visibility')}>{ASSET_VISIBILITIES.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}</TextField>
-        <TextField select label="Default category" value={form.category} onChange={set('category')}><MenuItem value="">None</MenuItem>{ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}</TextField>
+        <TextField select label="Default type" value={form.category} onChange={set('category')}><MenuItem value="">None</MenuItem>{ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}</TextField>
         <TextField label="Default folder" value={form.folder} onChange={set('folder')} placeholder="e.g. marketing/2026" />
       </DialogContent>
       <DialogActions>

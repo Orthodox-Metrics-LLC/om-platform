@@ -92,7 +92,7 @@ export function AssetCard({ asset, selected, onSelect, onOpen, onAction, dense }
           <Typography variant="subtitle2" noWrap title={asset.name}>{asset.title || asset.name}</Typography>
           <Box sx={{ mt: 0.5, gap: 0.5, display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
             <Label variant="soft" color={SCOPE_COLOR[asset.scope] || 'default'} sx={{ textTransform: 'capitalize' }}>{asset.scope}{asset.church_id ? ` #${asset.church_id}` : ''}</Label>
-            <Label variant="outlined" sx={{ textTransform: 'capitalize' }}>{asset.category.replace(/_/g, ' ')}</Label>
+            <Label variant="outlined" sx={{ textTransform: 'capitalize' }}>{[asset.category, asset.primary_tag, asset.secondary_tag].filter(Boolean).join(' · ').replace(/_/g, ' ')}</Label>
             {asset.status === 'archived' && <Label variant="soft" color="error">Archived</Label>}
           </Box>
           {!dense && (

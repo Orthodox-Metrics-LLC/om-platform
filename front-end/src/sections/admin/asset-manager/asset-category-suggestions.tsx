@@ -15,16 +15,27 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 
 import { Label } from 'src/components/label';
 
-import { categoryLabel } from './asset-category-dialog';
+import { classificationLabel } from './asset-category-dialog';
 
 // ----------------------------------------------------------------------
 
-type Props = {
-  suggestions: OmAssetCategorySuggestion[];
-  onMove: (groups: { ids: number[]; category: string }[]) => void;
+type MoveGroup = {
+  ids: number[];
+  category: string;
+  primary_tag: string | null;
+  secondary_tag: string | null;
 };
 
-/** Banner plus review dialog for files named like a category they are not in. */
+type Props = {
+  suggestions: OmAssetCategorySuggestion[];
+  onMove: (groups: MoveGroup[]) => void;
+};
+
+function groupKey(item: OmAssetCategorySuggestion) {
+  return [item.suggested_category, item.suggested_primary_tag || '', item.suggested_secondary_tag || ''].join('|');
+}
+
+/** Banner plus review dialog for files named like a type or tag they are not filed as. */
 export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -42,11 +53,11 @@ export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
   const groups = useMemo(() => {
     const map = new Map<string, OmAssetCategorySuggestion[]>();
     for (const item of suggestions) {
-      const list = map.get(item.suggested_category) ?? [];
+      const list = map.get(groupKey(item)) ?? [];
       list.push(item);
-      map.set(item.suggested_category, list);
+      map.set(groupKey(item), list);
     }
-    return [...map.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+    return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [suggestions]);
 
   if (!suggestions.length || dismissed) return null;
@@ -60,22 +71,27 @@ export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
     });
   };
 
-  const moveGroup = (category: string, items: OmAssetCategorySuggestion[]) => {
+  const toMove = (items: OmAssetCategorySuggestion[]): MoveGroup | null => {
     const ids = items.map((item) => item.id).filter((id) => checked.has(id));
-    if (!ids.length) return;
+    if (!ids.length) return null;
+    const sample = items[0];
+    return {
+      ids,
+      category: sample.suggested_category,
+      primary_tag: sample.suggested_primary_tag || null,
+      secondary_tag: sample.suggested_secondary_tag || null,
+    };
+  };
+
+  const moveGroup = (items: OmAssetCategorySuggestion[]) => {
+    const move = toMove(items);
+    if (!move) return;
     setOpen(false);
-    onMove([{ ids, category }]);
+    onMove([move]);
   };
 
   const moveChecked = () => {
-    const byCategory = new Map<string, number[]>();
-    for (const item of suggestions) {
-      if (!checked.has(item.id)) continue;
-      const list = byCategory.get(item.suggested_category) ?? [];
-      list.push(item.id);
-      byCategory.set(item.suggested_category, list);
-    }
-    const moves = [...byCategory.entries()].map(([category, ids]) => ({ category, ids }));
+    const moves = groups.map(([, items]) => toMove(items)).filter((move): move is MoveGroup => !!move);
     if (!moves.length) return;
     setOpen(false);
     onMove(moves);
@@ -83,8 +99,8 @@ export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
 
   const checkedCount = suggestions.filter((item) => checked.has(item.id)).length;
   const summary = suggestions.length === 1
-    ? `“${suggestions[0].name}” starts with “${categoryLabel(suggestions[0].suggested_category)}” but is filed as ${categoryLabel(suggestions[0].category)}.`
-    : `${suggestions.length} files are named like a category they are not in.`;
+    ? `“${suggestions[0].name}” looks like ${classificationLabel({ category: suggestions[0].suggested_category, primary_tag: suggestions[0].suggested_primary_tag, secondary_tag: suggestions[0].suggested_secondary_tag })}.`
+    : `${suggestions.length} files are named like a type or tag they are not filed as.`;
 
   return (
     <>
@@ -102,20 +118,21 @@ export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
       </Alert>
 
       <Dialog fullWidth maxWidth="sm" open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Move files into the category their name starts with</DialogTitle>
+        <DialogTitle>File these by the type and tags in the name</DialogTitle>
         <DialogContent dividers>
-          {groups.map(([category, items]) => {
+          {groups.map(([key, items]) => {
             const selected = items.filter((item) => checked.has(item.id)).length;
+            const label = classificationLabel({
+              category: items[0].suggested_category,
+              primary_tag: items[0].suggested_primary_tag,
+              secondary_tag: items[0].suggested_secondary_tag,
+            });
             return (
-              <Box key={category} sx={{ mb: 2.5 }}>
+              <Box key={key} sx={{ mb: 2.5 }}>
                 <Box sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', flexGrow: 1 }}>
-                    {categoryLabel(category)}
-                  </Typography>
+                  <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', flexGrow: 1 }}>{label}</Typography>
                   <Label variant="soft">{selected}/{items.length}</Label>
-                  <Button size="small" disabled={!selected} onClick={() => moveGroup(category, items)}>
-                    Move these
-                  </Button>
+                  <Button size="small" disabled={!selected} onClick={() => moveGroup(items)}>Move these</Button>
                 </Box>
                 {items.map((item) => (
                   <FormControlLabel
@@ -126,7 +143,7 @@ export function AssetCategorySuggestions({ suggestions, onMove }: Props) {
                       <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
                         {item.name}
                         <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.disabled', textTransform: 'capitalize' }}>
-                          now {categoryLabel(item.category)}
+                          now {classificationLabel(item)}
                         </Typography>
                       </Typography>
                     }

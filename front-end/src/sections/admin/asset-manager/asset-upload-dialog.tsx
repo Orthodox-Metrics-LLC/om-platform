@@ -25,7 +25,7 @@ import { Iconify } from 'src/components/iconify';
 
 import { AssetChurchSelect } from './asset-church-select';
 import { uploadOmAsset, analyzeUploadAssets } from './om-assets-api';
-import { ASSET_SCOPES, useAssetManager, ASSET_CATEGORIES, ASSET_VISIBILITIES } from './asset-manager-context';
+import { ASSET_TYPES, ASSET_SCOPES, useAssetManager, ASSET_TAG_VOCAB, ASSET_VISIBILITIES } from './asset-manager-context';
 
 // ----------------------------------------------------------------------
 
@@ -34,6 +34,8 @@ type Row = {
   name: string;
   title: string;
   category: string;
+  primary_tag: string;
+  secondary_tag: string;
   folder: string;
   tags: string[];
   alt_text: string;
@@ -94,7 +96,7 @@ export function AssetUploadDialog({ open, onClose, initialFiles = [] }: { open: 
       else setAnalysisNote(`Suggestions applied${res.vision_enabled ? ' (vision enabled)' : ''}. Review before uploading.`);
       setRows((p) => p.map((r) => {
         const s = res.suggestions.find((x) => x.original_filename === r.file.name);
-        return s ? { ...r, suggestion: s, name: s.stored_filename || r.name, title: s.title || r.title, category: s.category || r.category, folder: s.folder || r.folder, tags: s.tags?.length ? s.tags : r.tags, alt_text: s.alt_text || r.alt_text, caption: s.caption || r.caption, description: s.description || r.description } : r;
+        return s ? { ...r, suggestion: s, name: s.stored_filename || r.name, title: s.title || r.title, category: s.category || r.category, primary_tag: s.primary_tag || r.primary_tag, secondary_tag: s.secondary_tag || r.secondary_tag, folder: s.folder || r.folder, tags: s.tags?.length ? s.tags : r.tags, alt_text: s.alt_text || r.alt_text, caption: s.caption || r.caption, description: s.description || r.description } : r;
       }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Smart assist unavailable');
@@ -120,7 +122,9 @@ export function AssetUploadDialog({ open, onClose, initialFiles = [] }: { open: 
       if (visibility) fd.append('visibility', visibility);
       if (scope === 'church' && churchId) fd.append('church_id', String(churchId));
       if (collectionId !== '') fd.append('collection_id', String(collectionId));
-      fd.append('category', r.category || 'misc');
+      fd.append('category', r.category || 'image');
+      if (r.primary_tag) fd.append('primary_tag', r.primary_tag);
+      if (r.secondary_tag) fd.append('secondary_tag', r.secondary_tag);
       if (r.name) fd.append('name', r.name);
       if (r.title) fd.append('title', r.title);
       if (r.folder) fd.append('folder', r.folder);
@@ -168,7 +172,7 @@ export function AssetUploadDialog({ open, onClose, initialFiles = [] }: { open: 
               <Iconify icon={r.status === 'done' ? 'solar:check-circle-bold' : r.status === 'error' ? 'solar:danger-bold' : 'solar:file-bold-duotone'} width={22} sx={{ color: r.status === 'done' ? 'success.main' : r.status === 'error' ? 'error.main' : 'text.disabled' }} />
               <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                 <Typography variant="subtitle2" noWrap>{r.name || r.file.name}</Typography>
-                <Typography variant="caption" sx={{ color: 'text.disabled' }}>{fData(r.file.size)} · {r.category || 'misc'}{r.folder ? ` · ${r.folder}` : ''}{r.suggestion ? ` · ${Math.round(r.suggestion.category_confidence * 100)}% ${r.suggestion.classification_source}` : ''}</Typography>
+                <Typography variant="caption" sx={{ color: 'text.disabled' }}>{fData(r.file.size)} · {[r.category, r.primary_tag, r.secondary_tag].filter(Boolean).join(' · ') || 'image'}{r.folder ? ` · ${r.folder}` : ''}{r.suggestion ? ` · ${Math.round(r.suggestion.category_confidence * 100)}% ${r.suggestion.classification_source}` : ''}</Typography>
                 {r.error && <Typography variant="caption" color="error">{r.error}</Typography>}
               </Box>
               <Button size="small" color="inherit" onClick={() => setExpanded(expanded === i ? null : i)} endIcon={<Iconify icon={expanded === i ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'} />}>Details</Button>
@@ -179,7 +183,9 @@ export function AssetUploadDialog({ open, onClose, initialFiles = [] }: { open: 
               <Box sx={{ mt: 2, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
                 <TextField size="small" label="File name" value={r.name} onChange={(e) => patch(i, { name: e.target.value })} />
                 <TextField size="small" label="Title" value={r.title} onChange={(e) => patch(i, { title: e.target.value })} />
-                <TextField select size="small" label="Category" value={r.category} onChange={(e) => patch(i, { category: e.target.value })}>{ASSET_CATEGORIES.map((c) => <MenuItem key={c.value} value={c.value} sx={{ textTransform: 'capitalize' }}>{c.label}</MenuItem>)}</TextField>
+                <TextField select size="small" label="Type" value={r.category} onChange={(e) => patch(i, { category: e.target.value })}>{ASSET_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}</TextField>
+                <Autocomplete freeSolo size="small" options={ASSET_TAG_VOCAB} value={r.primary_tag} onInputChange={(_, v) => patch(i, { primary_tag: v })} renderInput={(p) => <TextField {...p} label="Primary tag" />} />
+                <Autocomplete freeSolo size="small" options={ASSET_TAG_VOCAB} value={r.secondary_tag} onInputChange={(_, v) => patch(i, { secondary_tag: v })} renderInput={(p) => <TextField {...p} label="Secondary tag" />} />
                 <Autocomplete freeSolo size="small" options={directories} value={r.folder} onInputChange={(_, v) => patch(i, { folder: v })} renderInput={(p) => <TextField {...p} label="Folder" />} />
                 <Autocomplete multiple freeSolo size="small" options={allTags} value={r.tags} onChange={(_, v) => patch(i, { tags: v as string[] })} renderValue={(sel, getTagProps) => sel.map((o, k) => <Chip {...getTagProps({ index: k })} key={String(o)} size="small" label={String(o)} />)} renderInput={(p) => <TextField {...p} label="Tags" />} sx={{ gridColumn: '1 / -1' }} />
                 <TextField size="small" label="Alt text" value={r.alt_text} onChange={(e) => patch(i, { alt_text: e.target.value })} />
@@ -202,6 +208,6 @@ export function AssetUploadDialog({ open, onClose, initialFiles = [] }: { open: 
 
 function toRow(file: File): Row {
   const ext = file.name.split('.').pop()?.toLowerCase() || '';
-  const guess = /^(png|jpe?g|gif|webp|svg|avif)$/.test(ext) ? 'content' : /^(pdf|docx?|xlsx?|pptx?|txt|md|html?|zip)$/.test(ext) ? 'document' : 'misc';
-  return { file, name: file.name, title: '', category: guess, folder: '', tags: [], alt_text: '', caption: '', description: '', progress: 0, status: 'pending' };
+  const guess = /^(mp4|webm|mov|m4v)$/.test(ext) ? 'video' : /^(woff2?|ttf|otf)$/.test(ext) ? 'font' : /^(pdf|docx?|xlsx?|pptx?|txt|md|html?|zip)$/.test(ext) ? 'document' : 'image';
+  return { file, name: file.name, title: '', category: guess, primary_tag: '', secondary_tag: '', folder: '', tags: [], alt_text: '', caption: '', description: '', progress: 0, status: 'pending' };
 }

@@ -30,7 +30,7 @@ import { omAssetFileUrl, fetchOmAssetsCursorPage } from 'src/sections/admin/asse
 
 // ----------------------------------------------------------------------
 
-const ASSET_CATEGORIES = [{ value: 'template', label: 'Templates' }, { value: 'background', label: 'Backgrounds' }, { value: 'logo', label: 'Logos & marks' }, { value: 'icon', label: 'Icons' }, { value: 'header', label: 'Headers' }, { value: 'content', label: 'Artwork' }];
+const ASSET_CATEGORIES = [{ value: 'template', label: 'Templates' }, { value: 'background', label: 'Backgrounds' }, { value: 'logo', label: 'Logos & marks' }, { value: 'icon', label: 'Icons' }, { value: 'header', label: 'Headers' }, { value: 'image', label: 'Artwork' }];
 
 /** Left panel: Assets (Asset Manager artwork) · Fields (record bindings) · Add (text / shapes) · Layers. */
 export function DesignerLeftPanel({ d, meta, certificateType, churchId, page }: { d: DesignerState; meta: StudioMeta | null; certificateType: CertificateType; churchId: number | null; page: { width: number; height: number } }) {

@@ -37,7 +37,7 @@ import { isImageAsset, isVideoAsset } from './asset-manager-context';
 const COLUMNS: { id: string; label: string; sortAsc?: AssetSortField; sortDesc?: AssetSortField; align?: 'left' | 'right'; width?: number }[] = [
   { id: 'name', label: 'Asset', sortAsc: 'name', sortDesc: 'name_desc' },
   { id: 'scope', label: 'Scope', sortAsc: 'scope', sortDesc: 'scope_desc', width: 110 },
-  { id: 'category', label: 'Category', sortAsc: 'category', sortDesc: 'category_desc', width: 130 },
+  { id: 'category', label: 'Type', sortAsc: 'category', sortDesc: 'category_desc', width: 180 },
   { id: 'folder', label: 'Folder', width: 140 },
   { id: 'type', label: 'Type', width: 120 },
   { id: 'size', label: 'Size', sortAsc: 'size', sortDesc: 'size_desc', align: 'right', width: 100 },
@@ -131,7 +131,7 @@ function Row({ asset, selected, onToggle, onOpen, onAction }: { asset: OmAsset; 
           </Box>
         </TableCell>
         <TableCell><Label variant="soft" color={SCOPE_COLOR[asset.scope] || 'default'} sx={{ textTransform: 'capitalize' }}>{asset.scope}{asset.church_id ? ` #${asset.church_id}` : ''}</Label></TableCell>
-        <TableCell sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{asset.category.replace(/_/g, ' ')}</TableCell>
+        <TableCell sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}>{[asset.category, asset.primary_tag, asset.secondary_tag].filter(Boolean).join(' · ').replace(/_/g, ' ')}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}>{asset.folder || asset.directory || '—'}</TableCell>
         <TableCell sx={{ whiteSpace: 'nowrap' }}>{asset.file_type?.toUpperCase() || '—'}{asset.width && asset.height ? ` · ${asset.width}×${asset.height}` : ''}</TableCell>
         <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{asset.file_size ? fData(asset.file_size) : '—'}</TableCell>

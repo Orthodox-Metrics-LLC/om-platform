@@ -7,6 +7,7 @@ import type {
   OmAssetVisibility,
   OmAssetSimilarGroup,
   OmAssetDuplicateGroup,
+  OmAssetClassification,
   OmAssetCategorySuggestion,
 } from './om-assets-api';
 
@@ -49,6 +50,7 @@ export type AssetFilters = {
   scope: OmAssetScope | '';
   visibility: OmAssetVisibility | '';
   category: string;
+  primaryTag: string;
   search: string;
   sort: AssetSortField;
   directory: string;
@@ -62,7 +64,7 @@ export type AssetFilters = {
 };
 
 const DEFAULT_FILTERS: AssetFilters = {
-  scope: '', visibility: '', category: '', search: '', sort: 'created_desc', directory: '', tag: '', sourceType: '', churchId: null, collectionId: null, fileType: '', dateFrom: '', dateTo: '',
+  scope: '', visibility: '', category: '', primaryTag: '', search: '', sort: 'created_desc', directory: '', tag: '', sourceType: '', churchId: null, collectionId: null, fileType: '', dateFrom: '', dateTo: '',
 };
 
 const PAGE_SIZE = 48;
@@ -104,8 +106,8 @@ type State = {
     purge: (ids: number[]) => Promise<void>;
     moveToDirectory: (ids: number[], directory: string) => Promise<void>;
     applyTags: (ids: number[], tags: string[], mode: 'add' | 'remove' | 'set') => Promise<void>;
-    changeCategory: (ids: number[], category: string) => Promise<void>;
-    changeCategories: (groups: { ids: number[]; category: string }[]) => Promise<void>;
+    changeCategory: (ids: number[], classification: OmAssetClassification) => Promise<void>;
+    changeCategories: (groups: (OmAssetClassification & { ids: number[] })[]) => Promise<void>;
     changeScope: (ids: number[], scope: OmAssetScope, churchId?: number | null) => Promise<void>;
     copy: (id: number, payload: Parameters<typeof copyOmAsset>[1]) => Promise<void>;
     createDirectory: (scope: OmAssetScope, path: string, churchId?: number | null) => Promise<void>;
@@ -164,6 +166,7 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
       scope: filters.scope || undefined,
       visibility: filters.visibility || undefined,
       category: filters.category || undefined,
+      primary_tag: filters.primaryTag || undefined,
       search: filters.search || undefined,
       sort: filters.sort,
       directory: filters.directory || undefined,
@@ -275,14 +278,14 @@ export function AssetManagerProvider({ children }: { children: React.ReactNode }
       purge: (ids) => run(async () => { if (ids.length === 1) await purgeOmAsset(ids[0]); else await bulkPurgeOmAssets(ids); setSelected(new Set()); }, `${ids.length === 1 ? 'Asset' : `${ids.length} assets`} permanently deleted`, true),
       moveToDirectory: (ids, directory) => run(async () => { await bulkMoveOmAssets(ids, directory); }, 'Moved', true),
       applyTags: (ids, tg, mode) => run(async () => { await bulkSetOmAssetTags(ids, tg, mode); }, 'Tags updated', true),
-      changeCategory: (ids, category) => run(async () => { await bulkChangeOmAssetCategory(ids, category); }, ids.length === 1 ? 'Category updated' : `Moved ${ids.length} assets`, true),
+      changeCategory: (ids, classification) => run(async () => { await bulkChangeOmAssetCategory(ids, classification); }, ids.length === 1 ? 'Type updated' : `Updated ${ids.length} assets`, true),
       changeCategories: (groups) => {
         const count = groups.reduce((sum, group) => sum + group.ids.length, 0);
         return run(async () => {
           for (const group of groups) {
-            if (group.ids.length) await bulkChangeOmAssetCategory(group.ids, group.category);
+            if (group.ids.length) await bulkChangeOmAssetCategory(group.ids, group);
           }
-        }, count === 1 ? 'Category updated' : `Moved ${count} assets`, true);
+        }, count === 1 ? 'Type updated' : `Updated ${count} assets`, true);
       },
       changeScope: (ids, scope, churchId) => run(async () => { await bulkChangeOmAssetScope(ids, scope, churchId); }, 'Scope changed', true),
       copy: (id, payload) => run(async () => { await copyOmAsset(id, payload); }, 'Asset copied', true),
@@ -335,12 +338,28 @@ export const ASSET_SOURCE_TYPES: { value: OmAssetSourceType; label: string }[] =
   { value: 'quarantine', label: 'Quarantine' },
 ];
 
-export const ASSET_CATEGORIES: { value: string; label: string; group: string }[] = [
-  ...['layout', 'border', 'cross', 'seal', 'header', 'background', 'icon', 'watermark', 'signature', 'font', 'divider', 'branding', 'logo', 'content', 'template'].map((v) => ({ value: v, label: v.replace(/_/g, ' '), group: 'Design' })),
-  ...['diagram', 'infrastructure', 'ui_reference', 'screenshot', 'church_photo', 'clergy', 'certificate', 'map', 'document_scan', 'marketing', 'social_media', 'misc'].map((v) => ({ value: v, label: v.replace(/_/g, ' '), group: 'Content' })),
-  { value: 'document', label: 'document', group: 'Documents' },
-  { value: 'flagged', label: 'flagged', group: 'Quarantine' },
+/** Kind of asset. Subjects (screenshot, cross, header, …) are primary and secondary tags. */
+export const ASSET_TYPES: { value: string; label: string }[] = [
+  { value: 'image', label: 'Image' },
+  { value: 'icon', label: 'Icon' },
+  { value: 'logo', label: 'Logo' },
+  { value: 'font', label: 'Font' },
+  { value: 'document', label: 'Document' },
+  { value: 'video', label: 'Video' },
+  { value: 'template', label: 'Template' },
+  { value: 'background', label: 'Background' },
+  { value: 'flagged', label: 'Flagged' },
 ];
+
+/** Suggested subjects for primary and secondary tags. Custom tags are allowed too. */
+export const ASSET_TAG_VOCAB = [
+  'screenshot', 'cross', 'header', 'border', 'seal', 'watermark', 'signature', 'divider', 'layout',
+  'branding', 'diagram', 'infrastructure', 'ui_reference', 'church_photo', 'clergy', 'certificate',
+  'map', 'document_scan', 'marketing', 'social_media',
+];
+
+/** @deprecated use ASSET_TYPES. Still exported for older call sites. */
+export const ASSET_CATEGORIES = ASSET_TYPES.map((item) => ({ ...item, group: 'Type' }));
 
 export const isImageAsset = (a: OmAsset) => /^image\//.test(a.mime_type || '') || /^(png|jpe?g|gif|webp|svg|avif|bmp)$/i.test(a.file_type || '');
 export const isVideoAsset = (a: OmAsset) => /^video\//.test(a.mime_type || '') || /^(mp4|webm|mov|m4v)$/i.test(a.file_type || '');
