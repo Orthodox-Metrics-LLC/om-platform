@@ -16,6 +16,7 @@ import { DocumentsView } from '../documents-view';
 import { CloudFilesView } from '../cloud-files-view';
 import { ChurchFilesView } from '../church-files-view';
 import { WebsiteFilesView } from '../website-files-view';
+import { HandoffNotesView } from '../handoff-notes-view';
 import { AssetLibraryView } from '../asset-library-view';
 import { AdminFilesOverviewView } from '../admin-files-overview-view';
 
@@ -30,7 +31,9 @@ const TABS = [
   { value: 'cloud-files', label: 'Cloud Files', icon: 'eva:cloud-upload-fill' },
 ] as const;
 
-type TabValue = (typeof TABS)[number]['value'];
+const UPDATE_TAB = { value: 'updates', label: 'Updates', icon: 'solar:chat-round-dots-bold' } as const;
+
+type TabValue = (typeof TABS)[number]['value'] | (typeof UPDATE_TAB)['value'];
 
 /**
  * Management → Asset Manager (super_admin / admin).
@@ -44,6 +47,9 @@ export function AssetManagerView() {
   const tab = (searchParams.get('tab') as TabValue) || 'overview';
 
   const allowed = user?.role === 'super_admin' || user?.role === 'admin';
+  const isSuperAdmin = user?.role === 'super_admin';
+  const tabs = isSuperAdmin ? [...TABS, UPDATE_TAB] : TABS;
+  const active: TabValue = tabs.some((item) => item.value === tab) ? tab : 'overview';
 
   return (
     <DashboardContent maxWidth="xl">
@@ -57,16 +63,17 @@ export function AssetManagerView() {
         <EmptyContent filled title="Administrators only" description="The Asset Manager is available to platform administrators." sx={{ py: 10 }} />
       ) : (
         <>
-          <Tabs value={tab} onChange={(_, v) => router.replace(`${paths.dashboard.assetManager}?tab=${v}`)} sx={{ mb: 3 }}>
-            {TABS.map((t) => <Tab key={t.value} value={t.value} label={t.label} iconPosition="start" icon={<Iconify icon={t.icon} width={20} />} />)}
+          <Tabs value={active} onChange={(_, v) => router.replace(`${paths.dashboard.assetManager}?tab=${v}`)} sx={{ mb: 3 }}>
+            {tabs.map((t) => <Tab key={t.value} value={t.value} label={t.label} iconPosition="start" icon={<Iconify icon={t.icon} width={20} />} />)}
           </Tabs>
 
-          {tab === 'overview' && <AdminFilesOverviewView />}
-          {tab === 'website' && <WebsiteFilesView />}
-          {tab === 'assets' && <AssetLibraryView />}
-          {tab === 'documents' && <DocumentsView />}
-          {tab === 'church-files' && <ChurchFilesView />}
-          {tab === 'cloud-files' && <CloudFilesView />}
+          {active === 'overview' && <AdminFilesOverviewView />}
+          {active === 'website' && <WebsiteFilesView />}
+          {active === 'assets' && <AssetLibraryView />}
+          {active === 'documents' && <DocumentsView />}
+          {active === 'church-files' && <ChurchFilesView />}
+          {active === 'cloud-files' && <CloudFilesView />}
+          {active === 'updates' && isSuperAdmin && <HandoffNotesView />}
         </>
       )}
     </DashboardContent>

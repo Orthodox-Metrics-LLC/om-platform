@@ -831,3 +831,42 @@ export async function uploadWebsiteFile(directoryPath: string, file: File) {
     body
   );
 }
+
+// ----------------------------------------------------------------------
+// Handoff notes — Cursor updates and super-admin replies.
+
+export type HandoffNoteSummary = {
+  path: string;
+  name: string;
+  folder: string;
+  size: number;
+  modified_at: string;
+  latest: boolean;
+  has_reply: boolean;
+};
+
+export type HandoffNote = {
+  path: string;
+  name: string;
+  folder: string;
+  modified_at: string | null;
+  content: string;
+  reply: string;
+};
+
+export async function fetchHandoffNotes() {
+  return apiClient.get<{ items: HandoffNoteSummary[]; inbox: { path: string; modified_at: string; size: number } | null }>(
+    `${BASE}/handoff-notes/list`
+  );
+}
+
+export async function fetchHandoffNote(filePath: string) {
+  return apiClient.get<HandoffNote>(`${BASE}/handoff-notes/file`, { params: { path: filePath } });
+}
+
+export async function sendHandoffNote(filePath: string, message: string) {
+  return apiClient.post<{ success: boolean; note: HandoffNote }>(`${BASE}/handoff-notes/note`, {
+    path: filePath,
+    message,
+  });
+}
