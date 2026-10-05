@@ -15,6 +15,7 @@ import { useAuthContext } from 'src/auth/hooks';
 import { DocumentsView } from '../documents-view';
 import { CloudFilesView } from '../cloud-files-view';
 import { ChurchFilesView } from '../church-files-view';
+import { WebsiteFilesView } from '../website-files-view';
 import { AssetLibraryView } from '../asset-library-view';
 import { AdminFilesOverviewView } from '../admin-files-overview-view';
 
@@ -22,6 +23,7 @@ import { AdminFilesOverviewView } from '../admin-files-overview-view';
 
 const TABS = [
   { value: 'overview', label: 'Overview', icon: 'solar:chart-square-outline' },
+  { value: 'website', label: 'Website', icon: 'solar:global-bold-duotone' },
   { value: 'assets', label: 'Media assets', icon: 'solar:gallery-wide-bold' },
   { value: 'documents', label: 'Documents', icon: 'solar:file-text-bold' },
   { value: 'church-files', label: 'Church files', icon: 'custom:cross-bold' },
@@ -60,6 +62,7 @@ export function AssetManagerView() {
           </Tabs>
 
           {tab === 'overview' && <AdminFilesOverviewView />}
+          {tab === 'website' && <WebsiteFilesView />}
           {tab === 'assets' && <AssetLibraryView />}
           {tab === 'documents' && <DocumentsView />}
           {tab === 'church-files' && <ChurchFilesView />}

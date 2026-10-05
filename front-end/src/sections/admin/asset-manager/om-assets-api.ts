@@ -789,3 +789,45 @@ export async function fetchCloudFilesScreenshots(path = '') {
 export async function deleteCloudFileScreenshot(filePath: string) {
   await apiClient.delete(`${BASE}/cloud-files/screenshots/file`, { params: { path: filePath } });
 }
+
+// ----------------------------------------------------------------------
+// Website files — live browse/replace of front-end/public.
+// Writes the public source and the dist copy the site is serving.
+
+export type WebsiteFileEntry = {
+  name: string;
+  type: 'file' | 'directory';
+  size: number | null;
+  modified_at: string;
+  path: string;
+  public_url: string | null;
+  file_url: string | null;
+  thumb_url: string | null;
+};
+
+export async function fetchWebsiteFiles(filePath = '') {
+  return apiClient.get<{ path: string; root: string; entries: WebsiteFileEntry[] }>(
+    `${BASE}/website-files/list`,
+    { params: { path: filePath } }
+  );
+}
+
+export async function replaceWebsiteFile(filePath: string, file: File) {
+  const body = new FormData();
+  body.append('path', filePath);
+  body.append('file', file);
+  return apiClient.post<{ success: boolean; mirrored: boolean; entry: WebsiteFileEntry }>(
+    `${BASE}/website-files/replace`,
+    body
+  );
+}
+
+export async function uploadWebsiteFile(directoryPath: string, file: File) {
+  const body = new FormData();
+  body.append('path', directoryPath);
+  body.append('file', file);
+  return apiClient.post<{ success: boolean; mirrored: boolean; entry: WebsiteFileEntry }>(
+    `${BASE}/website-files/upload`,
+    body
+  );
+}
