@@ -843,6 +843,15 @@ export type HandoffNoteSummary = {
   modified_at: string;
   latest: boolean;
   has_reply: boolean;
+  attachment_count: number;
+};
+
+export type HandoffAttachment = {
+  id: string;
+  name: string;
+  size: number;
+  modified_at: string | null;
+  kind: 'image' | 'video' | 'file';
 };
 
 export type HandoffNote = {
@@ -852,7 +861,13 @@ export type HandoffNote = {
   modified_at: string | null;
   content: string;
   reply: string;
+  attachments: HandoffAttachment[];
 };
+
+export function handoffAttachmentUrl(notePath: string, id: string) {
+  const params = new URLSearchParams({ note: notePath, id });
+  return `/api/assets/handoff-notes/attachment?${params.toString()}`;
+}
 
 export async function fetchHandoffNotes() {
   return apiClient.get<{ items: HandoffNoteSummary[]; inbox: { path: string; modified_at: string; size: number } | null }>(
@@ -869,4 +884,12 @@ export async function sendHandoffNote(filePath: string, message: string) {
     path: filePath,
     message,
   });
+}
+
+export async function sendHandoffAttachments(filePath: string, message: string, files: File[]) {
+  const body = new FormData();
+  body.append('path', filePath);
+  body.append('message', message);
+  files.forEach((file) => body.append('files', file));
+  return apiClient.post<{ success: boolean; note: HandoffNote }>(`${BASE}/handoff-notes/attach`, body);
 }
