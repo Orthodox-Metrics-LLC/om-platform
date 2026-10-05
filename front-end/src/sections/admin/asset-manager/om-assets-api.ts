@@ -816,7 +816,7 @@ export async function replaceWebsiteFile(filePath: string, file: File) {
   const body = new FormData();
   body.append('path', filePath);
   body.append('file', file);
-  return apiClient.post<{ success: boolean; mirrored: boolean; entry: WebsiteFileEntry }>(
+  return apiClient.post<{ success: boolean; mirrored: boolean; converted?: boolean; entry: WebsiteFileEntry }>(
     `${BASE}/website-files/replace`,
     body
   );

@@ -1,6 +1,7 @@
 import type { Slide } from 'yet-another-react-lightbox';
 import type { WebsiteFileEntry } from './om-assets-api';
 
+import { useLightboxState } from 'yet-another-react-lightbox';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -43,6 +44,17 @@ function fileExt(name: string) {
   return dot >= 0 ? name.slice(dot).toLowerCase() : '';
 }
 
+/** WebP website files also accept a PNG, which the server converts. */
+function canReplaceWith(targetExt: string, uploadExt: string) {
+  if (uploadExt === targetExt) return true;
+  return targetExt === '.webp' && uploadExt === '.png';
+}
+
+function replaceAccept(targetExt: string) {
+  if (targetExt === '.webp') return '.webp,.png';
+  return targetExt || ACCEPT;
+}
+
 /** Public files are served under the app base (`/` in dev, `/om-platform/` in production). */
 function websiteHref(relPath: string) {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -67,6 +79,7 @@ export function WebsiteFilesView() {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(-1);
+  const [previewVersion, setPreviewVersion] = useState(0);
   const [dialog, setDialog] = useState<DialogState | null>(null);
   const [dialogNonce, setDialogNonce] = useState(0);
   const [picked, setPicked] = useState<File | null>(null);
@@ -113,6 +126,12 @@ export function WebsiteFilesView() {
     if (index >= 0) setLightboxIndex(index);
   };
 
+  const openReplace = (entry: WebsiteFileEntry) => {
+    setPicked(null);
+    setDialogNonce((n) => n + 1);
+    setDialog({ mode: 'replace', entry });
+  };
+
   const closeDialog = () => {
     if (busy) return;
     setDialog(null);
@@ -121,7 +140,8 @@ export function WebsiteFilesView() {
 
   const expectedExt = dialog?.mode === 'replace' ? fileExt(dialog.entry.name) : '';
   const pickedExt = picked ? fileExt(picked.name) : '';
-  const extMismatch = dialog?.mode === 'replace' && !!picked && pickedExt !== expectedExt;
+  const willConvertPng = expectedExt === '.webp' && pickedExt === '.png';
+  const extMismatch = dialog?.mode === 'replace' && !!picked && !canReplaceWith(expectedExt, pickedExt);
 
   const submit = async () => {
     if (!dialog || !picked || extMismatch) return;
@@ -131,11 +151,14 @@ export function WebsiteFilesView() {
         ? await replaceWebsiteFile(dialog.entry.path, picked)
         : await uploadWebsiteFile(dirPath, picked);
       const name = dialog.mode === 'replace' ? dialog.entry.name : picked.name;
-      if (res.mirrored) toast.success(`${dialog.mode === 'replace' ? 'Replaced' : 'Added'} ${name}`);
+      const converted = dialog.mode === 'replace' && 'converted' in res && res.converted;
+      const verb = dialog.mode === 'replace' ? `Replaced ${name}${converted ? ' (PNG converted to WebP)' : ''}` : `Added ${name}`;
+      if (res.mirrored) toast.success(verb);
       else toast.warning(`${name} was saved in public/, but the live site copy was not updated`);
       setDialog(null);
       setPicked(null);
       await load(dirPath);
+      if (lightboxIndex >= 0) setPreviewVersion((version) => version + 1);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not update the website file');
     } finally {
@@ -281,7 +304,7 @@ export function WebsiteFilesView() {
                     </Typography>
                     <Typography variant="caption" noWrap title={href} sx={{ color: 'text.secondary' }}>{href}</Typography>
                     <Box sx={{ mt: 0.5, display: 'flex', gap: 1 }}>
-                      <Button size="small" variant="contained" onClick={() => { setPicked(null); setDialogNonce((n) => n + 1); setDialog({ mode: 'replace', entry: file }); }}>
+                      <Button size="small" variant="contained" onClick={() => openReplace(file)}>
                         Replace
                       </Button>
                       <Button size="small" color="inherit" component="a" href={href} target="_blank" rel="noopener">
@@ -296,12 +319,14 @@ export function WebsiteFilesView() {
         </Box>
       )}
 
-      <Dialog open={!!dialog} onClose={closeDialog} fullWidth maxWidth="sm">
+      <Dialog open={!!dialog} onClose={closeDialog} fullWidth maxWidth="sm" sx={{ zIndex: 11000 }}>
         <DialogTitle>{dialog?.mode === 'replace' ? `Replace ${dialog.entry.name}` : 'Add a website file'}</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {dialog?.mode === 'replace'
-              ? `Upload a ${expectedExt} file. The website keeps the address ${websiteHref(dialog.entry.path)}.`
+              ? expectedExt === '.webp'
+                ? `Upload a WebP or a PNG. A PNG is converted to WebP. The website keeps the address ${websiteHref(dialog.entry.path)}.`
+                : `Upload a ${expectedExt} file. The website keeps the address ${websiteHref(dialog.entry.path)}.`
               : 'The file is added to this folder and served on the website under its filename.'}
           </Typography>
           <Button variant="outlined" component="label" color="inherit" startIcon={<Iconify icon="eva:cloud-upload-fill" />}>
@@ -310,13 +335,18 @@ export function WebsiteFilesView() {
               key={dialogNonce}
               hidden
               type="file"
-              accept={dialog?.mode === 'replace' ? expectedExt : ACCEPT}
+              accept={dialog?.mode === 'replace' ? replaceAccept(expectedExt) : ACCEPT}
               onChange={(event) => setPicked(event.target.files?.[0] ?? null)}
             />
           </Button>
+          {willConvertPng && (
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              This PNG will be saved as WebP.
+            </Typography>
+          )}
           {extMismatch && (
             <Typography variant="caption" sx={{ color: 'error.main' }}>
-              This file is {pickedExt}. Choose a {expectedExt} file.
+              This file is {pickedExt}. {expectedExt === '.webp' ? 'Choose a .webp or a .png.' : `Choose a ${expectedExt} file.`}
             </Typography>
           )}
         </DialogContent>
@@ -334,11 +364,44 @@ export function WebsiteFilesView() {
       </Dialog>
 
       <Lightbox
+        key={previewVersion}
         open={lightboxIndex >= 0}
         close={() => setLightboxIndex(-1)}
         slides={slides}
         index={Math.max(lightboxIndex, 0)}
+        toolbarExtraButtons={[
+          <WebsitePreviewReplaceButton key="replace-from-preview" entries={previewable} onReplace={openReplace} />,
+        ]}
       />
     </>
+  );
+}
+
+// ----------------------------------------------------------------------
+
+/** Toolbar control on the open preview, so Replace is available while the image is on screen. */
+function WebsitePreviewReplaceButton({
+  entries,
+  onReplace,
+}: {
+  entries: WebsiteFileEntry[];
+  onReplace: (entry: WebsiteFileEntry) => void;
+}) {
+  const { currentIndex } = useLightboxState();
+  const entry = entries[currentIndex];
+
+  if (!entry) return null;
+
+  return (
+    <Box
+      component="button"
+      type="button"
+      className="yarl__button"
+      onClick={() => onReplace(entry)}
+      sx={{ gap: 0.75, display: 'inline-flex', alignItems: 'center', typography: 'subtitle2', lineHeight: 1 }}
+    >
+      <Iconify icon="eva:cloud-upload-fill" width={18} />
+      Replace
+    </Box>
   );
 }
