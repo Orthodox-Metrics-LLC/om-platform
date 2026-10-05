@@ -239,59 +239,24 @@ function repeatTiles(tiles: StripTileItem[], times: number): StripTileItem[] {
 
 // ----------------------------------------------------------------------
 
-/** Shorter row: wide dashboard and summary views. */
+/**
+ * Homepage scroll frames. Files live in public/assets/images/home/records.
+ * Replace `1.png`, `2.png`, and so on — the filename is the slot.
+ * Top strip is 1–4. Bottom strip is 5–10.
+ */
 const TOP_ROW: StripTileItem[] = [
-  { src: 'records-overview.webp', ratio: 1.495, alt: 'Church records summary with yearly totals' },
-  {
-    src: 'parish-history.webp',
-    ratio: 2.665,
-    alt: 'Parish history dashboard showing record trends by year',
-  },
-  {
-    src: 'register-cards-trio.webp',
-    ratio: 2.04,
-    alt: 'Three baptism register cards from a parish archive',
-  },
-  {
-    src: 'notebook-entries.webp',
-    ratio: 1.495,
-    alt: 'Guide to reading entries in a parish notebook',
-  },
+  { src: '1.png', ratio: 1.495, alt: 'Church records summary with yearly totals' },
+  { src: '2.png', ratio: 2.665, alt: 'Parish history dashboard showing record trends by year' },
+  { src: '3.png', ratio: 2.04, alt: 'Three baptism register cards from a parish archive' },
+  { src: '4.png', ratio: 1.495, alt: 'Guide to reading entries in a parish notebook' },
 ];
 
-/**
- * Taller row. Opens on the same baptism record (No. 15401) as it moves from the
- * handwritten page, to a transcription, to a structured record in the platform.
- */
+/** Taller row. 5–7 are the baptism record as it moves from the page into the platform. */
 const BOTTOM_ROW: StripTileItem[] = [
-  {
-    src: 'register-handwritten.webp',
-    ratio: 0.8,
-    alt: 'Handwritten baptism register card, parish record 15401',
-  },
-  {
-    src: 'register-transcribed.webp',
-    ratio: 0.8,
-    alt: 'The same baptism record transcribed into print',
-  },
-  {
-    src: 'register-digitized.webp',
-    ratio: 0.8,
-    alt: 'The same baptism record as a structured digital record',
-  },
-  {
-    src: 'ocr-batch-progress.webp',
-    ratio: 1.234,
-    alt: 'OCR batch processing progress for a parish register',
-  },
-  {
-    src: 'ocr-batch-complete.webp',
-    ratio: 1.128,
-    alt: 'Completed OCR batch ready for review',
-  },
-  {
-    src: 'certificate-generator.webp',
-    ratio: 1.776,
-    alt: 'Certificate generator with a live baptism certificate preview',
-  },
+  { src: '5.png', ratio: 0.8, alt: 'Handwritten baptism register card, parish record 15401' },
+  { src: '6.png', ratio: 0.8, alt: 'The same baptism record transcribed into print' },
+  { src: '7.png', ratio: 0.8, alt: 'The same baptism record as a structured digital record' },
+  { src: '8.png', ratio: 1.234, alt: 'OCR batch processing progress for a parish register' },
+  { src: '9.png', ratio: 1.128, alt: 'Completed OCR batch ready for review' },
+  { src: '10.png', ratio: 1.776, alt: 'Certificate generator with a live baptism certificate preview' },
 ];
