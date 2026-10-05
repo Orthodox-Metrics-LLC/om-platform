@@ -127,17 +127,53 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+const REAUTH_AT_KEY = 'om-reauth-at';
+
+/** A 401 means the session is gone. Account expiry is the one 401 that signing in again will not fix. */
+export function shouldReauthenticate(status: number, body: { code?: string } | null) {
+  if (status !== 401) return false;
+  return body?.code !== 'ACCOUNT_EXPIRED';
+}
+
+function redirectToSignIn() {
+  if (typeof window === 'undefined') return;
+  if (window.location.pathname.startsWith('/auth/')) return;
+  const now = Date.now();
+  let last = 0;
+  try {
+    last = Number(sessionStorage.getItem(REAUTH_AT_KEY) || 0);
+  } catch {
+    last = 0;
+  }
+  if (now - last < 8000) return;
+  try {
+    sessionStorage.setItem(REAUTH_AT_KEY, String(now));
+  } catch {
+    // Storage unavailable — still send them to sign in.
+  }
+  writeToken(null);
+  const returnTo = `${window.location.pathname}${window.location.search}`;
+  const params = new URLSearchParams({ returnTo });
+  window.location.assign(`/auth/login?${params.toString()}`);
+}
+
 /**
  * Authenticated fetch for OM backend calls made outside the auth context
  * itself (portal pages, dashboards, etc.). Attaches the Bearer token when one
- * exists; the session cookie covers the rest.
+ * exists; the session cookie covers the rest. A dead session sends the user
+ * to sign in and returns them to the page they were on.
  */
-export function omApiFetch(input: string, init: RequestInit = {}) {
-  return fetch(input, {
+export async function omApiFetch(input: string, init: RequestInit = {}) {
+  const res = await fetch(input, {
     credentials: 'include',
     ...init,
     headers: { ...authHeaders(), ...init.headers },
   });
+  if (res.status === 401) {
+    const body = await res.clone().json().catch(() => null);
+    if (shouldReauthenticate(res.status, body)) redirectToSignIn();
+  }
+  return res;
 }
 
 function isOmdevHost(): boolean {
@@ -258,6 +294,11 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.access_token) writeToken(data.access_token);
+    try {
+      sessionStorage.removeItem(REAUTH_AT_KEY);
+    } catch {
+      // Storage unavailable.
+    }
     setUser(data.user);
     return data.user as OmUser;
   }, []);
