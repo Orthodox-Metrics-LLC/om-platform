@@ -150,6 +150,7 @@ export const paths = {
     kanban: `${ROOTS.DASHBOARD}/kanban`,
     calendar: `${ROOTS.DASHBOARD}/calendar`,
     assetManager: `${ROOTS.DASHBOARD}/asset-manager`,
+    annotate: `${ROOTS.DASHBOARD}/annotate`,
     menuEditor: `${ROOTS.DASHBOARD}/menu-editor`,
     pageBuilder: {
       root: `${ROOTS.DASHBOARD}/admin/page-builder`,

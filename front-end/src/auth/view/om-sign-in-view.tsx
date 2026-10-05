@@ -165,7 +165,7 @@ export function OmSignInView() {
  * ?returnTo= into one of these (e.g. after a session expiry) must not strand a
  * church user on a mock page.
  */
-const PLATFORM_ONLY_PREFIXES = ['/dashboard/order', '/dashboard/product', '/dashboard/ecommerce', '/dashboard/banking', '/dashboard/booking', '/dashboard/course', '/dashboard/blog', '/dashboard/job', '/dashboard/tour', '/dashboard/kanban', '/dashboard/params', '/dashboard/asset-manager', '/dashboard/user/list', '/dashboard/user/new', '/dashboard/user/cards'];
+const PLATFORM_ONLY_PREFIXES = ['/dashboard/order', '/dashboard/product', '/dashboard/ecommerce', '/dashboard/banking', '/dashboard/booking', '/dashboard/course', '/dashboard/blog', '/dashboard/job', '/dashboard/tour', '/dashboard/kanban', '/dashboard/params', '/dashboard/asset-manager', '/dashboard/annotate', '/dashboard/user/list', '/dashboard/user/new', '/dashboard/user/cards'];
 
 function landingPath(role: string | null | undefined, returnTo: string | null) {
   const church = isChurchRole(role);

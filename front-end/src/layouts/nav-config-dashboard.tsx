@@ -254,6 +254,7 @@ export const navData: NavSectionProps['data'] = [
       },
       { title: 'File manager', path: paths.portal.fileManager, icon: NAV_ICONS.folder },
       { title: 'Asset Manager', path: paths.dashboard.assetManager, icon: NAV_ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Platform administrators' },
+      { title: 'Annotate', path: paths.dashboard.annotate, icon: <Iconify icon="solar:pen-bold" />, allowedRoles: ['super_admin', 'admin'], caption: 'Mark up a screenshot' },
       { title: 'Menu editor', path: paths.dashboard.menuEditor, icon: NAV_ICONS.menuItem, allowedRoles: ['super_admin', 'admin'], caption: 'Role menu templates' },
       { title: 'Page Builder', path: paths.dashboard.pageBuilder.root, icon: NAV_ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Latest News, coming-soon, maintenance, error pages', deepMatch: true },
       {

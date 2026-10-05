@@ -71,6 +71,7 @@ const TourCreatePage = lazy(() => import('src/pages/dashboard/tour/new'));
 const TourEditPage = lazy(() => import('src/pages/dashboard/tour/edit'));
 // File manager
 const AssetManagerPage = lazy(() => import('src/pages/dashboard/asset-manager'));
+const AnnotatePage = lazy(() => import('src/pages/dashboard/annotate'));
 const MenuEditorPage = lazy(() => import('src/pages/dashboard/menu-editor'));
 const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-builder'));
 const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
@@ -231,6 +232,14 @@ export const dashboardRoutes: RouteObject[] = [
         element: (
           <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
             <AssetManagerPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'annotate',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
+            <AnnotatePage />
           </RoleRouteGuard>
         ),
       },
