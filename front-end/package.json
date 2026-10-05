@@ -1,7 +1,7 @@
 {
   "name": "om-platform-front-end",
   "author": "Orthodox Metrics",
-  "version": "7.7.0",
+  "version": "1.1.0",
   "description": "OM platform frontend. Version numbers are cut with semantic-release from conventional commits on main. GitHub milestones are the release plan.",
   "private": true,
   "type": "module",
