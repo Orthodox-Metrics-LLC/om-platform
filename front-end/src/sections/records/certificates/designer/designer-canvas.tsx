@@ -1,6 +1,7 @@
 import type { DesignerState } from './use-designer';
 import type { StudioMeta, CertificateLayer } from '../om-certificates-api';
 
+import { varAlpha } from 'minimal-shared/utils';
 import { useRef, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
@@ -93,16 +94,16 @@ export function DesignerCanvas({ d, page, meta, sampleValues, showGrid }: Props)
               <Box
                 key={layer.id}
                 onMouseDown={(e) => { e.stopPropagation(); if (layer.locked) { d.setSelectedId(layer.id); return; } startDrag(e, layer, 'move'); }}
-                sx={{
+                sx={(theme) => ({
                   position: 'absolute', left: layer.x, top: layer.y, width: layer.width, height: layer.height, opacity: layer.opacity,
                   transform: layer.rotation ? `rotate(${layer.rotation}deg)` : undefined, zIndex: layer.z_index + 1,
                   cursor: layer.locked ? 'default' : 'move', boxSizing: 'border-box',
-                  outline: isSel ? '2px solid #00A76F' : '1px solid transparent', outlineOffset: 0,
-                  '&:hover': { outline: isSel ? '2px solid #00A76F' : '1px dashed rgba(0,167,111,0.6)' },
+                  outline: isSel ? `2px solid ${theme.vars.palette.primary.main}` : '1px solid transparent', outlineOffset: 0,
+                  '&:hover': { outline: isSel ? `2px solid ${theme.vars.palette.primary.main}` : `1px dashed ${varAlpha(theme.vars.palette.primary.mainChannel, 0.6)}` },
                   bgcolor: layer.type === 'background' && !img ? layer.style?.fill || '#f7f3eb' : 'transparent',
                   border: layer.type === 'shape' || layer.type === 'border' ? `${layer.style?.border_width || 2}px solid ${layer.style?.color || '#c9a227'}` : undefined,
                   overflow: 'hidden',
-                }}
+                })}
               >
                 {img && (layer.type === 'background' || layer.type === 'image') && (
                   <Box component="img" src={img} alt={layer.name} draggable={false} sx={{ width: 1, height: 1, objectFit: fit === 'stretch' ? 'fill' : fit, display: 'block', pointerEvents: 'none', userSelect: 'none' }} />
@@ -124,7 +125,7 @@ export function DesignerCanvas({ d, page, meta, sampleValues, showGrid }: Props)
                   </Box>
                 )}
                 {isSel && !layer.locked && HANDLES.map((h) => (
-                  <Box key={h} onMouseDown={(e) => startDrag(e, layer, h)} sx={{ position: 'absolute', width: 8, height: 8, bgcolor: '#fff', border: '1.5px solid #00A76F', borderRadius: 0.25, zIndex: 2,
+                  <Box key={h} onMouseDown={(e) => startDrag(e, layer, h)} sx={{ position: 'absolute', width: 8, height: 8, bgcolor: '#fff', border: '1.5px solid', borderColor: 'primary.main', borderRadius: 0.25, zIndex: 2,
                     cursor: `${h}-resize`,
                     top: h.includes('n') ? -4 : h.includes('s') ? 'calc(100% - 4px)' : 'calc(50% - 4px)',
                     left: h.includes('w') ? -4 : h.includes('e') ? 'calc(100% - 4px)' : 'calc(50% - 4px)' }} />

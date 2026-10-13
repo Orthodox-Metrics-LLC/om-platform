@@ -28,7 +28,8 @@ export function Logo({
 }: LogoProps) {
   /**
    * Orthodox Metrics brand marks.
-   * `om-mark` is the standalone OM glyph (green in both colour schemes).
+   * `om-mark` is the standalone OM glyph — rendered as a CSS mask tinted with
+   * `primary.main` so it follows the selected color preset.
    * `om-full` is the OMetrics lockup — the wordmark is near-black, so the
    * light-on-dark variant is swapped in for the dark colour scheme.
    */
@@ -47,18 +48,22 @@ export function Logo({
         (theme) => ({
           width: 40,
           height: 40,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'left center',
-          backgroundImage: `url(${markUrl})`,
-          ...(!isSingle && {
-            width: 132,
-            height: 40,
-            backgroundImage: `url(${fullUrl})`,
-            ...theme.applyStyles('dark', {
-              backgroundImage: `url(${fullLightUrl})`,
-            }),
-          }),
+          ...(isSingle
+            ? {
+                mask: `url(${markUrl}) no-repeat left center / contain`,
+                WebkitMask: `url(${markUrl}) no-repeat left center / contain`,
+                backgroundColor: theme.vars.palette.primary.main,
+              }
+            : {
+                width: 132,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'left center',
+                backgroundImage: `url(${fullUrl})`,
+                ...theme.applyStyles('dark', {
+                  backgroundImage: `url(${fullLightUrl})`,
+                }),
+              }),
           ...(disabled && { pointerEvents: 'none' }),
         }),
         ...(Array.isArray(sx) ? sx : [sx]),

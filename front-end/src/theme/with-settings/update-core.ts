@@ -4,8 +4,8 @@ import type { ThemeOptions, ThemeColorScheme, ColorSchemeOptionsExtended } from 
 
 import { setFont, hexToRgbChannel, createPaletteChannel } from 'minimal-shared/utils';
 
-import { primaryColorPresets } from './color-presets';
 import { createShadowColor } from '../core/custom-shadows';
+import { primaryColorPresets, secondaryColorPresets } from './color-presets';
 
 // ----------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ export function applySettingsToTheme(
   const lightPalette = theme.colorSchemes?.light?.palette as ColorSystem['palette'];
 
   const primaryColorPalette = createPaletteChannel(primaryColorPresets[primaryColor]);
-  // const secondaryColorPalette = createPaletteChannel(secondaryColorPresets[primaryColor]);
+  const secondaryColorPalette = createPaletteChannel(secondaryColorPresets[primaryColor]);
 
   const updateColorScheme = (schemeName: ThemeColorScheme) => {
     const currentScheme: ColorSchemeOptionsExtended = theme.colorSchemes?.[schemeName] ?? {};
@@ -42,7 +42,7 @@ export function applySettingsToTheme(
       ...currentScheme?.palette,
       ...(!isDefaultPrimaryColor && {
         primary: primaryColorPalette,
-        // secondary: secondaryColorPalette,
+        secondary: secondaryColorPalette,
       }),
       ...(schemeName === 'light' && {
         background: {
@@ -59,7 +59,7 @@ export function applySettingsToTheme(
       ...currentScheme?.customShadows,
       ...(!isDefaultPrimaryColor && {
         primary: createShadowColor(primaryColorPalette.mainChannel),
-        // secondary: createShadowColor(secondaryColorPalette.mainChannel),
+        secondary: createShadowColor(secondaryColorPalette.mainChannel),
       }),
     };
 

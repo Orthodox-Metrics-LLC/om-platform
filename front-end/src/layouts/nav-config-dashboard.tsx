@@ -77,7 +77,7 @@ export const churchNavData: NavSectionProps['data'] = [
         path: paths.dashboard.user.root,
         icon: NAV_ICONS.label,
         info: (
-          <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
+          <Label color="primary" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
             NEW
           </Label>
         ),
@@ -134,7 +134,7 @@ export const navData: NavSectionProps['data'] = [
         path: paths.dashboard.user.root,
         icon: NAV_ICONS.label,
         info: (
-          <Label color="info" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
+          <Label color="primary" variant="inverted" startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}>
             NEW
           </Label>
         ),
@@ -340,7 +340,7 @@ export const navData: NavSectionProps['data'] = [
         icon: NAV_ICONS.label,
         info: (
           <Label
-            color="info"
+            color="primary"
             variant="inverted"
             startIcon={<Iconify icon="solar:bell-bing-bold-duotone" />}
           >

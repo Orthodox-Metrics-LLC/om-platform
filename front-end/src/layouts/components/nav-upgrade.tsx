@@ -46,7 +46,7 @@ export function NavUpgrade({ sx, ...other }: BoxProps) {
             py: 1.5,
             borderRadius: 0.5,
             color: 'common.white',
-            bgcolor: appearance.primary_color || '#2c5aa0',
+            bgcolor: appearance.primary_color || 'primary.main',
             fontFamily: '"Georgia", "Times New Roman", serif',
             textTransform: 'uppercase',
             textAlign: 'center',

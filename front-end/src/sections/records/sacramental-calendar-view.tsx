@@ -12,6 +12,7 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
+import { useTheme } from '@mui/material/styles';
 import CardHeader from '@mui/material/CardHeader';
 import Typography from '@mui/material/Typography';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -32,12 +33,15 @@ import { calculatePascha, getRestrictionsForYear, getBaptismDateRestriction, get
 
 // ----------------------------------------------------------------------
 
-const SACRAMENT_COLOR: Record<RecordType, string> = { baptism: '#00A76F', marriage: '#8E33FF', funeral: '#FFAB00' };
+const SACRAMENT_COLOR: Record<RecordType, 'primary' | 'secondary' | 'warning'> = { baptism: 'primary', marriage: 'secondary', funeral: 'warning' };
 const MONTHS = Array.from({ length: 12 }, (_, i) => i);
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 /** Sacramental calendar — when baptisms, marriages and funerals are restricted (New / Old Calendar). */
 export function SacramentalCalendarView() {
+  const theme = useTheme();
+  const sacramentColor = (t: RecordType) => theme.palette[SACRAMENT_COLOR[t]].main;
+
   const [year, setYear] = useState(new Date().getFullYear());
   const [calendar, setCalendar] = useState<OrthodoxCalendar>('new');
   const [sacraments, setSacraments] = useState<RecordType[]>(['baptism', 'marriage', 'funeral']);
@@ -74,7 +78,7 @@ export function SacramentalCalendarView() {
             const iso = `${year}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
             const hits = (byDate.get(iso) || []).filter((p) => sacraments.includes(p.sacrament));
             const isPascha = iso === dayjs(pascha).format('YYYY-MM-DD');
-            const colors = [...new Set(hits.map((h) => SACRAMENT_COLOR[h.sacrament]))];
+            const colors = [...new Set(hits.map((h) => sacramentColor(h.sacrament)))];
             const bg = colors.length === 0 ? 'transparent' : colors.length === 1 ? colors[0] : `linear-gradient(135deg, ${colors.map((c, k) => `${c} ${(k / colors.length) * 100}% ${((k + 1) / colors.length) * 100}%`).join(', ')})`;
             const warnOnly = hits.length > 0 && hits.every((h) => h.severity === 'warning');
             const cell = (
@@ -130,7 +134,7 @@ export function SacramentalCalendarView() {
               <Stack spacing={1}>
                 {RECORD_TYPES.map((t) => (
                   <Box key={t.value} onClick={() => toggleSacrament(t.value)} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer', opacity: sacraments.includes(t.value) ? 1 : 0.4 }}>
-                    <Box sx={{ width: 14, height: 14, borderRadius: 0.5, bgcolor: SACRAMENT_COLOR[t.value] }} /><Typography variant="body2">{t.plural} restricted</Typography>
+                    <Box sx={{ width: 14, height: 14, borderRadius: 0.5, bgcolor: `${SACRAMENT_COLOR[t.value]}.main` }} /><Typography variant="body2">{t.plural} restricted</Typography>
                   </Box>
                 ))}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}><Box sx={{ width: 14, height: 14, borderRadius: 0.5, border: '2px solid', borderColor: 'error.main' }} /><Typography variant="body2">Pascha · {fDate(pascha)}</Typography></Box>
