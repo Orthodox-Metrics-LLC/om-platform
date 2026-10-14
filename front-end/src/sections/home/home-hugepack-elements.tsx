@@ -199,21 +199,27 @@ const ScrollItem = styled(m.div)(({ theme }) => ({
 
 // ----------------------------------------------------------------------
 
-/** `ratio` is the asset's intrinsic width/height. */
-type StripTileItem = { src: string; alt: string; ratio: number };
+/**
+ * `ratio` is the asset's intrinsic width/height. `video` overlays a clip on top
+ * of the baked-in artwork — `left/top/width/height` are percentages of the tile
+ * matching where that artwork sits inside the image.
+ */
+type StripTileItem = {
+  src: string;
+  alt: string;
+  ratio: number;
+  video?: { src: string; left: number; top: number; width: number; height: number };
+};
 
 function StripTile({ tile }: { tile: StripTileItem }) {
   return (
     <Box
-      component="img"
-      loading="lazy"
-      alt={tile.alt}
-      src={`${CONFIG.assetsDir}/assets/images/home/records/${tile.src}`}
       sx={(theme) => ({
         height: 1,
         flexShrink: 0,
         borderRadius: 2,
-        objectFit: 'contain',
+        overflow: 'hidden',
+        position: 'relative',
         bgcolor: 'background.paper',
         boxShadow: theme.vars.customShadows.z8,
         /**
@@ -224,7 +230,34 @@ function StripTile({ tile }: { tile: StripTileItem }) {
          */
         aspectRatio: tile.ratio,
       })}
-    />
+    >
+      <Box
+        component="img"
+        loading="lazy"
+        alt={tile.alt}
+        src={`${CONFIG.assetsDir}/assets/images/home/records/${tile.src}`}
+        sx={{ width: 1, height: 1, display: 'block', objectFit: 'contain' }}
+      />
+      {tile.video && (
+        <Box
+          component="video"
+          autoPlay
+          muted
+          loop
+          playsInline
+          aria-hidden
+          src={`${CONFIG.assetsDir}/assets/images/home/records/${tile.video.src}`}
+          sx={{
+            position: 'absolute',
+            objectFit: 'cover',
+            left: `${tile.video.left}%`,
+            top: `${tile.video.top}%`,
+            width: `${tile.video.width}%`,
+            height: `${tile.video.height}%`,
+          }}
+        />
+      )}
+    </Box>
   );
 }
 
@@ -241,22 +274,38 @@ function repeatTiles(tiles: StripTileItem[], times: number): StripTileItem[] {
 
 /**
  * Homepage scroll frames. Files live in public/assets/images/home/records.
- * Replace `1.png`, `2.png`, and so on — the filename is the slot.
- * Top strip is 1–4. Bottom strip is 5–10.
+ * Top strip is the platform screenshots. Bottom strip pairs each record type's
+ * banner with its composite tile — the composite carries a `video` that plays
+ * over the artwork baked into the image.
  */
 const TOP_ROW: StripTileItem[] = [
-  { src: '1.png', ratio: 1.495, alt: 'Church records summary with yearly totals' },
-  { src: '2.png', ratio: 2.665, alt: 'Parish history dashboard showing record trends by year' },
-  { src: '3.png', ratio: 2.04, alt: 'Three baptism register cards from a parish archive' },
-  { src: '4.png', ratio: 1.495, alt: 'Guide to reading entries in a parish notebook' },
+  { src: '7.png', ratio: 2.666, alt: 'Orthodox Metrics feature overview tiles' },
+  { src: '8.png', ratio: 1.777, alt: 'Parish Journey operations dashboard' },
+  { src: '9.png', ratio: 2.673, alt: 'Parish analytics dashboard with sacramental trends' },
+  { src: '10.png', ratio: 3.0, alt: 'Preserve Your Parish History feature summary' },
 ];
 
-/** Taller row. 5–7 are the baptism record as it moves from the page into the platform. */
+/** Taller row — each record type gets its title banner then its animated composite. */
 const BOTTOM_ROW: StripTileItem[] = [
-  { src: '5.png', ratio: 0.8, alt: 'Handwritten baptism register card, parish record 15401' },
-  { src: '6.png', ratio: 0.8, alt: 'The same baptism record transcribed into print' },
-  { src: '7.png', ratio: 0.8, alt: 'The same baptism record as a structured digital record' },
-  { src: '8.png', ratio: 1.234, alt: 'OCR batch processing progress for a parish register' },
-  { src: '9.png', ratio: 1.128, alt: 'Completed OCR batch ready for review' },
-  { src: '10.png', ratio: 1.776, alt: 'Certificate generator with a live baptism certificate preview' },
+  { src: 'bmf-2.png', ratio: 2.577, alt: 'Baptism Records' },
+  {
+    src: 'baptism-homepage-img.png',
+    ratio: 1.633,
+    alt: 'Baptism records table above a baptismal font and doves',
+    video: { src: '2-dove-flying.mp4', left: 64.2, top: 57.4, width: 34.9, height: 35.0 },
+  },
+  { src: 'bmf-3.png', ratio: 2.577, alt: 'Marriage Records' },
+  {
+    src: 'marriage-homepage-img.png',
+    ratio: 1.461,
+    alt: 'Marriage records table above a bride and groom silhouette',
+    video: { src: 'married-couple-walking.mp4', left: 50.1, top: 70.0, width: 14.1, height: 29.4 },
+  },
+  { src: 'bmf-1.png', ratio: 2.577, alt: 'Funeral Records' },
+  {
+    src: 'funeral-homepage-image.png',
+    ratio: 1.542,
+    alt: 'Funeral records table above a cemetery painting',
+    video: { src: 'cemetery-video.mp4', left: 40.6, top: 67.0, width: 37.8, height: 31.6 },
+  },
 ];
