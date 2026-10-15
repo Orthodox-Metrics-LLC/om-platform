@@ -14,7 +14,6 @@ import {
 
 import { HomeFAQs } from 'src/sections/home/home-faqs';
 import { SectionTitle } from 'src/sections/home/components/section-title';
-import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
 // ----------------------------------------------------------------------
 
@@ -79,16 +78,11 @@ function PricingCarousel() {
 
 export function PricingView() {
   return (
-    <PublicPageBuilderOverride
-      pageType="pricing"
-      fallback={
-        <Container maxWidth={false} disableGutters>
-          <PricingCarousel />
+    <Container maxWidth={false} disableGutters>
+      <PricingCarousel />
 
-          <HomeFAQs />
-        </Container>
-      }
-    />
+      <HomeFAQs />
+    </Container>
   );
 }
 
