@@ -3,7 +3,6 @@ import type { BoxProps } from '@mui/material/Box';
 import type { Theme, SxProps } from '@mui/material/styles';
 
 import { m } from 'framer-motion';
-import { varAlpha } from 'minimal-shared/utils';
 
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -69,10 +68,9 @@ export function SectionTitle({
         <Box
           component="span"
           sx={(theme) => ({
-            opacity: 0.4,
             display: 'inline-block',
             ...theme.mixins.textGradient(
-              `to right, ${theme.vars.palette.text.primary}, ${varAlpha(theme.vars.palette.text.primaryChannel, 0.2)}`
+              `to right, ${theme.vars.palette.primary.light}, ${theme.vars.palette.primary.main}`
             ),
           })}
         >

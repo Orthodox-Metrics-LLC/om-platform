@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import { useTheme } from '@mui/material/styles';
+import { useColorScheme } from '@mui/material/styles';
 
 import { CONFIG } from 'src/global-config';
 
@@ -22,8 +22,8 @@ import { SectionTitle } from 'src/sections/home/components/section-title';
  * variants) inside a carousel rather than the template's plan-card grid.
  */
 function PricingCarousel() {
-  const theme = useTheme();
-  const variant = theme.palette.mode === 'dark' ? 'dark' : 'light';
+  const { colorScheme } = useColorScheme();
+  const variant = colorScheme === 'dark' ? 'dark' : 'light';
 
   const carousel = useCarousel({ loop: true, slidesToShow: 1 });
 
