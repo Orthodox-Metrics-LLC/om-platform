@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -9,12 +11,17 @@ import { useCheckoutContext } from '../context';
 import { CheckoutSteps } from '../checkout-steps';
 import { CheckoutPayment } from '../checkout-payment';
 import { CheckoutOrderComplete } from '../checkout-order-complete';
-import { CheckoutBillingAddress } from '../checkout-billing-address';
 
 // ----------------------------------------------------------------------
 
 export function CheckoutView() {
   const { steps, activeStep, completed, onResetCart } = useCheckoutContext();
+
+  // Stripe returns to the "complete" step — clear the cart so a refresh of the
+  // checkout page does not reshow the purchased items.
+  useEffect(() => {
+    if (completed) onResetCart();
+  }, [completed, onResetCart]);
 
   return (
     <PublicPageBuilderOverride
@@ -34,12 +41,10 @@ export function CheckoutView() {
       <>
         {activeStep === 0 && <CheckoutCart />}
 
-        {activeStep === 1 && <CheckoutBillingAddress />}
-
-        {activeStep === 2 && <CheckoutPayment />}
+        {activeStep === 1 && <CheckoutPayment />}
 
         {completed && (
-          <CheckoutOrderComplete open onResetCart={onResetCart} onDownloadPDF={() => {}} />
+          <CheckoutOrderComplete open onResetCart={onResetCart} />
         )}
       </>
     </Container>

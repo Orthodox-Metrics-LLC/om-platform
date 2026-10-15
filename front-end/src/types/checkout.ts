@@ -7,6 +7,8 @@ export type ICheckoutItem = {
   name: string;
   size: string;
   price: number;
+  /** Pricing-page plan this line belongs to; used to build the Stripe Checkout session. */
+  planKey?: string;
   coverUrl: string;
   colors: string[];
   quantity: number;

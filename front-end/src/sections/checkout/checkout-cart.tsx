@@ -24,7 +24,6 @@ export function CheckoutCart() {
   const {
     loading,
     onChangeStep,
-    onApplyDiscount,
     onDeleteCartItem,
     state: checkoutState,
     onChangeItemQuantity,
@@ -89,7 +88,7 @@ export function CheckoutCart() {
 
         <Button
           component={RouterLink}
-          href={paths.product.root}
+          href={paths.pricing}
           color="inherit"
           startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
         >
@@ -98,7 +97,7 @@ export function CheckoutCart() {
       </Grid>
 
       <Grid size={{ xs: 12, md: 4 }}>
-        <CheckoutSummary checkoutState={checkoutState} onApplyDiscount={onApplyDiscount} />
+        <CheckoutSummary checkoutState={checkoutState} />
 
         <Button
           fullWidth

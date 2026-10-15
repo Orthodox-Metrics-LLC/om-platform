@@ -3,7 +3,6 @@ import type { DialogProps } from '@mui/material/Dialog';
 import type { CheckoutContextValue } from 'src/types/checkout';
 
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
@@ -19,11 +18,10 @@ import { Iconify } from 'src/components/iconify';
 // ----------------------------------------------------------------------
 
 type Props = DialogProps & {
-  onDownloadPDF: () => void;
   onResetCart: CheckoutContextValue['onResetCart'];
 };
 
-export function CheckoutOrderComplete({ onResetCart, onDownloadPDF, slotProps, ...other }: Props) {
+export function CheckoutOrderComplete({ onResetCart, slotProps, ...other }: Props) {
   const dialogPaperSx = (slotProps?.paper as PaperProps)?.sx;
 
   return (
@@ -63,15 +61,13 @@ export function CheckoutOrderComplete({ onResetCart, onDownloadPDF, slotProps, .
         <OrderCompleteIllustration />
 
         <Typography>
-          Thanks for placing order
+          Thanks for your order
           <br />
           <br />
-          <Link>01dc1370-3df6-11eb-b378-0242ac130002</Link>
+          Your subscription and onboarding fee were processed by Stripe. A receipt has been sent to
+          your email, and our team will reach out shortly to begin onboarding.
           <br />
-          <br />
-          We will send you a notification within 5 days when it ships.
-          <br /> If you have any question or queries then fell to get in contact us. <br />
-          All the best,
+          If you have any questions, please get in contact with us.
         </Typography>
 
         <Divider sx={{ width: 1, borderStyle: 'dashed' }} />
@@ -86,23 +82,14 @@ export function CheckoutOrderComplete({ onResetCart, onDownloadPDF, slotProps, .
         >
           <Button
             component={RouterLink}
-            href={paths.product.root}
+            href={paths.pricing}
             size="large"
             color="inherit"
             variant="outlined"
             onClick={onResetCart}
             startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
           >
-            Continue shopping
-          </Button>
-
-          <Button
-            size="large"
-            variant="contained"
-            startIcon={<Iconify icon="eva:cloud-download-fill" />}
-            onClick={onDownloadPDF}
-          >
-            Download as PDF
+            Back to pricing
           </Button>
         </Box>
       </Box>

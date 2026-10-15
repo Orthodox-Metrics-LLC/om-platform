@@ -1,139 +1,113 @@
-import type {
-  ICheckoutCardOption,
-  ICheckoutPaymentOption,
-  ICheckoutDeliveryOption,
-} from 'src/types/checkout';
+import { useState } from 'react';
 
-import * as z from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
+import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
 
-import { Form } from 'src/components/hook-form';
+import { fCurrency } from 'src/utils/format-number';
+
 import { Iconify } from 'src/components/iconify';
 
 import { useCheckoutContext } from './context';
 import { CheckoutSummary } from './checkout-summary';
-import { CheckoutDelivery } from './checkout-delivery';
-import { CheckoutBillingInfo } from './checkout-billing-info';
-import { CheckoutPaymentMethods } from './checkout-payment-methods';
-
-// ----------------------------------------------------------------------
-
-const DELIVERY_OPTIONS: ICheckoutDeliveryOption[] = [
-  { value: 0, label: 'Free', description: '5-7 days delivery' },
-  { value: 10, label: 'Standard', description: '3-5 days delivery' },
-  { value: 20, label: 'Express', description: '2-3 days delivery' },
-];
-
-const PAYMENT_OPTIONS: ICheckoutPaymentOption[] = [
-  {
-    value: 'paypal',
-    label: 'Pay with Paypal',
-    description: 'You will be redirected to PayPal website to complete your purchase securely.',
-  },
-  {
-    value: 'creditcard',
-    label: 'Credit / Debit card',
-    description: 'We support Mastercard, Visa, Discover and Stripe.',
-  },
-  { value: 'cash', label: 'Cash', description: 'Pay with cash when your order is delivered.' },
-];
-
-const CARD_OPTIONS: ICheckoutCardOption[] = [
-  { value: 'visa1', label: '**** **** **** 1212 - Jimmy Holland' },
-  { value: 'visa2', label: '**** **** **** 2424 - Shawn Stokes' },
-  { value: 'mastercard', label: '**** **** **** 4545 - Cole Armstrong' },
-];
-
-// ----------------------------------------------------------------------
-
-export type PaymentSchemaType = z.infer<typeof PaymentSchema>;
-
-export const PaymentSchema = z.object({
-  payment: z.string().min(1, { error: 'Payment is required!' }),
-  // Not required
-  delivery: z.number(),
-});
 
 // ----------------------------------------------------------------------
 
 export function CheckoutPayment() {
-  const {
-    loading,
-    onResetCart,
-    onChangeStep,
-    onApplyShipping,
-    state: checkoutState,
-  } = useCheckoutContext();
+  const { onChangeStep, state: checkoutState } = useCheckoutContext();
 
-  const defaultValues: PaymentSchemaType = {
-    delivery: checkoutState.shipping,
-    payment: '',
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const planKeys = [...new Set(checkoutState.items.map((item) => item.planKey).filter(Boolean))];
+  const isCartEmpty = !checkoutState.items.length;
+
+  const onPay = async () => {
+    try {
+      setError('');
+      setSubmitting(true);
+
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plans: planKeys }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data?.url) {
+        throw new Error(data?.error || 'Checkout is unavailable right now.');
+      }
+
+      window.location.assign(data.url);
+    } catch (err) {
+      setSubmitting(false);
+      setError(err instanceof Error ? err.message : 'Checkout is unavailable right now.');
+    }
   };
 
-  const methods = useForm({
-    resolver: zodResolver(PaymentSchema),
-    defaultValues,
-  });
-
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-  } = methods;
-
-  const onSubmit = handleSubmit(async (data) => {
-    try {
-      onResetCart();
-      onChangeStep('next');
-      console.info('DATA', data);
-    } catch (error) {
-      console.error(error);
-    }
-  });
-
   return (
-    <Form methods={methods} onSubmit={onSubmit}>
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <CheckoutDelivery
-            name="delivery"
-            onApplyShipping={onApplyShipping}
-            options={DELIVERY_OPTIONS}
-          />
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, md: 8 }}>
+        <Card>
+          <CardHeader title="Payment" />
 
-          <CheckoutPaymentMethods
-            name="payment"
-            options={{ cards: CARD_OPTIONS, payments: PAYMENT_OPTIONS }}
-            sx={{ my: 3 }}
-          />
+          <Stack spacing={2.5} sx={{ p: 3 }}>
+            {checkoutState.items.map((item) => (
+              <Box key={item.id} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ flexGrow: 1, color: 'text.secondary' }}>
+                  {item.name}
+                </Typography>
+                <Typography variant="subtitle2">
+                  {fCurrency(item.price)}
+                  {item.size === 'Monthly' ? '/mo' : ''}
+                </Typography>
+              </Box>
+            ))}
 
-          <Button
-            size="small"
-            color="inherit"
-            onClick={() => onChangeStep('back')}
-            startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
-          >
-            Back
-          </Button>
-        </Grid>
+            {!isCartEmpty && <Divider sx={{ borderStyle: 'dashed' }} />}
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <CheckoutBillingInfo
-            loading={loading}
-            onChangeStep={onChangeStep}
-            checkoutState={checkoutState}
-          />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Iconify icon="solar:shield-check-bold" width={28} sx={{ color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                You will be redirected to Stripe to complete your purchase securely. Monthly hosting
+                is billed as a subscription; onboarding is a one-time fee charged today.
+              </Typography>
+            </Box>
 
-          <CheckoutSummary checkoutState={checkoutState} onEdit={() => onChangeStep('go', 0)} />
+            {!!error && <Alert severity="error">{error}</Alert>}
+          </Stack>
+        </Card>
 
-          <Button fullWidth size="large" type="submit" variant="contained" loading={isSubmitting}>
-            Complete order
-          </Button>
-        </Grid>
+        <Button
+          size="small"
+          color="inherit"
+          onClick={() => onChangeStep('back')}
+          startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
+        >
+          Back
+        </Button>
       </Grid>
-    </Form>
+
+      <Grid size={{ xs: 12, md: 4 }}>
+        <CheckoutSummary checkoutState={checkoutState} onEdit={() => onChangeStep('go', 0)} />
+
+        <Button
+          fullWidth
+          size="large"
+          variant="contained"
+          loading={submitting}
+          disabled={isCartEmpty}
+          onClick={onPay}
+        >
+          Pay with Stripe
+        </Button>
+      </Grid>
+    </Grid>
   );
 }
