@@ -1,33 +1,101 @@
+import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
+import { useTheme } from '@mui/material/styles';
+
+import { CONFIG } from 'src/global-config';
+
+import { MotionViewport } from 'src/components/animate';
+import {
+  Carousel,
+  useCarousel,
+  CarouselDotButtons,
+  CarouselArrowBasicButtons,
+} from 'src/components/carousel';
 
 import { HomeFAQs } from 'src/sections/home/home-faqs';
-import { HomePricing } from 'src/sections/home/home-pricing';
+import { SectionTitle } from 'src/sections/home/components/section-title';
 import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
 // ----------------------------------------------------------------------
 
 /**
- * Renders the same pricing section as the home page rather than keeping a second
- * set of plans.
- *
- * The template's own pricing page shipped Minimal's `_pricingPlans` mock
- * (basic / starter / premium at $0 / $4.99 / $9.99, with features like
- * "3 prototypes" and "Up to 5 team members") plus a monthly/yearly toggle that
- * changed nothing. That contradicted the real plans on the home page, so a
- * visitor comparing the two pages saw two different prices. Reusing one source
- * means they cannot drift again.
+ * The plans render as designed cards (one image per plan, in light and dark
+ * variants) inside a carousel rather than the template's plan-card grid.
  */
+function PricingCarousel() {
+  const theme = useTheme();
+  const variant = theme.palette.mode === 'dark' ? 'dark' : 'light';
+
+  const carousel = useCarousel({ loop: true, slidesToShow: 1 });
+
+  return (
+    <Box component="section" sx={{ py: 10, position: 'relative' }}>
+      <MotionViewport>
+        <Container>
+          <SectionTitle
+            caption="plans"
+            title="Flexible plans designed to"
+            txtGradient="scale"
+            description="From small rural parishes to cathedral archives — one-time digitization for your historic books, plus affordable monthly hosting for a living sacramental registry."
+            sx={{ mb: 8, textAlign: 'center' }}
+          />
+
+          <Box sx={{ position: 'relative', maxWidth: 1080, mx: 'auto' }}>
+            <Carousel carousel={carousel}>
+              {PLAN_CARDS.map((card) => (
+                <Box
+                  key={card.key}
+                  component="img"
+                  alt={card.alt}
+                  src={`${CONFIG.assetsDir}/assets/images/pricing/${card.key}-${variant}.png`}
+                  sx={{ width: 1, display: 'block', borderRadius: 2 }}
+                />
+              ))}
+            </Carousel>
+
+            <Box
+              sx={{
+                mt: 4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <CarouselDotButtons
+                variant="rounded"
+                scrollSnaps={carousel.dots.scrollSnaps}
+                selectedIndex={carousel.dots.selectedIndex}
+                onClickDot={carousel.dots.onClickDot}
+              />
+
+              <CarouselArrowBasicButtons {...carousel.arrows} options={carousel.options} />
+            </Box>
+          </Box>
+        </Container>
+      </MotionViewport>
+    </Box>
+  );
+}
+
 export function PricingView() {
   return (
     <PublicPageBuilderOverride
       pageType="pricing"
       fallback={
-    <Container maxWidth={false} disableGutters>
-      <HomePricing />
+        <Container maxWidth={false} disableGutters>
+          <PricingCarousel />
 
-      <HomeFAQs />
-    </Container>
+          <HomeFAQs />
+        </Container>
       }
     />
   );
 }
+
+// ----------------------------------------------------------------------
+
+const PLAN_CARDS = [
+  { key: 'parish', alt: 'Parish Essentials plan with monthly price and onboarding fee options' },
+  { key: 'diocese', alt: 'Diocesan Standard plan with monthly price and onboarding fee options' },
+  { key: 'cath-pro', alt: 'Cathedral Pro plan with monthly price and onboarding fee options' },
+];
