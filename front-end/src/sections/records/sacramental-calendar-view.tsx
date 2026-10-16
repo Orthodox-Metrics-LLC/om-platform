@@ -37,8 +37,13 @@ const SACRAMENT_COLOR: Record<RecordType, 'primary' | 'secondary' | 'warning'> =
 const MONTHS = Array.from({ length: 12 }, (_, i) => i);
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-/** Sacramental calendar — when baptisms, marriages and funerals are restricted (New / Old Calendar). */
-export function SacramentalCalendarView() {
+/**
+ * Sacramental calendar content — when baptisms, marriages and funerals are
+ * restricted (New / Old Calendar). Exported standalone so it can be embedded
+ * directly inside the regular Calendar (toggled by clicking its "Calendar"
+ * heading) as well as rendered on its own page.
+ */
+export function SacramentalCalendarContent() {
   const theme = useTheme();
   const sacramentColor = (t: RecordType) => theme.palette[SACRAMENT_COLOR[t]].main;
 
@@ -98,22 +103,7 @@ export function SacramentalCalendarView() {
   };
 
   return (
-    <DashboardContent maxWidth="xl">
-      <CustomBreadcrumbs
-        heading="Sacramental calendar"
-        links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.portal.records.root }, { name: 'Sacramental calendar' }]}
-        action={
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Button color="inherit" onClick={() => setYear((y) => y - 1)}><Iconify icon="eva:arrow-ios-back-fill" /></Button>
-            <Typography variant="h6" sx={{ minWidth: 56, textAlign: 'center' }}>{year}</Typography>
-            <Button color="inherit" onClick={() => setYear((y) => y + 1)}><Iconify icon="eva:arrow-ios-forward-fill" /></Button>
-            <ToggleButtonGroup exclusive size="small" value={calendar} onChange={(_, v) => v && setCalendar(v)}><ToggleButton value="new">New Calendar</ToggleButton><ToggleButton value="old">Old Calendar</ToggleButton></ToggleButtonGroup>
-          </Box>
-        }
-        sx={{ mb: 3 }}
-      />
-
-      <Grid container spacing={3}>
+    <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
           <Stack spacing={3}>
             <Card sx={{ p: 3 }}>
@@ -155,11 +145,35 @@ export function SacramentalCalendarView() {
 
         <Grid size={{ xs: 12, md: 8 }}>
           <Card>
-            <CardHeader title={`${year} — ${calendar === 'old' ? 'Old' : 'New'} Calendar`} subheader="Hover a highlighted day for the reason" />
+            <CardHeader
+              title={`${year} — ${calendar === 'old' ? 'Old' : 'New'} Calendar`}
+              subheader="Hover a highlighted day for the reason"
+              action={
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Button color="inherit" onClick={() => setYear((y) => y - 1)}><Iconify icon="eva:arrow-ios-back-fill" /></Button>
+                  <Typography variant="h6" sx={{ minWidth: 56, textAlign: 'center' }}>{year}</Typography>
+                  <Button color="inherit" onClick={() => setYear((y) => y + 1)}><Iconify icon="eva:arrow-ios-forward-fill" /></Button>
+                  <ToggleButtonGroup exclusive size="small" value={calendar} onChange={(_, v) => v && setCalendar(v)}><ToggleButton value="new">New Calendar</ToggleButton><ToggleButton value="old">Old Calendar</ToggleButton></ToggleButtonGroup>
+                </Box>
+              }
+            />
             <Box sx={{ p: 2, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' } }}>{MONTHS.map(renderMonth)}</Box>
           </Card>
         </Grid>
       </Grid>
+  );
+}
+
+/** Sacramental calendar on its own page (direct link / bookmark compatibility). */
+export function SacramentalCalendarView() {
+  return (
+    <DashboardContent maxWidth="xl">
+      <CustomBreadcrumbs
+        heading="Sacramental calendar"
+        links={[{ name: 'Portal', href: paths.portal.root }, { name: 'Records', href: paths.portal.records.root }, { name: 'Sacramental calendar' }]}
+        sx={{ mb: 3 }}
+      />
+      <SacramentalCalendarContent />
     </DashboardContent>
   );
 }

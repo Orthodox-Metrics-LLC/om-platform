@@ -98,7 +98,6 @@ const RecordEditPage = lazy(() => import('src/pages/portal/records/edit'));
 const RecordsCertificatesPage = lazy(() => import('src/pages/portal/records/certificates'));
 const CertificateTemplatesPage = lazy(() => import('src/pages/portal/records/certificate-templates'));
 const CertificateDesignerPage = lazy(() => import('src/pages/portal/records/certificate-designer'));
-const SacramentalCalendarPage = lazy(() => import('src/pages/portal/records/sacramental-calendar'));
 // Portal: OCR
 const OcrListPage = lazy(() => import('src/pages/portal/ocr'));
 const OcrUploadPage = lazy(() => import('src/pages/portal/ocr/upload'));
@@ -317,7 +316,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'certificates', element: <RecordsCertificatesPage /> },
           { path: 'certificates/templates', element: <CertificateTemplatesPage /> },
           { path: 'certificates/designer/:id', element: <CertificateDesignerPage /> },
-          { path: 'sacramental-calendar', element: <SacramentalCalendarPage /> },
+          { path: 'sacramental-calendar', element: <Navigate to="/dashboard/calendar?tab=sacramental" replace /> },
           { path: ':type', element: <RecordsListPage /> },
           { path: ':type/new', element: <RecordNewPage /> },
           { path: ':type/:id', element: <RecordDetailsPage /> },

@@ -1,6 +1,6 @@
 import { CONFIG } from 'src/global-config';
 
-import { CalendarView } from 'src/sections/calendar/view';
+import { CalendarHubView } from 'src/sections/calendar/view';
 
 // ----------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ export default function Page() {
     <>
       <title>{metadata.title}</title>
 
-      <CalendarView />
+      <CalendarHubView />
     </>
   );
 }

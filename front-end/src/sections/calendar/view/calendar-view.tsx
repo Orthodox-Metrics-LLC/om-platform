@@ -1,4 +1,5 @@
 import type { Theme, SxProps } from '@mui/material/styles';
+import type { OmCalendarSource } from '../om-calendar-api';
 import type { ICalendarEvent, ICalendarFilters } from 'src/types/calendar';
 
 import Calendar from '@fullcalendar/react';
@@ -64,6 +65,7 @@ export function CalendarView() {
   const [liturgical, setLiturgical] = useState<Map<string, any>>(new Map());
   const [detailsEvent, setDetailsEvent] = useState<any>(null);
   const [litVersion, setLitVersion] = useState(0);
+  const [sources, setSources] = useState<OmCalendarSource[]>([]);
 
   useEffect(() => {
     if (platformNoChurch) return;
@@ -72,6 +74,13 @@ export function CalendarView() {
     omCalendarApi.liturgical(churchId, start.toISOString().slice(0, 10), end.toISOString().slice(0, 10))
       .then((r) => setLiturgical(new Map(r.days.map((d) => [d.date, d]))))
       .catch(() => setLiturgical(new Map()));
+  }, [churchId, platformNoChurch, litVersion]);
+
+  // Always-visible color legend on the right of the calendar — independent
+  // of the "Calendars" management drawer, which stays opt-in.
+  useEffect(() => {
+    if (platformNoChurch) return;
+    omCalendarApi.sources(churchId).then((r) => setSources(r.sources)).catch(() => setSources([]));
   }, [churchId, platformNoChurch, litVersion]);
 
   const filters = useSetState<ICalendarFilters>({ colors: [], startDate: null, endDate: null });
@@ -185,6 +194,28 @@ export function CalendarView() {
 
   if (platformNoChurch) return <FileManagerChurchPicker heading="Calendar" basePath={paths.dashboard.calendar} />;
 
+  const renderLegend = () => (
+    <Box
+      sx={{
+        width: { xs: 1, md: 200 },
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 1.5,
+        pl: { xs: 0, md: 2 },
+        pt: { xs: 2, md: 0 },
+      }}
+    >
+      {sources.filter((s) => s.enabled).map((s) => (
+        <Box key={s.id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ width: 14, height: 14, borderRadius: 0.5, bgcolor: s.color, flexShrink: 0 }} />
+          <Typography variant="body2" noWrap>{s.name}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+
   return (
     <>
       <DashboardContent maxWidth="xl" sx={{ ...flexStyles }}>
@@ -211,60 +242,64 @@ export function CalendarView() {
 
         {canReset && renderResults()}
 
-        <Card sx={{ ...flexStyles, minHeight: '50vh' }}>
-          <CalendarRoot ref={calendarWrapRef} sx={{ ...flexStyles }}>
-            <CalendarToolbar
-              view={view}
-              title={title}
-              canReset={canReset}
-              loading={eventsLoading}
-              onChangeView={onChangeView}
-              onDateNavigation={onDateNavigation}
-              onOpenFilters={openFilters.onTrue}
-              viewOptions={[
-                { value: 'dayGridMonth', label: 'Month', icon: 'mingcute:calendar-month-line' },
-                { value: 'timeGridWeek', label: 'Week', icon: 'mingcute:calendar-week-line' },
-                { value: 'timeGridDay', label: 'Day', icon: 'mingcute:calendar-day-line' },
-                { value: 'listWeek', label: 'Agenda', icon: 'custom:calendar-agenda-outline' },
-              ]}
-            />
+        <Box sx={{ ...flexStyles, flexDirection: { xs: 'column', md: 'row' } }}>
+          <Card sx={{ ...flexStyles, minHeight: '50vh' }}>
+            <CalendarRoot ref={calendarWrapRef} sx={{ ...flexStyles }}>
+              <CalendarToolbar
+                view={view}
+                title={title}
+                canReset={canReset}
+                loading={eventsLoading}
+                onChangeView={onChangeView}
+                onDateNavigation={onDateNavigation}
+                onOpenFilters={openFilters.onTrue}
+                viewOptions={[
+                  { value: 'dayGridMonth', label: 'Month', icon: 'mingcute:calendar-month-line' },
+                  { value: 'timeGridWeek', label: 'Week', icon: 'mingcute:calendar-week-line' },
+                  { value: 'timeGridDay', label: 'Day', icon: 'mingcute:calendar-day-line' },
+                  { value: 'listWeek', label: 'Agenda', icon: 'custom:calendar-agenda-outline' },
+                ]}
+              />
 
-            <Calendar
-              weekends
-              editable={canWrite}
-              droppable={canWrite}
-              selectable={canWrite}
-              allDayMaintainDuration
-              eventResizableFromStart
-              firstDay={1}
-              aspectRatio={3}
-              dayMaxEvents={3}
-              eventMaxStack={2}
-              rerenderDelay={10}
-              headerToolbar={false}
-              eventDisplay="block"
-              ref={calendarRef}
-              initialView={view}
-              events={dataFiltered}
-              select={onSelectRange}
-              eventClick={onClickEvent}
-              businessHours={{
-                daysOfWeek: [1, 2, 3, 4, 5], // Mon-Fri
-              }}
-              eventDrop={(arg) => {
-                startTransition(() => {
-                  onDropEvent(arg, updateEvent);
-                });
-              }}
-              eventResize={(arg) => {
-                startTransition(() => {
-                  onResizeEvent(arg, updateEvent);
-                });
-              }}
-              plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-            />
-          </CalendarRoot>
-        </Card>
+              <Calendar
+                weekends
+                editable={canWrite}
+                droppable={canWrite}
+                selectable={canWrite}
+                allDayMaintainDuration
+                eventResizableFromStart
+                firstDay={1}
+                aspectRatio={3}
+                dayMaxEvents={3}
+                eventMaxStack={2}
+                rerenderDelay={10}
+                headerToolbar={false}
+                eventDisplay="block"
+                ref={calendarRef}
+                initialView={view}
+                events={dataFiltered}
+                select={onSelectRange}
+                eventClick={onClickEvent}
+                businessHours={{
+                  daysOfWeek: [1, 2, 3, 4, 5], // Mon-Fri
+                }}
+                eventDrop={(arg) => {
+                  startTransition(() => {
+                    onDropEvent(arg, updateEvent);
+                  });
+                }}
+                eventResize={(arg) => {
+                  startTransition(() => {
+                    onResizeEvent(arg, updateEvent);
+                  });
+                }}
+                plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+              />
+            </CalendarRoot>
+          </Card>
+
+          {renderLegend()}
+        </Box>
       </DashboardContent>
 
       {renderCreateFormDialog()}

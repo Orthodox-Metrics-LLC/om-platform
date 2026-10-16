@@ -112,7 +112,6 @@ export const churchNavData: NavSectionProps['data'] = [
           { title: 'Metrics', path: paths.portal.records.root, deepMatch: true },
         ],
       },
-      { title: 'Sacramental calendar', path: paths.portal.records.sacramentalCalendar, icon: NAV_ICONS.booking },
       { title: 'Invoices', path: paths.dashboard.invoice.root, icon: NAV_ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
       { title: 'File manager', path: paths.portal.fileManager, icon: NAV_ICONS.folder },
       { title: 'Mail', path: paths.dashboard.mail, icon: NAV_ICONS.mail },
