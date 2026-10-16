@@ -9,10 +9,11 @@ import { ScrollProgress, useScrollProgress } from 'src/components/animate/scroll
 
 import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
+import { PricingCarousel } from 'src/sections/pricing/view/pricing-view';
+
 import { HomeHero } from '../home-hero';
 import { HomeFAQs } from '../home-faqs';
 import { HomeMinimal } from '../home-minimal';
-import { HomePricing } from '../home-pricing';
 import { HomeProducts } from '../home-products';
 import { sectionIdForPath } from '../landing-sections';
 import { HomeForDesigner } from '../home-for-designer';
@@ -58,11 +59,7 @@ export function HomeView() {
 
         <HomeIntegrations />
 
-        <PublicPageBuilderOverride
-          pageType="pricing"
-          id="pricing"
-          fallback={<HomePricing id="pricing" />}
-        />
+        <PricingCarousel id="pricing" />
 
         <HomeTestimonials />
 

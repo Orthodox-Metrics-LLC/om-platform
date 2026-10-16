@@ -83,11 +83,18 @@ const CTA_RECT: Record<string, Record<'light' | 'dark', object>> = {
 
 // ----------------------------------------------------------------------
 
+type PricingCarouselProps = {
+  /** Deep-link anchor id, e.g. so /#pricing on the home page scrolls here. */
+  id?: string;
+};
+
 /**
  * The plans render as designed cards (one image per plan, in light and dark
  * variants) inside a carousel rather than the template's plan-card grid.
+ * Exported so the home page's pricing section can render the exact same
+ * component instead of a second, separately-maintained copy.
  */
-function PricingCarousel() {
+export function PricingCarousel({ id }: PricingCarouselProps) {
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const variant = colorScheme === 'dark' ? 'dark' : 'light';
@@ -114,7 +121,7 @@ function PricingCarousel() {
   };
 
   return (
-    <Box component="section" sx={{ py: 10, position: 'relative' }}>
+    <Box id={id} component="section" sx={{ py: 10, position: 'relative' }}>
       <MotionViewport>
         <Container>
           <SectionTitle
