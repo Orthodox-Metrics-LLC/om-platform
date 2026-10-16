@@ -158,6 +158,13 @@ export const paths = {
       edit: (id: string | number) => `${ROOTS.DASHBOARD}/admin/page-builder/${id}/edit`,
     },
     parishSettings: `${ROOTS.DASHBOARD}/admin/parish-settings`,
+    accountParish: {
+      root: `${ROOTS.DASHBOARD}/account/parish-management`,
+      databaseMapping: `${ROOTS.DASHBOARD}/account/parish-management/database-mapping`,
+      recordSettings: `${ROOTS.DASHBOARD}/account/parish/record-settings`,
+      searchConfiguration: `${ROOTS.DASHBOARD}/account/parish-management/search-configuration`,
+      ocrPreferences: `${ROOTS.DASHBOARD}/account/ocr-preferences`,
+    },
     permission: `${ROOTS.DASHBOARD}/permission`,
     general: {
       app: `${ROOTS.DASHBOARD}/app`,

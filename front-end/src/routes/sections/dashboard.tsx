@@ -77,6 +77,11 @@ const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-bu
 const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
 const PageBuilderEditPage = lazy(() => import('src/pages/dashboard/admin/page-builder/edit'));
 const ParishSettingsPage = lazy(() => import('src/pages/dashboard/admin/parish-settings'));
+const ParishManagementPage = lazy(() => import('src/pages/dashboard/account/parish-management'));
+const DatabaseMappingPage = lazy(() => import('src/pages/dashboard/account/database-mapping'));
+const RecordSettingsPage = lazy(() => import('src/pages/dashboard/account/record-settings'));
+const SearchConfigurationPage = lazy(() => import('src/pages/dashboard/account/search-configuration'));
+const OcrPreferencesPage = lazy(() => import('src/pages/dashboard/account/ocr-preferences'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
 const MailPage = lazy(() => import('src/pages/dashboard/mail'));
@@ -268,6 +273,50 @@ export const dashboardRoutes: RouteObject[] = [
         element: (
           <RoleRouteGuard allowedRoles={['super_admin', 'admin']}>
             <ParishSettingsPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'account/parish-management',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+            <ParishManagementPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'account/parish-management/database-mapping',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+            <Outlet />
+          </RoleRouteGuard>
+        ),
+        children: [
+          { index: true, element: <DatabaseMappingPage /> },
+          { path: ':step', element: <DatabaseMappingPage /> },
+        ],
+      },
+      {
+        path: 'account/parish/record-settings',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+            <RecordSettingsPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'account/parish-management/search-configuration',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+            <SearchConfigurationPage />
+          </RoleRouteGuard>
+        ),
+      },
+      {
+        path: 'account/ocr-preferences',
+        element: (
+          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+            <OcrPreferencesPage />
           </RoleRouteGuard>
         ),
       },
