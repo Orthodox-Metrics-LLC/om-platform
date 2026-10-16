@@ -9,6 +9,7 @@
     "dev": "NODE_OPTIONS=--max-old-space-size=6144 vite",
     "start": "NODE_OPTIONS=--max-old-space-size=6144 vite preview",
     "typecheck": "tsc --noEmit",
+    "check-icons": "bash -c 'if rg -n \"@mui/icons-material|lucide-react\" src --glob \"*.{ts,tsx}\"; then echo \"Use src/components/iconify instead.\"; exit 1; fi; echo icon imports ok'",
     "build": "NODE_OPTIONS=--max-old-space-size=6144 tsc && vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
