@@ -1,25 +1,18 @@
 # server
 
-Reserved for the Orthodox Metrics backend, migrating from
-`/var/www/orthodoxmetrics/prod/server`.
+Orthodox Metrics backend. Migrated from `/var/www/orthodoxmetrics/prod/server`
+(source commit `49215a843b5f8987ce503fcdeaed7dc8e80343dc`, plus the path fix
+that keeps uploads, `.build-info`, and `package.json` valid from this parent).
 
-## Do not change its depth or its sibling's name
+## Depth
 
-`prod/server/src/index.ts` hard-codes both:
+`server/` stays one level below the repo root, with `front-end/` as its sibling.
+`src/index.ts` resolves `front-end/dist` from that parent.
 
-```js
-const prodRoot = path.resolve(__dirname, '../..');   // server/dist -> server -> root
-app.use('/assets', express.static(path.join(prodRoot, 'front-end/dist/assets')));
-```
+Uploads stay at `/var/www/orthodoxmetrics/prod/uploads` (`UPLOADS_ROOT` overrides).
+Deploy metadata is `server/.build-info`. The version read is `server/package.json`.
 
-So `server/` must stay exactly one level below the repo root, with `front-end/` as its
-sibling under that exact name. Moving either into an `apps/` directory breaks both lines
-plus the deploy script. That constraint is why this repo is flat rather than a conventional
-`apps/` + `packages/` monorepo — see `docs/migration-contract.md`.
+## Runtime, not git
 
-## Other rules that travel with it
-
-- TypeScript compiles `server/src` -> `server/dist`; the running service loads from `dist/`.
-- Plain `.js` files are **not** copied by the compiler and must be present in both trees.
-- SQL lives in `server/database/migrations/` — the one documented exception outside `src/`.
-- Build/deploy tooling lives in `server/scripts/`; hand-run ops scripts in `server/src/scripts/`.
+Do not commit `.env`, `.credentials/`, `node_modules/`, `dist/`, `logs/`, or the
+runtime blobs under `storage/`. The service runs `dist/index.js` after `npm run build`.

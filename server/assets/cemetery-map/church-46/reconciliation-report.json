@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-07-12T11:12:14.808Z",
+  "xlsx": "/var/www/orthodoxmetrics/prod/tmp/ssppoc_all_grave_mappings_with_locations.xlsx",
+  "workbookStats": {
+    "sections": {
+      "1": 70,
+      "2": 199,
+      "3": 86,
+      "NS": 92
+    },
+    "regions": {
+      "L01-L14": 70,
+      "L15-L27": 96,
+      "R02-R15": 103,
+      "L28-L36-CIRCLE": 52,
+      "R16-R22-CIRCLE": 34,
+      "NEW-MN": 92
+    },
+    "status": {
+      "occupied": 411,
+      "unavailable": 10,
+      "available": 26
+    },
+    "sourceRows": 447,
+    "physical": 447,
+    "ambiguous": 0,
+    "ambiguousDetails": []
+  },
+  "reconciliations": [
+    {
+      "label": "workbook-vs-manifest",
+      "workbookCount": 447,
+      "renderedCount": 469,
+      "expectedTotal": 469,
+      "missingInRendered": [],
+      "extraInRendered": [
+        "SSPPOC-R01-P01",
+        "SSPPOC-R01-P02",
+        "SSPPOC-R01-P03",
+        "SSPPOC-R01-P04",
+        "SSPPOC-R01-P05",
+        "SSPPOC-R01-P06",
+        "SSPPOC-L14-P02",
+        "SSPPOC-L02-P06",
+        "SSPPOC-L05-P04",
+        "SSPPOC-L01-P04",
+        "SSPPOC-L01-P02",
+        "SSPPOC-L01-P01",
+        "SSPPOC-L02-P03",
+        "SSPPOC-L02-P02",
+        "SSPPOC-L02-P01",
+        "SSPPOC-L03-P03",
+        "SSPPOC-L03-P02",
+        "SSPPOC-L03-P01",
+        "SSPPOC-L04-P03",
+        "SSPPOC-L04-P02",
+        "SSPPOC-L10-P06",
+        "SSPPOC-L10-P04"
+      ],
+      "duplicateStableIds": [],
+      "duplicateRowPosition": [],
+      "graveNumberMismatches": [],
+      "occupiedMissingNames": [
+        "SSPPOC-R22-P01",
+        "SSPPOC-R22-P02",
+        "SSPPOC-R21-P01",
+        "SSPPOC-R21-P02",
+        "SSPPOC-R21-P03"
+      ],
+      "rowGaps": [
+        {
+          "region_code": "L01-L14",
+          "normalized_row": "L14",
+          "missing_positions": [
+            2
+          ]
+        },
+        {
+          "region_code": "L01-L14",
+          "normalized_row": "L10",
+          "missing_positions": [
+            4
+          ]
+        },
+        {
+          "region_code": "L01-L14",
+          "normalized_row": "L5",
+          "missing_positions": [
+            4
+          ]
+        },
+        {
+          "region_code": "L01-L14",
+          "normalized_row": "L4",
+          "missing_positions": [
+            2,
+            3
+          ]
+        },
+        {
+          "region_code": "L01-L14",
+          "normalized_row": "L1",
+          "missing_positions": [
+            4
+          ]
+        }
+      ],
+      "sectionTotals": {
+        "workbook": {
+          "1": 70,
+          "2": 199,
+          "3": 86,
+          "NS": 92
+        },
+        "rendered": {
+          "1": 92,
+          "2": 199,
+          "3": 86,
+          "NS": 92
+        },
+        "expected": {
+          "1": 92,
+          "2": 199,
+          "3": 86,
+          "NS": 92
+        }
+      },
+      "pass": false
+    }
+  ],
+  "dbError": "connect ECONNREFUSED 127.0.0.1:3306"
+}

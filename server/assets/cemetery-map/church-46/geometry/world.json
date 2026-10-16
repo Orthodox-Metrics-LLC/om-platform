@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "churchId": 46,
+  "description": "SSPPOC cemetery map world space — SVG viewBox logical coordinates",
+  "viewBox": { "width": 100, "height": 170 },
+  "plotDefaults": { "width": 2.4, "height": 2.4 },
+  "trafficCircle": {
+    "center": { "x": 42, "y": 62 },
+    "radius": 11.5,
+    "islandRadius": 6.5,
+    "roadWidth": 5.0,
+    "clearanceRadius": 14.0
+  },
+  "roads": {
+    "spine": [
+      { "x": 42, "y": 72 },
+      { "x": 45, "y": 82 },
+      { "x": 47, "y": 104 },
+      { "x": 49, "y": 128 },
+      { "x": 50, "y": 150 },
+      { "x": 52, "y": 162 }
+    ],
+    "upper": [
+      { "x": 42, "y": 52 },
+      { "x": 36, "y": 42 },
+      { "x": 33, "y": 25 }
+    ],
+    "newSection": [
+      { "x": 33, "y": 25 },
+      { "x": 33, "y": 14 },
+      { "x": 100.5, "y": 14 }
+    ],
+    "casingWidth": 7.5,
+    "surfaceWidth": 5.0
+  },
+  "landmarks": {
+    "entrance": { "x": 52, "y": 162 },
+    "welcome": { "x": 50, "y": 150 },
+    "whiteGate": { "x": 33, "y": 25, "width": 14 },
+    "storageShed": { "x": 14, "y": 39, "w": 9, "h": 6 },
+    "dumpster": { "x": 14, "y": 33, "w": 6, "h": 3.4 },
+    "newSection": { "x": 60, "y": 38, "rx": 35, "ry": 11 }
+  },
+  "cameras": {
+    "full": { "x": 0, "y": 4, "w": 98, "h": 162, "description": "All grave-bearing regions including south entrance L01–L14 and Section 2 upper fields" },
+    "trafficCircle": { "x": 6, "y": 46, "w": 88, "h": 40, "description": "Calibration slice — circle + L28–L36 + R16–R22" },
+    "section1": { "x": 8, "y": 104, "w": 76, "h": 58, "description": "South entrance — L01–L14 west + R1 east across the road" },
+    "section2": { "x": 0, "y": 68, "w": 96, "h": 46, "description": "Upper field — L15–L27 west + R02–R15 east across the road" },
+    "section3": { "x": 2, "y": 41, "w": 90, "h": 38, "description": "Traffic circle — L28–L36 west arc + R16–R22 east arc around the central monument" },
+    "newSection": { "x": 30, "y": 25, "w": 72, "h": 22, "description": "New Section M/N grid east of path (y 33–45) south of white fence y=25; gate/labels parked north so R22 stays visible" }
+  }
+}

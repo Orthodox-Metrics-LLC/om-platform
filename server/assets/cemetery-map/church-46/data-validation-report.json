@@ -1,0 +1,142 @@
+{
+  "validatedAt": "2026-07-12T11:12:14.480Z",
+  "churchId": 46,
+  "plotCount": 469,
+  "metrics": {
+    "missing_plot_keys": 0,
+    "duplicate_plot_keys": 0,
+    "missing_sections": 0,
+    "missing_rows": 0,
+    "missing_positions": 0,
+    "malformed_composite_numbers": 0,
+    "synthetic_dates": 0,
+    "orphan_occupants": 0,
+    "orphan_interments": 5,
+    "manifest_api_mismatches": 0,
+    "database_mismatches": 0
+  },
+  "totals": {
+    "sections": {
+      "1": 92,
+      "2": 199,
+      "3": 86,
+      "NS": 92
+    },
+    "status": {
+      "occupied": 419,
+      "unavailable": 24,
+      "available": 26
+    },
+    "physical": 469
+  },
+  "expected": {
+    "physical": 469,
+    "sections": {
+      "1": 92,
+      "2": 199,
+      "3": 86,
+      "NS": 92
+    },
+    "status": {
+      "occupied": 419,
+      "available": 26,
+      "unavailable": 24,
+      "reserved": 0
+    }
+  },
+  "totalsMatch": {
+    "physical": true,
+    "sections": true,
+    "status": true
+  },
+  "edgeResults": [
+    {
+      "label": "823 family lot — 5 physical slots (authoritative workbook)",
+      "pass": true,
+      "detail": "",
+      "matchCount": 5
+    },
+    {
+      "label": "882 one physical grave",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "895/896 one physical grave",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "102/101 one physical grave",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "105/104 one physical grave",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "194/195/196 one physical grave",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "164 available no occupant",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    },
+    {
+      "label": "194–196 occupants (operator 2026-07-11)",
+      "pass": true,
+      "detail": "",
+      "matchCount": 1
+    }
+  ],
+  "roadClearance": {
+    "pass": true,
+    "overlaps": 0,
+    "minCenterDist": 16.2,
+    "transitionGaps": [],
+    "transitionPass": true,
+    "offenders": []
+  },
+  "fenceBoundary": {
+    "pass": true,
+    "fenceY": 30,
+    "minSouthY": 31.5,
+    "northOfFence": [],
+    "northOfRoad": [],
+    "northOfFenceCount": 0,
+    "northOfRoadCount": 0
+  },
+  "issues": [
+    {
+      "code": "OCCUPIED_WITHOUT_OCCUPANT",
+      "plot_key": "SSPPOC-R01-P01"
+    },
+    {
+      "code": "OCCUPIED_WITHOUT_OCCUPANT",
+      "plot_key": "SSPPOC-R01-P02"
+    },
+    {
+      "code": "OCCUPIED_WITHOUT_OCCUPANT",
+      "plot_key": "SSPPOC-R01-P03"
+    },
+    {
+      "code": "OCCUPIED_WITHOUT_OCCUPANT",
+      "plot_key": "SSPPOC-R01-P04"
+    },
+    {
+      "code": "OCCUPIED_WITHOUT_OCCUPANT",
+      "plot_key": "SSPPOC-R01-P05"
+    }
+  ],
+  "passed": false
+}
