@@ -58,7 +58,11 @@ export function HomeView() {
 
         <HomeIntegrations />
 
-        <HomePricing id="pricing" />
+        <PublicPageBuilderOverride
+          pageType="pricing"
+          id="pricing"
+          fallback={<HomePricing id="pricing" />}
+        />
 
         <HomeTestimonials />
 
