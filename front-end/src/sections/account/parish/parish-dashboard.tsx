@@ -11,9 +11,17 @@ import { RouterLink } from 'src/routes/components';
 
 import { useActiveChurchId } from 'src/layouts/components/use-active-church';
 
-import { omApiFetch } from 'src/auth/context/om-auth';
+import { useAuthContext } from 'src/auth/hooks';
+import { omApiFetch, isPlatformRole } from 'src/auth/context/om-auth';
 
-import { ArrowForwardIcon, BrushOutlinedIcon, EventOutlinedIcon, PeopleOutlinedIcon, PaletteOutlinedIcon, StorageOutlinedIcon } from './parish-icons';
+import {
+  ArrowForwardIcon,
+  BrushOutlinedIcon,
+  EventOutlinedIcon,
+  PeopleOutlinedIcon,
+  PaletteOutlinedIcon,
+  StorageOutlinedIcon,
+} from './parish-icons';
 
 type ParishStats = {
   baptisms: number;
@@ -76,6 +84,10 @@ function formatActivityTime(iso: string): string {
 
 const ParishDashboard: React.FC = () => {
   const churchId = useActiveChurchId();
+  const { user } = useAuthContext();
+  const actions = isPlatformRole(user?.role)
+    ? quickActions
+    : quickActions.filter((action) => action.href !== paths.dashboard.accountParish.ocrPreferences);
   const [stats, setStats] = useState<ParishStats | null>(null);
   const [recentActivity] = useState<ActivityRow[]>([]);
 
@@ -115,7 +127,13 @@ const ParishDashboard: React.FC = () => {
           Records, configuration shortcuts, and parish setup for the active church.
         </Typography>
         {!churchId && (
-          <Chip size="small" color="warning" variant="outlined" label="Select a parish to load counts" sx={{ mt: 1.5 }} />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label="Select a parish to load counts"
+            sx={{ mt: 1.5 }}
+          />
         )}
       </Box>
 
@@ -174,7 +192,7 @@ const ParishDashboard: React.FC = () => {
             gap: 2,
           }}
         >
-          {quickActions.map((action) => {
+          {actions.map((action) => {
             const { Icon } = action;
             return (
               <Paper
@@ -196,7 +214,14 @@ const ParishDashboard: React.FC = () => {
                 }}
               >
                 <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
-                  <Box sx={{ p: 1, borderRadius: 1.5, bgcolor: 'primary.lighter', display: 'inline-flex' }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 1.5,
+                      bgcolor: 'primary.lighter',
+                      display: 'inline-flex',
+                    }}
+                  >
                     <Icon sx={{ fontSize: 22, color: 'primary.main' }} />
                   </Box>
                   <Box sx={{ flex: 1 }}>
@@ -204,10 +229,19 @@ const ParishDashboard: React.FC = () => {
                       <Typography variant="subtitle2">{action.title}</Typography>
                       <ArrowForwardIcon
                         className="action-arrow"
-                        sx={{ fontSize: 16, opacity: 0, transition: 'opacity 0.2s', color: 'primary.main' }}
+                        sx={{
+                          fontSize: 16,
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          color: 'primary.main',
+                        }}
                       />
                     </Stack>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 0.25, display: 'block' }}
+                    >
                       {action.description}
                     </Typography>
                   </Box>

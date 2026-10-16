@@ -4,7 +4,7 @@
  * Mounted at /api/my/ocr-preferences in index.ts.
  *
  * Proxies to the tenant-DB ocr_settings table via the user's church_id.
- * Only exposes settings appropriate for church administrators (not dev internals).
+ * Only super_admin and admin may read or change these settings.
  *
  * GET  / — Read current church OCR preferences (with defaults)
  * PUT  / — Update church OCR preferences (partial, non-destructive)
@@ -15,8 +15,8 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { getAppPool } = require('../config/db-compat');
 
-// Roles that can manage OCR preferences
-const OCR_ADMIN_ROLES = ['super_admin', 'admin', 'church_admin', 'manager', 'priest'];
+// Platform administrators only. Parish clergy and church admins do not get this screen.
+const OCR_ADMIN_ROLES = ['super_admin', 'admin'];
 
 // Default values (match server/src/routes/ocr/settings.ts)
 const DEFAULTS = {

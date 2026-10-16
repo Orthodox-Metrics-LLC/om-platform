@@ -11,6 +11,7 @@ import { LoadingScreen } from 'src/components/loading-screen';
 import { AccountLayout, PARISH_ACCOUNT_ROLES } from 'src/sections/account/account-layout';
 
 import { AuthGuard, RoleRouteGuard } from 'src/auth/guard';
+import { OM_PLATFORM_ROLES } from 'src/auth/context/om-auth';
 
 import { usePathname } from '../hooks';
 
@@ -300,7 +301,14 @@ export const dashboardRoutes: RouteObject[] = [
             path: 'account/parish-management/search-configuration',
             element: <SearchConfigurationPage />,
           },
-          { path: 'account/ocr-preferences', element: <OcrPreferencesPage /> },
+          {
+            path: 'account/ocr-preferences',
+            element: (
+              <RoleRouteGuard allowedRoles={[...OM_PLATFORM_ROLES]}>
+                <OcrPreferencesPage />
+              </RoleRouteGuard>
+            ),
+          },
         ],
       },
       { path: 'mail', element: <MailPage /> },

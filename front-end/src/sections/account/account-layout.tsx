@@ -15,6 +15,7 @@ import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import { useAuthContext } from 'src/auth/hooks';
+import { isPlatformRole } from 'src/auth/context/om-auth';
 
 // ----------------------------------------------------------------------
 
@@ -81,12 +82,13 @@ const PARISH_NAV_ITEMS = [
     icon: <Iconify width={24} icon="eva:search-fill" />,
     href: paths.dashboard.accountParish.searchConfiguration,
   },
-  {
-    label: 'OCR',
-    icon: <Iconify width={24} icon="solar:settings-bold" />,
-    href: paths.dashboard.accountParish.ocrPreferences,
-  },
 ];
+
+const OCR_NAV_ITEM = {
+  label: 'OCR',
+  icon: <Iconify width={24} icon="solar:settings-bold" />,
+  href: paths.dashboard.accountParish.ocrPreferences,
+};
 
 function activeTabHref(pathname: string, items: Array<{ href: string }>) {
   const current = removeLastSlash(pathname);
@@ -105,9 +107,11 @@ export function AccountLayout({ children, ...other }: DashboardContentProps) {
 
   const canManageParish =
     !!user?.role && (PARISH_ACCOUNT_ROLES as readonly string[]).includes(user.role);
-  const navItems = canManageParish
-    ? [...ACCOUNT_NAV_ITEMS, ...PARISH_NAV_ITEMS]
-    : ACCOUNT_NAV_ITEMS;
+  const navItems = [
+    ...ACCOUNT_NAV_ITEMS,
+    ...(canManageParish ? PARISH_NAV_ITEMS : []),
+    ...(isPlatformRole(user?.role) ? [OCR_NAV_ITEM] : []),
+  ];
 
   return (
     <DashboardContent {...other}>
