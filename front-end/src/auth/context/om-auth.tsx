@@ -49,7 +49,7 @@ type OmAuthState = {
   loading: boolean;
   authenticated: boolean;
   impersonation: OmImpersonation;
-  signIn: (email: string, password: string) => Promise<OmUser>;
+  signIn: (email: string, password: string, client?: 'om-viewer') => Promise<OmUser>;
   signOut: () => Promise<void>;
   checkSession: () => Promise<void>;
   /** super_admin only — swap the session to another account (server enforces the role). */
@@ -277,12 +277,12 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
     checkSession();
   }, [checkSession]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, client?: 'om-viewer') => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, ...(client ? { client } : {}) }),
     });
 
     const data = await res.json().catch(() => null);

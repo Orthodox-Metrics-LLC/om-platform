@@ -1,0 +1,11 @@
+const express=require('express');
+const {requireAuth}=require('../middleware/auth');
+const {getAppPool}=require('../config/db-compat');
+const {runResource}=require('../services/omViewerEngine');
+const {createViewerHandlers}=require('../services/omViewerPolicy');
+const router=express.Router();
+const handlers=createViewerHandlers({pool:getAppPool(),runResource});
+router.use(requireAuth);
+router.get('/session',handlers.session);
+router.post('/resource',express.json({limit:'30mb'}),handlers.resource);
+module.exports=router;

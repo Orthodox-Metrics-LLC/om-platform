@@ -13,6 +13,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { Logo } from 'src/components/logo';
 
+import { isViewerClient } from 'src/auth/utils/viewer-client';
+
 import { AuthSplitSection } from './section';
 import { AuthSplitContent } from './content';
 import { SettingsButton } from '../components/settings-button';
@@ -49,10 +51,10 @@ export function AuthSplitLayout({
       leftArea: (
         <>
           {/** @slot Logo */}
-          <Logo />
+          <Logo disabled={isViewerClient()} tabIndex={isViewerClient()?-1:0} />
         </>
       ),
-      rightArea: (
+      rightArea: isViewerClient() ? null : (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
           {/** @slot Help link */}
           <Link

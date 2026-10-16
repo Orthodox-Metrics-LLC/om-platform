@@ -24,6 +24,7 @@ import { RHFTextField } from 'src/components/hook-form/rhf-text-field';
 
 import { FormHead } from '../components/form-head';
 import { useOmAuth, isChurchRole } from '../context/om-auth';
+import { isViewerClient, VIEWER_COMPLETE } from '../utils/viewer-client';
 
 // ----------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ export function OmSignInView() {
   const onSubmit = handleSubmit(async (data) => {
     setErrorMessage(null);
     try {
-      const signedIn = await signIn(data.email, data.password);
+      const signedIn = await signIn(data.email, data.password, isViewerClient()?'om-viewer':undefined);
       // The backend tells us when a password change or onboarding step is owed.
       if (signedIn.must_change_password) {
         setErrorMessage(
@@ -68,6 +69,7 @@ export function OmSignInView() {
        * returns the user where they were headed. AuthGuard sets that param.
        */
       const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      if(isViewerClient()){window.location.replace(VIEWER_COMPLETE);return;}
       router.push(landingPath(signedIn.role, returnTo));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Sign in failed.');
@@ -85,7 +87,7 @@ export function OmSignInView() {
   return (
     <>
       <FormHead
-        title="Sign in to Orthodox Metrics"
+        title={isViewerClient()?"Sign in to OM Viewer":"Sign in to Orthodox Metrics"}
         description="Use your Orthodox Metrics account. Parish accounts issued through onboarding sign in with organization credentials."
         sx={{ textAlign: { xs: 'center', md: 'left' } }}
       />
@@ -153,7 +155,7 @@ export function OmSignInView() {
         </Stack>
       </Form>
 
-      <EnrollmentPrompt />
+      {!isViewerClient() && <EnrollmentPrompt />}
     </>
   );
 }
@@ -186,7 +188,7 @@ function OrganizationSignIn() {
   return (
     <>
       <FormHead
-        title="Sign in to Orthodox Metrics"
+        title={isViewerClient()?"Sign in to OM Viewer":"Sign in to Orthodox Metrics"}
         description="Use your organization account. Sign-in is handled by Keycloak and Active Directory."
         sx={{ textAlign: { xs: 'center', md: 'left' } }}
       />
@@ -195,7 +197,7 @@ function OrganizationSignIn() {
         Sign in
       </Button>
 
-      <EnrollmentPrompt />
+      {!isViewerClient() && <EnrollmentPrompt />}
     </>
   );
 }
@@ -248,6 +250,7 @@ function SignedInPanel() {
   useEffect(() => {
     if (!user) return;
     const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+    if(isViewerClient()){window.location.replace(VIEWER_COMPLETE);return;}
     router.replace(landingPath(user.role, returnTo));
   }, [user, router]);
 
@@ -260,7 +263,7 @@ function SignedInPanel() {
     <Stack spacing={3}>
       <FormHead
         title="You are signed in"
-        description="Taking you to your portal…"
+        description={isViewerClient()?"Returning to OM Viewer...":"Taking you to your portal..."}
         sx={{ textAlign: { xs: 'center', md: 'left' } }}
       />
 

@@ -74,7 +74,9 @@ const verifyRecaptchaToken = async (token, ip) => {
 // POST /api/auth/login - User login with JWT
 router.post('/login', async (req, res) => {
   try {
-    console.log('[AUTH] Login attempt - Body:', JSON.stringify(req.body));
+    const {isViewerLogin,establishViewerSession}=require('../services/omViewerLogin');
+    const viewerLogin=isViewerLogin(req);
+    console.log('[AUTH] Login attempt - client:',viewerLogin?'om-viewer':'website');
     console.log('[AUTH] Content-Type:', req.headers['content-type']);
     
     // Handle both 'email' and 'username' fields for compatibility
@@ -151,6 +153,19 @@ router.post('/login', async (req, res) => {
         success: false,
         message: 'Invalid email or password'
       });
+    }
+
+    // Viewer credentials create a restricted cookie session, never website access/refresh tokens.
+    if(viewerLogin){
+      try{
+        const viewerUser=await establishViewerSession(req,user);
+        try{
+          const {reactivateUserSessionsAfterLogin}=require('../middleware/sessionTracker');
+          await reactivateUserSessionsAfterLogin(user.id,req);
+        }catch{console.error('[AUTH] Viewer device session reactivation failed.');}
+        pool.execute("INSERT INTO activity_log (user_id,action,details,ip_address,user_agent,created_at) VALUES (?, 'login', ?, ?, ?, NOW())",[user.id,JSON.stringify({client:'om-viewer',role:user.role}),req.ip||'unknown',(req.get('User-Agent')||'unknown').substring(0,255)]).catch(()=>console.error('[AUTH] Viewer login activity could not be recorded.'));
+        return res.json({success:true,client:'om-viewer',user:viewerUser});
+      }catch(error){return res.status(403).json({success:false,message:error.message});}
     }
 
     // Admin "revoke all sessions" marks device rows terminated — remove so re-login is not blocked

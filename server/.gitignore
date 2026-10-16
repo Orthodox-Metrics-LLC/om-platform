@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+viewer-engine/.venv/
+viewer-engine/**/__pycache__/
+viewer-engine/**/*.egg-info/
 
 # Environment variables
 .env

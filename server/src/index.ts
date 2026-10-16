@@ -457,6 +457,7 @@ const upload = multer({
 // 3. Session middleware (CRITICAL: before any auth-protected routes)
 console.log('🍪 Applying session middleware...');
 app.use(sessionMiddleware);
+app.use(require('./middleware/viewerClientScope').viewerClientScope);
 
 // 4. Database routing middleware
 const { databaseRouter } = require('./middleware/databaseRouter');
@@ -642,6 +643,8 @@ console.log('✅ [Server] Mounted /api/churches/:churchId/records-landing route 
 
 // Register Router/Menu Studio feature (requires authentication)
 app.use('/api/auth', authRoutes);
+
+app.use('/api/om-viewer', require('./routes/om-viewer'));
 
 // Email intake webhook (webhook-secret protected, no auth middleware)
 const emailIntakeRouter = require('./routes/email-intake');

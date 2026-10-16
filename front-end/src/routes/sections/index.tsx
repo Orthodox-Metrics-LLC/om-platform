@@ -21,6 +21,7 @@ import { componentsRoutes } from './components';
 // ----------------------------------------------------------------------
 
 const HomePage = lazy(() => import('src/pages/home'));
+const ViewerCompletePage = lazy(() => import('src/pages/auth/viewer-complete'));
 const OmSignInPage = lazy(() => import('src/pages/auth/sign-in'));
 
 const homeElement = (
@@ -53,6 +54,8 @@ export const routesSection: RouteObject[] = [
       </Suspense>
     ),
   },
+
+  {path:'/auth/viewer-complete',element:<Suspense fallback={<SplashScreen />}><ViewerCompletePage /></Suspense>},
 
   // Auth
   ...authRoutes,
