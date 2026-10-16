@@ -16,7 +16,7 @@ const { requireAuth } = require('../middleware/auth');
 const { getAppPool } = require('../config/db-compat');
 
 // Roles that can manage OCR preferences
-const OCR_ADMIN_ROLES = ['super_admin', 'admin', 'church_admin'];
+const OCR_ADMIN_ROLES = ['super_admin', 'admin', 'church_admin', 'manager', 'priest'];
 
 // Default values (match server/src/routes/ocr/settings.ts)
 const DEFAULTS = {

@@ -77,6 +77,9 @@ const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-bu
 const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
 const PageBuilderEditPage = lazy(() => import('src/pages/dashboard/admin/page-builder/edit'));
 const ParishSettingsPage = lazy(() => import('src/pages/dashboard/admin/parish-settings'));
+/** Parish clergy and church admins configure their own parish. Platform admins too. */
+const PARISH_ACCOUNT_ROLES = ['super_admin', 'admin', 'church_admin', 'manager', 'priest'];
+
 const ParishManagementPage = lazy(() => import('src/pages/dashboard/account/parish-management'));
 const DatabaseMappingPage = lazy(() => import('src/pages/dashboard/account/database-mapping'));
 const RecordSettingsPage = lazy(() => import('src/pages/dashboard/account/record-settings'));
@@ -279,7 +282,7 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'account/parish-management',
         element: (
-          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
             <ParishManagementPage />
           </RoleRouteGuard>
         ),
@@ -287,7 +290,7 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'account/parish-management/database-mapping',
         element: (
-          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
             <Outlet />
           </RoleRouteGuard>
         ),
@@ -299,7 +302,7 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'account/parish/record-settings',
         element: (
-          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
             <RecordSettingsPage />
           </RoleRouteGuard>
         ),
@@ -307,7 +310,7 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'account/parish-management/search-configuration',
         element: (
-          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
             <SearchConfigurationPage />
           </RoleRouteGuard>
         ),
@@ -315,7 +318,7 @@ export const dashboardRoutes: RouteObject[] = [
       {
         path: 'account/ocr-preferences',
         element: (
-          <RoleRouteGuard allowedRoles={['super_admin', 'admin', 'church_admin']}>
+          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
             <OcrPreferencesPage />
           </RoleRouteGuard>
         ),
