@@ -1,7 +1,7 @@
 import type { BoxProps } from '@mui/material/Box';
 
-import { useRef, useState, useEffect } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
+import { useRef, useState, useEffect } from 'react';
 import { m, useSpring, useMotionValue, useReducedMotion } from 'framer-motion';
 
 import Box from '@mui/material/Box';
