@@ -158,8 +158,8 @@ async function processOcrJobAsync(db, jobId, imagePath, options = {}) {
       
       // Get churchId from options
       const churchId = options.churchId || 46;
-      // Use absolute path: /var/www/orthodoxmetrics/prod/server/uploads/om_church_##/processed
-      const baseUploadPath = process.env.UPLOAD_BASE_PATH || process.env.UPLOADS_ROOT || '/var/www/orthodoxmetrics/prod/uploads';
+      // Use absolute path: /var/www/om-platform/server/uploads/om_church_##/processed
+      const baseUploadPath = process.env.UPLOAD_BASE_PATH || process.env.UPLOADS_ROOT || '/var/www/om-platform/uploads';
       const baseUploadDir = path.join(baseUploadPath, `om_church_${churchId}`);
       const processedDir = path.join(baseUploadDir, 'processed');
       

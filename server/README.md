@@ -9,7 +9,7 @@ that keeps uploads, `.build-info`, and `package.json` valid from this parent).
 `server/` stays one level below the repo root, with `front-end/` as its sibling.
 `src/index.ts` resolves `front-end/dist` from that parent.
 
-Uploads stay at `/var/www/orthodoxmetrics/prod/uploads` (`UPLOADS_ROOT` overrides).
+Uploads stay at `/var/www/om-platform/uploads` (`UPLOADS_ROOT` overrides).
 Deploy metadata is `server/.build-info`. The version read is `server/package.json`.
 
 ## Runtime, not git

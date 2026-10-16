@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-07-12T11:12:14.808Z",
-  "xlsx": "/var/www/orthodoxmetrics/prod/tmp/ssppoc_all_grave_mappings_with_locations.xlsx",
+  "xlsx": "/var/www/om-platform/tmp/ssppoc_all_grave_mappings_with_locations.xlsx",
   "workbookStats": {
     "sections": {
       "1": 70,

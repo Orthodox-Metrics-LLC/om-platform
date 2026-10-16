@@ -34,7 +34,7 @@ function loadVisionJson(pool, jobId) {
 
     if (!visionJsonStr) {
       const feederPath = path.join(
-        '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+        '/var/www/om-platform/server/storage/feeder',
         `job_${jobId}`, 'page_0', 'vision_result.json'
       );
       if (fs.existsSync(feederPath)) {

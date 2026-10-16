@@ -188,8 +188,8 @@ class JsonToDatabaseMigrator {
             updated_at = CURRENT_TIMESTAMP
         `, [
           'production',
-          '/var/www/orthodoxmetrics/prod',
-          '/var/www/orthodoxmetrics/prod/front-end',
+          '/var/www/om-platform',
+          '/var/www/om-platform/church-front-end',
           '/var/log/orthodoxmetrics',
           '/var/www/orthodoxmetrics/uploads',
           '/var/backups/orthodoxmetrics',

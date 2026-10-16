@@ -10,7 +10,7 @@ import type { ParsingGetResponse } from '@llamaindex/llama-cloud/resources/parsi
 
 export type LlamaParseTier = 'fast' | 'cost_effective' | 'agentic' | 'agentic_plus';
 
-const FEEDER_ROOT = '/var/www/orthodoxmetrics/prod/server/storage/feeder';
+const FEEDER_ROOT = '/var/www/om-platform/server/storage/feeder';
 
 export function isLlamaParseConfigured(): boolean {
   return !!(process.env.LLAMA_CLOUD_API_KEY?.trim() || process.env.LLAMA_PARSE_API_KEY?.trim());

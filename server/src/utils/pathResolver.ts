@@ -178,7 +178,7 @@ export function getBaseSourcePath(sourceType: 'local' | 'remote'): string {
   if (sourceType === 'remote') {
     return MOUNT_POINT;
   }
-  return '/var/www/orthodoxmetrics/prod/refactor-src';
+  return '/var/www/om-platform/refactor-src';
 }
 
 /**

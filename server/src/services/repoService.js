@@ -3,7 +3,7 @@
  *
  * Supports both repo targets:
  *   omai          → /var/www/omai
- *   orthodoxmetrics → /var/www/orthodoxmetrics/prod
+ *   orthodoxmetrics → /var/www/om-platform
  *
  * Used by om-daily.js and admin/ops.js for all git operations.
  */
@@ -13,7 +13,7 @@ const { execSync } = require('child_process');
 // ── Repo paths ──────────────────────────────────────────────────
 const REPO_PATHS = {
   omai: '/var/www/omai',
-  orthodoxmetrics: '/var/www/orthodoxmetrics/prod',
+  orthodoxmetrics: '/var/www/om-platform',
 };
 
 const DEFAULT_TIMEOUT = 10000; // 10s

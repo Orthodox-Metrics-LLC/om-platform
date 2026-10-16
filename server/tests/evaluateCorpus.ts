@@ -11,7 +11,7 @@ const { processJob } = require('../src/workers/ocrFeederWorker');
 const { extractAgentFieldsForJob } = require('../src/utils/ocrClassifier');
 
 const CORPUS_BASE = '/var/omai-ops/data/orthodoxmetrics/ocr-corpus/sample_records';
-const CACHE_DIR = '/var/www/orthodoxmetrics/prod/server/storage/test_cache';
+const CACHE_DIR = '/var/www/om-platform/server/storage/test_cache';
 const CHURCH_ID = 278; // Test Church
 
 interface CorpusItem {
@@ -139,7 +139,7 @@ async function setupPageCache(tenantPool: any, jobId: number, md5: string, image
   console.log(`[Cache] Found cached OCR files for ${md5}. Restoring...`);
 
   // Create page folder under server/storage/feeder/job_{jobId}/page_0/
-  const pageDir = path.join('/var/www/orthodoxmetrics/prod/server/storage/feeder', `job_${jobId}`, 'page_0');
+  const pageDir = path.join('/var/www/om-platform/server/storage/feeder', `job_${jobId}`, 'page_0');
   fs.mkdirSync(pageDir, { recursive: true });
 
   // Copy files
@@ -184,7 +184,7 @@ async function setupPageCache(tenantPool: any, jobId: number, md5: string, image
 }
 
 async function savePageToCache(jobId: number, md5: string) {
-  const pageDir = path.join('/var/www/orthodoxmetrics/prod/server/storage/feeder', `job_${jobId}`, 'page_0');
+  const pageDir = path.join('/var/www/om-platform/server/storage/feeder', `job_${jobId}`, 'page_0');
   const visionJsonPath = path.join(pageDir, 'vision_result.json');
   const preprocPath = path.join(pageDir, 'preprocessed.jpg');
   const rawTextPath = path.join(pageDir, 'raw_text.txt');

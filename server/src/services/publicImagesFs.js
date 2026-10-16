@@ -49,7 +49,7 @@ function getRepoRoot() {
   
   // Production fallback
   if (process.env.NODE_ENV === 'production') {
-    const prodRoot = '/var/www/orthodoxmetrics/prod';
+    const prodRoot = '/var/www/om-platform';
     if (fs.existsSync(path.join(prodRoot, 'front-end', 'public', 'images'))) {
       return prodRoot;
     }
@@ -93,7 +93,7 @@ function getImagesRoot() {
   
   // In production, use the production path as default
   if (process.env.NODE_ENV === 'production') {
-    const prodPath = '/var/www/orthodoxmetrics/prod/front-end/public/images';
+    const prodPath = '/var/www/om-platform/church-front-end/public/images';
     if (fs.existsSync(prodPath)) {
       _imagesRoot = prodPath;
       console.log(`✅ Using production images root: ${_imagesRoot}`);

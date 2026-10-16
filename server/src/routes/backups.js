@@ -246,7 +246,7 @@ router.post('/start', async (req, res) => {
     const db = getDb();
     const engine = new BackupEngine(db, {
       backupRoot: BACKUP_ROOT,
-      prodRoot: process.env.PROD_ROOT || '/var/www/orthodoxmetrics/prod',
+      prodRoot: process.env.PROD_ROOT || '/var/www/om-platform',
       database: {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER,

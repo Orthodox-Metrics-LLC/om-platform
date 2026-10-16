@@ -55,7 +55,7 @@ const SECRET_PATTERNS = [
 
 function getStorageRoot() {
   if (process.env.DOCS_PICKUP_ROOT) return process.env.DOCS_PICKUP_ROOT;
-  return path.join('/var/www/orthodoxmetrics/prod', 'storage', 'docs-pickup');
+  return path.join('/var/www/om-platform', 'storage', 'docs-pickup');
 }
 
 function getFilesDir() {

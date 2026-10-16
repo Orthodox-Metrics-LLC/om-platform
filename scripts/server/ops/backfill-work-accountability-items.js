@@ -22,7 +22,7 @@ const SINCE_DEFAULT = '2025-12-01';
 const BACKFILL_SOURCE = 'historical_backfill';
 
 const GH_REPOS = [
-  { slug: 'omrecords82/prod-current', repo_target: 'orthodoxmetrics', cwd: '/var/www/orthodoxmetrics/prod' },
+  { slug: 'omrecords82/prod-current', repo_target: 'orthodoxmetrics', cwd: '/var/www/om-platform' },
   { slug: 'omrecords82/omai', repo_target: 'omai', cwd: '/var/www/omai' },
 ];
 

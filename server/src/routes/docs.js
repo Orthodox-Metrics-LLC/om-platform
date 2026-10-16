@@ -9,7 +9,7 @@
  * 3. Add to your main server file: app.use('/api/docs', require('./routes/docs'));
  * 
  * File Storage:
- * - Production: /var/www/orthodoxmetrics/prod/front-end/public/docs
+ * - Production: /var/www/om-platform/church-front-end/public/docs
  * - Development: front-end/public/docs (relative to project root)
  */
 
@@ -23,7 +23,7 @@ const router = express.Router();
 // Determine docs directory based on environment
 const getDocsDirectory = () => {
   if (process.env.NODE_ENV === 'production') {
-    return '/var/www/orthodoxmetrics/prod/front-end/public/docs';
+    return '/var/www/om-platform/church-front-end/public/docs';
   }
   // Development: relative to backend project root, go up to front-end/public/docs
   // Adjust this path based on your backend project structure

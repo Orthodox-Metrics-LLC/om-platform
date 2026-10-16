@@ -116,13 +116,13 @@ console.log('\n── getRepoPath ───────────────�
 assertEq(repoService.REPO_PATHS.omai, '/var/www/omai', 'REPO_PATHS.omai');
 assertEq(
   repoService.REPO_PATHS.orthodoxmetrics,
-  '/var/www/orthodoxmetrics/prod',
+  '/var/www/om-platform',
   'REPO_PATHS.orthodoxmetrics'
 );
 assertEq(repoService.getRepoPath('omai'), '/var/www/omai', 'getRepoPath omai');
 assertEq(
   repoService.getRepoPath('orthodoxmetrics'),
-  '/var/www/orthodoxmetrics/prod',
+  '/var/www/om-platform',
   'getRepoPath orthodoxmetrics'
 );
 

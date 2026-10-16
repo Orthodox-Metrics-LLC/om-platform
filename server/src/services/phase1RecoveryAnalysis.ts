@@ -36,7 +36,7 @@ try {
   throw new Error('glob module required for Phase 1 analysis');
 }
 
-const PROJECT_ROOT = '/var/www/orthodoxmetrics/prod';
+const PROJECT_ROOT = '/var/www/om-platform';
 const BACKUP_SOURCE = path.join(PROJECT_ROOT, 'refactor-src');
 const LIVE_TARGET = path.join(PROJECT_ROOT, 'front-end/src');
 const DOCS_ROOT = path.join(PROJECT_ROOT, 'docs');

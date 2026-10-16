@@ -29,7 +29,7 @@ const requireSuperAdmin = requireRole(['super_admin']);
 // ============================================================================
 
 const ALLOWED_ROOTS = {
-  prod:   { key: 'prod',   label: 'prod',        path: '/var/www/orthodoxmetrics/prod' },
+  prod:   { key: 'prod',   label: 'prod',        path: '/var/www/om-platform' },
   backup: { key: 'backup', label: 'backup-prod',  path: '/var/www/orthodoxmetrics/backup-prod' },
 };
 

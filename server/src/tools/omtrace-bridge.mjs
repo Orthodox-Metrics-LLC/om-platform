@@ -18,7 +18,7 @@ const frontEndToolsPath = path.resolve(__dirname, '../../../front-end/src/tools/
 /**
  * Run dependency analysis
  * @param {Object} options - Analysis options
- * @param {string} options.baseDir - Base directory (e.g., /var/www/orthodoxmetrics/prod)
+ * @param {string} options.baseDir - Base directory (e.g., /var/www/om-platform)
  * @param {string} options.relativeRoot - Relative root (e.g., front-end/src)
  * @param {string} options.scanRoot - Resolved scan root path
  * @param {string[]} options.targets - Target components to analyze

@@ -71,8 +71,8 @@ async function gitExec(repoPath, args, timeout = 30000) {
 // ── Repo path mapping ────────────────────────────────────────────────────────
 
 const REPO_PATHS = {
-  'om-frontend':   '/var/www/orthodoxmetrics/prod',
-  'om-server':     '/var/www/orthodoxmetrics/prod',
+  'om-frontend':   '/var/www/om-platform',
+  'om-server':     '/var/www/om-platform',
   'omai-frontend': '/var/www/omai',
   'omai-server':   '/var/www/omai',
 };

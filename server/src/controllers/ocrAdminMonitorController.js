@@ -41,12 +41,12 @@ const JOB_COLUMNS = `
 `;
 
 // Resolve a job's filename to an absolute filesystem path
-const UPLOADS_ROOT = '/var/www/orthodoxmetrics/prod/uploads';
+const UPLOADS_ROOT = '/var/www/om-platform/uploads';
 function resolveJobFilePath(filename, churchId) {
   if (!filename) return null;
   let filePath;
   if (filename.startsWith('/uploads/')) {
-    filePath = path.join('/var/www/orthodoxmetrics/prod', filename);
+    filePath = path.join('/var/www/om-platform', filename);
   } else {
     filePath = path.join(UPLOADS_ROOT, `om_church_${churchId}`, 'uploaded', filename);
   }

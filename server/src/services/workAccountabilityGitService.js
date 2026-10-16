@@ -11,7 +11,7 @@ const { getRepoMeta } = require('./workSessionConstants');
 const { scanAgentActivity } = require('./workAccountabilityAgentSourcesService');
 
 const GIT_REPO_ROOTS = {
-  orthodoxmetrics: '/var/www/orthodoxmetrics/prod',
+  orthodoxmetrics: '/var/www/om-platform',
   omai: '/var/www/omai',
   'omai-ops': '/var/omai-ops',
 };

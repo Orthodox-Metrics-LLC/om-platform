@@ -33,7 +33,7 @@ try {
   yaml = null;
 }
 
-const PROD_ROOT = process.env.OM_PROD_ROOT || '/var/www/orthodoxmetrics/prod';
+const PROD_ROOT = process.env.OM_PROD_ROOT || '/var/www/om-platform';
 const DROPBOX_ROOT = process.env.DOCS_DROPBOX_ROOT || path.join(PROD_ROOT, 'storage', 'docs-dropbox');
 const PICKUP_ROOT = process.env.DOCS_PICKUP_ROOT || path.join(PROD_ROOT, 'storage', 'docs-pickup');
 const PICKUP_FILES_DIR = path.join(PICKUP_ROOT, 'files');

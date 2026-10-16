@@ -402,7 +402,7 @@ router.get('/artifacts/:id/file/:filename', requireAuth, requireAdmin, async (re
 // see below) can't be reached. Kept in sync with git_repo_inventory's seed
 // rows in repoInventoryService.js.
 const STATIC_REPOS_FALLBACK = {
-  orthodoxmetrics: '/var/www/orthodoxmetrics/prod',
+  orthodoxmetrics: '/var/www/om-platform',
   omai: '/var/www/omai',
   omstudio: '/var/www/omstudio',
   'om-workshop': '/var/www/om-workshop',

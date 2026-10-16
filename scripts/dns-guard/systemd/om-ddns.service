@@ -1,0 +1,20 @@
+[Unit]
+Description=OM GoDaddy Dynamic DNS updater for orthodoxmetrics.com
+Documentation=https://orthodoxmetrics.com/docs/internal/infrastructure/dns-reliability-guard/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+# Credentials live outside the repo, root-owned 600.
+Environment=OM_DNS_ENV_FILE=/etc/orthodoxmetrics/om-dns-guard.env
+ExecStart=/var/www/om-platform/scripts/dns-guard/om-ddns-update.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=90
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

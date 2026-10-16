@@ -7,8 +7,8 @@ const logger = require('./logger');
 class EncryptedStorage {
   constructor() {
     this.encryptedMountPath = '/mnt/bigbook_secure';
-    this.encryptedSourcePath = '/var/www/orthodoxmetrics/prod/bigbook/encrypted';
-    this.keyPath = '/var/www/orthodoxmetrics/prod/bigbook/keys';
+    this.encryptedSourcePath = '/var/www/om-platform/bigbook/encrypted';
+    this.keyPath = '/var/www/om-platform/bigbook/keys';
     this.isMounted = false;
     this.mountKey = null;
   }

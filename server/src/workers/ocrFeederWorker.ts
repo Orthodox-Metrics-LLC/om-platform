@@ -16,7 +16,7 @@
  *
  * Status ENUM: pending | processing | complete | error
  *
- * Upload root: /var/www/orthodoxmetrics/prod/uploads (NO server/uploads)
+ * Upload root: /var/www/om-platform/uploads (NO server/uploads)
  * Managed via systemctl, NOT pm2.
  */
 
@@ -118,7 +118,7 @@ function isShutdownRequested(): boolean {
 }
 
 // ── Resolve upload dir (canonical path outside server/) ─────────────────────
-const UPLOADS_ROOT = '/var/www/orthodoxmetrics/prod/uploads';
+const UPLOADS_ROOT = '/var/www/om-platform/uploads';
 function resolveUploadDir(churchId: number): string {
   const dir = path.join(UPLOADS_ROOT, `om_church_${churchId}`, 'uploaded');
   mkdirp(dir);
@@ -138,7 +138,7 @@ function resolveJobFilePath(filename: string, churchId: number): string {
     filePath = filename;
   } else if (filename.startsWith('/uploads/')) {
     // Relative DB path → absolute under prod/
-    filePath = path.join('/var/www/orthodoxmetrics/prod', filename);
+    filePath = path.join('/var/www/om-platform', filename);
   } else {
     // Bare filename → canonical upload dir
     filePath = path.join(resolveUploadDir(churchId), filename);

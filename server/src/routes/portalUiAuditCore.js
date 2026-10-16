@@ -19,7 +19,7 @@ const { spawn } = require('child_process');
 const crypto = require('crypto');
 const { OM_ASSETS_ROOT, STORAGE_ROOT } = require('../assets/omAssetsConstants');
 
-const OM_ROOT = path.resolve('/var/www/orthodoxmetrics/prod');
+const OM_ROOT = path.resolve('/var/www/om-platform');
 const TOOL_ROOT = path.join(OM_ROOT, 'scripts', 'portal-ui-audit');
 const ARTIFACTS_ROOT = path.join(TOOL_ROOT, '.om-artifacts');
 const PROJECT_ROOT = path.join(OM_ROOT, 'front-end');
