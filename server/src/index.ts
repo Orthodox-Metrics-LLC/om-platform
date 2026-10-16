@@ -1095,6 +1095,7 @@ app.use('/api/pages', pagesRouter);
 app.use('/api/blogs', require('./routes/blogs')); // Blog functionality for Task 132
 app.use('/api/latest-news', require('./routes/latest-news'));
 app.use('/api/public/latest-news', require('./routes/latest-news-public'));
+app.use('/api/public/home-media', require('./routes/home-media-public'));
 app.use('/api/uploads', uploadsRouter);
 // Add middleware to log ALL requests to /api/gallery before routing
 app.use('/api/gallery', (req, res, next) => {

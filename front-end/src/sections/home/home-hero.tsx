@@ -1,6 +1,6 @@
 import type { BoxProps } from '@mui/material/Box';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { varAlpha } from 'minimal-shared/utils';
 import { m, useSpring, useMotionValue, useReducedMotion } from 'framer-motion';
 
@@ -37,11 +37,58 @@ const HERO_EDGE_MASK = [
   'linear-gradient(to top, transparent, black 11%)',
 ].join(', ');
 
+/** How long the static image shows before the video reel kicks in (ms). */
+const REEL_DELAY = 4000;
+
+type HeroVideoFolder = { date: string; videos: string[] };
+type ReelClip = { date: string; file: string };
+
+/**
+ * Flattens latest-first dated folders into one ordered playlist
+ * (every clip in the newest folder, then every clip in the next, etc).
+ */
+function buildReel(folders: HeroVideoFolder[]): ReelClip[] {
+  return folders.flatMap((folder) => folder.videos.map((file) => ({ date: folder.date, file })));
+}
+
 export function HomeHero({ sx, ...other }: BoxProps) {
   const reduceMotion = useReducedMotion();
 
   const sectionRef = useRef<HTMLDivElement>(null);
   const [showVideo, setShowVideo] = useState(false);
+
+  // Auto-cycling "latest" video reel: image for a few seconds, then every
+  // video from assets/video/latest/MM-DD-YYYY, newest folder first, looping
+  // back to the image once the reel finishes.
+  const [reel, setReel] = useState<ReelClip[]>([]);
+  const [reelIndex, setReelIndex] = useState(0);
+  const [reelPlaying, setReelPlaying] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    fetch('/api/public/home-media/hero-videos')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (live) setReel(buildReel(data?.folders || [])); })
+      .catch(() => { if (live) setReel([]); });
+    return () => { live = false; };
+  }, []);
+
+  // Manually playing the intro video takes priority and pauses the reel;
+  // it resumes (from the image, after the usual delay) once that ends.
+  useEffect(() => {
+    if (showVideo || reelPlaying || !reel.length) return undefined;
+    const timer = setTimeout(() => setReelPlaying(true), REEL_DELAY);
+    return () => clearTimeout(timer);
+  }, [showVideo, reelPlaying, reel.length]);
+
+  const handleReelEnded = () => {
+    setReelIndex((index) => {
+      const next = index + 1;
+      if (next < reel.length) return next;
+      setReelPlaying(false);
+      return 0;
+    });
+  };
 
   const physics = { damping: 22, mass: 0.3, stiffness: 90 };
   const pointerX = useMotionValue(0);
@@ -241,6 +288,21 @@ export function HomeHero({ sx, ...other }: BoxProps) {
           controls
           playsInline
           onEnded={() => setShowVideo(false)}
+          sx={{
+            width: 1,
+            display: 'block',
+            aspectRatio: ARTWORK_RATIO,
+            borderRadius: 1,
+          }}
+        />
+      ) : reelPlaying && reel[reelIndex] ? (
+        <Box
+          key={`${reel[reelIndex].date}/${reel[reelIndex].file}`}
+          component="video"
+          src={`${CONFIG.assetsDir}/assets/video/latest/${reel[reelIndex].date}/${reel[reelIndex].file}`}
+          autoPlay
+          playsInline
+          onEnded={handleReelEnded}
           sx={{
             width: 1,
             display: 'block',
