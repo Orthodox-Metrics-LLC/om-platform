@@ -7,9 +7,8 @@ import { usePathname } from 'src/routes/hooks';
 import { BackToTopButton } from 'src/components/animate/back-to-top-button';
 import { ScrollProgress, useScrollProgress } from 'src/components/animate/scroll-progress';
 
-import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
-
 import { PricingCarousel } from 'src/sections/pricing/view/pricing-view';
+import { PublicPageBuilderOverride } from 'src/sections/latest-news/public-page-builder-override';
 
 import { HomeHero } from '../home-hero';
 import { HomeFAQs } from '../home-faqs';
