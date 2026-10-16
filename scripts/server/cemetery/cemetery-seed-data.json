@@ -1,0 +1,4461 @@
+{
+ "sections": {
+  "W": [
+   "W",
+   "West Historic Lawn"
+  ],
+  "E": [
+   "E",
+   "East Lawn (Main Drive)"
+  ],
+  "S": [
+   "S",
+   "South Memorial Lawn"
+  ],
+  "N": [
+   "N",
+   "North Niche Grid"
+  ]
+ },
+ "plots": [
+  {
+   "plot_number": "807",
+   "surname": "",
+   "given_names": [
+    "Daniel Grigorjew"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "806",
+   "surname": "Leich",
+   "given_names": [
+    "Peter",
+    "Pauline",
+    "Simone"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "805",
+   "surname": "Sabat",
+   "given_names": [
+    "Steve",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "804",
+   "surname": "Huzinec",
+   "given_names": [
+    "John",
+    "George",
+    "Mary",
+    "Gertrude"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "810",
+   "surname": "",
+   "given_names": [
+    "Josephine Wasevich"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "809",
+   "surname": "",
+   "given_names": [
+    "William Marchisin"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "812",
+   "surname": "",
+   "given_names": [
+    "Stella Gromack",
+    "Alexander Gromack"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "811",
+   "surname": "Carmon",
+   "given_names": [
+    "Mary",
+    "Steve"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "847",
+   "surname": "Barnosky",
+   "given_names": [
+    "Samuel",
+    "Tillie"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "814",
+   "surname": "Semekovich",
+   "given_names": [
+    "Nicholas Semoskovich"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "813",
+   "surname": "Pawlik",
+   "given_names": [
+    "Stephanie",
+    "Anthony Jr.",
+    "Stephen",
+    "Helen",
+    "Olga",
+    "Anthony Sr.",
+    "Alexander",
+    "Josephine",
+    "Charles"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "818",
+   "surname": "Padla",
+   "given_names": [
+    "Magdalena",
+    "Lazar",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 14.77,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "817",
+   "surname": "",
+   "given_names": [
+    "William Romanowky"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "816",
+   "surname": "Barna",
+   "given_names": [
+    "Anna",
+    "Wasil"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "815",
+   "surname": "Chepan",
+   "given_names": [
+    "Peter",
+    "Catherine"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "823",
+   "surname": "Arlam",
+   "given_names": [
+    "Demetry Bartushak"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "822",
+   "surname": "",
+   "given_names": [
+    "Tikon Jakowlew",
+    "Pauline Jakowlew"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "821",
+   "surname": "Romanovich",
+   "given_names": [
+    "Paul",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "820",
+   "surname": "",
+   "given_names": [
+    "Julia Hansen"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "819",
+   "surname": "Kuzmiak Holovach",
+   "given_names": [
+    "Anastasia",
+    "Michael",
+    "Mary",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "827",
+   "surname": "Lasin",
+   "given_names": [
+    "Jonah",
+    "Parasceva"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "826",
+   "surname": "Tacak",
+   "given_names": [
+    "Anna",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "825",
+   "surname": "",
+   "given_names": [
+    "Barbara Putyrske"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "824",
+   "surname": "Wozny",
+   "given_names": [
+    "Anna",
+    "Mary",
+    "Luke"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 20.31,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "85",
+   "surname": "Sundago",
+   "given_names": [
+    "Michael Tacak",
+    "Anastasia Irnitsky",
+    "Proclus Kostik"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "831",
+   "surname": "Zydiak",
+   "given_names": [
+    "Mary",
+    "Daniel"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "830",
+   "surname": "Lisowski",
+   "given_names": [
+    "Matilda Blanchard"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "829",
+   "surname": "Yarlik",
+   "given_names": [],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "828",
+   "surname": "Dzoba",
+   "given_names": [
+    "Paul",
+    "Tessie Zuboff",
+    "Martha"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "835A",
+   "surname": "Zydiak",
+   "given_names": [
+    "Olga",
+    "Theodore"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "835",
+   "surname": "Zydiak",
+   "given_names": [],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "834",
+   "surname": "Marchuk",
+   "given_names": [
+    "Julian",
+    "Vladimir"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "833",
+   "surname": "Marchuk",
+   "given_names": [
+    "Anna Mayberryt"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "832",
+   "surname": "Harasimeuk",
+   "given_names": [
+    "Efrosenia",
+    "Nicholay"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "838,839",
+   "surname": "Mihalick",
+   "given_names": [
+    "Jacob",
+    "Michael",
+    "Mary",
+    "Dora"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "837",
+   "surname": "Barnosky",
+   "given_names": [
+    "Dolores",
+    "Madeline",
+    "Jacob"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 25.85,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "836",
+   "surname": "Poklitar",
+   "given_names": [
+    "Olga",
+    "John",
+    "Antonia Salamander"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "846",
+   "surname": "Vashuta",
+   "given_names": [
+    "Julia",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "845",
+   "surname": "Vashuta",
+   "given_names": [],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "844",
+   "surname": "Hnatuk",
+   "given_names": [
+    "Andrew",
+    "Eva"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "843",
+   "surname": "Holovach",
+   "given_names": [
+    "John",
+    "Paraska",
+    "Gregory"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "842",
+   "surname": "Klimowich",
+   "given_names": [
+    "Sophie",
+    "Anna",
+    "Andrew"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "841",
+   "surname": "Yaskowsky",
+   "given_names": [
+    "Olga",
+    "Mary",
+    "Arthur"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "853",
+   "surname": "Barnosky",
+   "given_names": [
+    "Mary",
+    "Nicholas",
+    "Mary"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "852",
+   "surname": "Nebozinsky",
+   "given_names": [
+    "Katherine",
+    "Louis"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "850",
+   "surname": "Lazaruk",
+   "given_names": [
+    "Charles"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "849",
+   "surname": "Gerasimchuk",
+   "given_names": [
+    "Mary",
+    "David"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "848",
+   "surname": "Andreosky",
+   "given_names": [
+    "Theodore Andreosky"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 31.38,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "858",
+   "surname": "Yurchuck",
+   "given_names": [
+    "Mary",
+    "Frank"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "857",
+   "surname": "Patson",
+   "given_names": [
+    "Helen",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "856",
+   "surname": "Reckets",
+   "given_names": [
+    "Anna",
+    "Philip"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "855",
+   "surname": "",
+   "given_names": [
+    "Charles Fetchko Jr."
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "854",
+   "surname": "Fetchko",
+   "given_names": [
+    "Eugenia",
+    "Basil"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "146",
+   "surname": "Kralovich",
+   "given_names": [
+    "Anne Marie"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "145",
+   "surname": "Gregovich",
+   "given_names": [
+    "Helen",
+    "Frank"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "144",
+   "surname": "Russo",
+   "given_names": [
+    "Helen",
+    "Jerry"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "143",
+   "surname": "Tjaden",
+   "given_names": [
+    "Herman",
+    "Ludmila"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "142",
+   "surname": "Gavlick",
+   "given_names": [
+    "Andrew",
+    "Mary"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "141",
+   "surname": "Putryske",
+   "given_names": [
+    "Ann",
+    "Michael",
+    "Tatiana Svidrik"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "139",
+   "surname": "Podobed",
+   "given_names": [
+    "Mary Kachorsky"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 36.92,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "138",
+   "surname": "George",
+   "given_names": [
+    "John Kachorsky"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "137",
+   "surname": "Sofko",
+   "given_names": [
+    "Anna",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "136",
+   "surname": "Simpson",
+   "given_names": [
+    "Gloria",
+    "Richard",
+    "Theodora Wytovich"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "135",
+   "surname": "Yalsh",
+   "given_names": [
+    "Anna",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "134",
+   "surname": "Dimitrew",
+   "given_names": [
+    "Sophie Demjanow"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "132",
+   "surname": "Dutko",
+   "given_names": [
+    "Olga",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "131",
+   "surname": "Senko",
+   "given_names": [
+    "Christina",
+    "Nicholas"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "130",
+   "surname": "Dezko Karwatt",
+   "given_names": [
+    "Karwatt",
+    "Mary",
+    "Sedor",
+    "Sonya"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "129",
+   "surname": "Fedarka",
+   "given_names": [
+    "Xenia",
+    "Walter"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "128",
+   "surname": "Yadlowsky",
+   "given_names": [
+    "Julia",
+    "Makysm",
+    "Jerry"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "127",
+   "surname": "Arendacs",
+   "given_names": [
+    "Michael",
+    "Mildred",
+    "Michae Jr."
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "126125",
+   "surname": "Grenther",
+   "given_names": [
+    "Michael",
+    "Xenia",
+    "Peter",
+    "Carolyn"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 42.46,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "125",
+   "surname": "",
+   "given_names": [
+    "Kathryn",
+    "Gregory",
+    "Carolyn"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "124",
+   "surname": "Yarik",
+   "given_names": [
+    "Kathryn",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "123",
+   "surname": "Adamcio",
+   "given_names": [
+    "Mary",
+    "Paul"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "122",
+   "surname": "Pinarchik",
+   "given_names": [
+    "Clara",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "121",
+   "surname": "Neudachin",
+   "given_names": [
+    "William G.",
+    "Zinaida"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "120119",
+   "surname": "Wilhousky",
+   "given_names": [
+    "Elizabeth G.",
+    "Helen",
+    "Peter J.",
+    "Mary",
+    "Mac C.",
+    "Joseph G.",
+    "Joseph",
+    "Emil J.",
+    "Vera"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "118",
+   "surname": "",
+   "given_names": [
+    "Michael Dziga",
+    "Vasiliy Mlinetz"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "117",
+   "surname": "Max",
+   "given_names": [
+    "Mary",
+    "Steve",
+    "Steve Jr."
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "116",
+   "surname": "Ploof",
+   "given_names": [
+    "Jerome J. Wilhousky"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "115",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 33.19,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "114",
+   "surname": "Kluchnik",
+   "given_names": [
+    "Olga",
+    "Wasyl"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "113",
+   "surname": "Lopatka Tindall",
+   "given_names": [
+    "John Sr.",
+    "Tindall",
+    "Helen",
+    "Genevieve"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 48.0,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "112",
+   "surname": "Felice",
+   "given_names": [
+    "Mary",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "111",
+   "surname": "",
+   "given_names": [],
+   "status": "reserved",
+   "x": 8.19,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "110",
+   "surname": "Evaniec",
+   "given_names": [
+    "Anna",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "109",
+   "surname": "Verkon",
+   "given_names": [
+    "Olga",
+    "Joseph Sr."
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "108",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 17.56,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "107",
+   "surname": "",
+   "given_names": [
+    "Sophie O'Connell"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "106",
+   "surname": "Bulat",
+   "given_names": [
+    "Barbara",
+    "Pauline",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "105",
+   "surname": "",
+   "given_names": [
+    "Jack Russiawy"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "105104",
+   "surname": "Dzurich",
+   "given_names": [
+    "Eva",
+    "Mary",
+    "Nicholas"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "103",
+   "surname": "Schander",
+   "given_names": [
+    "Joseph Fenuck"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "102101",
+   "surname": "Wislosky",
+   "given_names": [
+    "John",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "100",
+   "surname": "Makowski",
+   "given_names": [
+    "Nicholas Makowski",
+    "John Makowski"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 53.54,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "99",
+   "surname": "",
+   "given_names": [
+    "Helen Zripko"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "98",
+   "surname": "",
+   "given_names": [
+    "George Limyansky"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "97",
+   "surname": "Seminuk",
+   "given_names": [
+    "Stephanida Seminuk"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "96",
+   "surname": "Gumenuk",
+   "given_names": [
+    "Evtihey",
+    "Tatiana",
+    "Eustafey"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "95",
+   "surname": "Chabra",
+   "given_names": [
+    "Louise",
+    "Nicholas"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "94",
+   "surname": "",
+   "given_names": [
+    "Dominica Stolowky"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "93",
+   "surname": "",
+   "given_names": [
+    "Anna Klaga"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "92",
+   "surname": "",
+   "given_names": [
+    "Andrew Panacek"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "91",
+   "surname": "Popko",
+   "given_names": [
+    "Michael",
+    "Jacob",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "90",
+   "surname": "Marchison",
+   "given_names": [
+    "Helen",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "89",
+   "surname": "Krivka",
+   "given_names": [
+    "Theresa",
+    "John Sr."
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "88",
+   "surname": "Chabra",
+   "given_names": [
+    "Helen",
+    "Peter",
+    "Peter Jr."
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 59.08,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "87",
+   "surname": "Cherniak",
+   "given_names": [
+    "Anthony",
+    "Anna",
+    "H. Wawrenchuk"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "86",
+   "surname": "",
+   "given_names": [
+    "Nazar Skwarla"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "84",
+   "surname": "Proskura",
+   "given_names": [
+    "Gregory",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "83",
+   "surname": "Spotts",
+   "given_names": [
+    "Michael",
+    "Mary",
+    "Andrew"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "82",
+   "surname": "Peschek",
+   "given_names": [
+    "Joseph",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "81",
+   "surname": "Pasechnik",
+   "given_names": [
+    "Vladimir",
+    "Nazary"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "80",
+   "surname": "",
+   "given_names": [
+    "Gregory Klimchuk"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "79",
+   "surname": "Lazorisak",
+   "given_names": [
+    "George"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "78",
+   "surname": "",
+   "given_names": [
+    "Peter J. Krenitsky"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "77",
+   "surname": "Specian",
+   "given_names": [
+    "Charles",
+    "Julie",
+    "Charles Jr."
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "76",
+   "surname": "Gorbunova",
+   "given_names": [
+    "Valentine",
+    "Valentina"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "75",
+   "surname": "Wasitowski",
+   "given_names": [
+    "Anna",
+    "Edward"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 64.62,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "7475",
+   "surname": "Cresina",
+   "given_names": [
+    "Julia",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "74",
+   "surname": "Bozinta",
+   "given_names": [
+    "Mary",
+    "Stanley W."
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "73",
+   "surname": "Kluchnik",
+   "given_names": [
+    "Anna Kluchnik"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "73/72",
+   "surname": "Pituch",
+   "given_names": [
+    "Gertrude Z.",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "71",
+   "surname": "Susko",
+   "given_names": [
+    "Stephen",
+    "Anna",
+    "Alice"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "69",
+   "surname": "Bozinta",
+   "given_names": [],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "68",
+   "surname": "Bozinta",
+   "given_names": [
+    "Howard",
+    "William"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "67",
+   "surname": "Rzeszowski",
+   "given_names": [
+    "Kristina",
+    "Timothy"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "66",
+   "surname": "Mock",
+   "given_names": [
+    "Stephen",
+    "Mildred"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "65",
+   "surname": "Gustich",
+   "given_names": [
+    "Harry",
+    "Leona M."
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "64",
+   "surname": "Zvonchenko",
+   "given_names": [
+    "Helen",
+    "George"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "63",
+   "surname": "Lebedz",
+   "given_names": [
+    "Joseph",
+    "Nadia",
+    "Paul"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 70.15,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "62",
+   "surname": "Wassel",
+   "given_names": [
+    "John",
+    "Sophie"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "61",
+   "surname": "Somoluk",
+   "given_names": [
+    "Peter",
+    "Stella"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "59",
+   "surname": "Filippini",
+   "given_names": [
+    "Sandy",
+    "Joan"
+   ],
+   "status": "occupied",
+   "x": 11.31,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "126,125",
+   "surname": "Grenther",
+   "given_names": [
+    "Michael",
+    "Xenia",
+    "Peter",
+    "Carolyn"
+   ],
+   "status": "occupied",
+   "x": 14.44,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "120,119",
+   "surname": "Wilhousky",
+   "given_names": [
+    "Elizabeth G.",
+    "Helen",
+    "Peter J.",
+    "Mary",
+    "Mae C.",
+    "Joseph G.",
+    "Joseph",
+    "Emil J.",
+    "Vera"
+   ],
+   "status": "occupied",
+   "x": 17.56,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "105,104",
+   "surname": "Dzurich",
+   "given_names": [
+    "Eva",
+    "Mary",
+    "Nicholas"
+   ],
+   "status": "occupied",
+   "x": 20.69,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "102,101",
+   "surname": "Wislosky",
+   "given_names": [
+    "John",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 23.81,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "74,75",
+   "surname": "Cresina",
+   "given_names": [
+    "Julia",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 26.94,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "Alex Zak"
+   ],
+   "status": "occupied",
+   "x": 30.06,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "George Andreyko"
+   ],
+   "status": "occupied",
+   "x": 33.19,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "Jacob Churniak"
+   ],
+   "status": "occupied",
+   "x": 36.31,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "Peter Palmer"
+   ],
+   "status": "occupied",
+   "x": 39.44,
+   "y": 75.69,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "J.S"
+   ],
+   "status": "occupied",
+   "x": 5.06,
+   "y": 81.23,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "",
+   "surname": "",
+   "given_names": [
+    "Elizabeth Demster",
+    "Maria Ishchuk",
+    "Jacob Shevchuk"
+   ],
+   "status": "occupied",
+   "x": 8.19,
+   "y": 81.23,
+   "page": "pg2",
+   "section": "W"
+  },
+  {
+   "plot_number": "71N",
+   "surname": "",
+   "given_names": [
+    "Denisov"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "74N",
+   "surname": "",
+   "given_names": [
+    "Toader"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "77N",
+   "surname": "",
+   "given_names": [
+    "Toader"
+   ],
+   "status": "occupied",
+   "x": 60.23,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "80N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 64.32,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "83N",
+   "surname": "",
+   "given_names": [
+    "S. Tasevski"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "85N",
+   "surname": "",
+   "given_names": [
+    "Claire Gorbatuk"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "70N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 76.59,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "73N",
+   "surname": "",
+   "given_names": [
+    "Dominica Toader"
+   ],
+   "status": "occupied",
+   "x": 80.68,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "76N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 84.77,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "79N",
+   "surname": "",
+   "given_names": [
+    "Lidya Goryacha"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "82N",
+   "surname": "",
+   "given_names": [
+    "Dusanka Tasevski"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 7.29,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "84N",
+   "surname": "",
+   "given_names": [
+    "Fred Gorbatuk"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "69N",
+   "surname": "",
+   "given_names": [],
+   "status": "reserved",
+   "x": 56.14,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "72N",
+   "surname": "",
+   "given_names": [
+    "Denisov"
+   ],
+   "status": "occupied",
+   "x": 60.23,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "75N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 64.32,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "78N",
+   "surname": "",
+   "given_names": [
+    "Tatiana Avdeeva"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "81N",
+   "surname": "",
+   "given_names": [
+    "Klime Tasevski"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "54N",
+   "surname": "",
+   "given_names": [
+    "Michael Turri"
+   ],
+   "status": "occupied",
+   "x": 76.59,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "57N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 80.68,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "60N",
+   "surname": "",
+   "given_names": [
+    "Juliane Ogozalik"
+   ],
+   "status": "occupied",
+   "x": 84.77,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "63N",
+   "surname": "",
+   "given_names": [
+    "Jordan Nedelkovikj"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "66N",
+   "surname": "",
+   "given_names": [
+    "Coutsouridis"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 9.86,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "68N",
+   "surname": "",
+   "given_names": [
+    "Coutsouridis"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "53N",
+   "surname": "",
+   "given_names": [
+    "Turri"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "56N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 60.23,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "59N",
+   "surname": "",
+   "given_names": [
+    "P. Constantine Scu"
+   ],
+   "status": "occupied",
+   "x": 64.32,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "62N",
+   "surname": "",
+   "given_names": [
+    "Dushanka Nedelkovikj"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "65N",
+   "surname": "",
+   "given_names": [
+    "Torrisi"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "67N",
+   "surname": "",
+   "given_names": [
+    "Coutsouridis"
+   ],
+   "status": "occupied",
+   "x": 76.59,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "52N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 80.68,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "55N",
+   "surname": "",
+   "given_names": [],
+   "status": "available",
+   "x": 84.77,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "58N",
+   "surname": "",
+   "given_names": [
+    "D. Constantine Scu"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "61N",
+   "surname": "",
+   "given_names": [
+    "Gavriloska Cvtea"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 12.43,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "64N",
+   "surname": "",
+   "given_names": [
+    "Torrisi"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "37N",
+   "surname": "",
+   "given_names": [
+    "John Petromelis"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "40N",
+   "surname": "",
+   "given_names": [
+    "Constantin"
+   ],
+   "status": "occupied",
+   "x": 60.23,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "43N",
+   "surname": "",
+   "given_names": [
+    "Frank Bongiorno"
+   ],
+   "status": "occupied",
+   "x": 64.32,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "46N",
+   "surname": "",
+   "given_names": [
+    "Angelina Bourodinos"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "49N",
+   "surname": "",
+   "given_names": [
+    "Azear Samir"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "51N",
+   "surname": "",
+   "given_names": [
+    "Despina Coutsauridis"
+   ],
+   "status": "occupied",
+   "x": 76.59,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "36N",
+   "surname": "",
+   "given_names": [
+    "Georgette Petromelis"
+   ],
+   "status": "occupied",
+   "x": 80.68,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "39N",
+   "surname": "",
+   "given_names": [
+    "Mriia Smirnova"
+   ],
+   "status": "occupied",
+   "x": 84.77,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "42N",
+   "surname": "",
+   "given_names": [
+    "Joan Bongiorno"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "45N",
+   "surname": "",
+   "given_names": [
+    "Fares"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 15.0,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "48N",
+   "surname": "",
+   "given_names": [
+    "Naggiar"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "50N",
+   "surname": "",
+   "given_names": [
+    "Stavros Coutsauridis"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "35N",
+   "surname": "",
+   "given_names": [
+    "Christopher Petromelis"
+   ],
+   "status": "occupied",
+   "x": 60.23,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "38N",
+   "surname": "",
+   "given_names": [
+    "T. Petromelis"
+   ],
+   "status": "occupied",
+   "x": 64.32,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "41N",
+   "surname": "",
+   "given_names": [
+    "Luiz Konomi"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "44N",
+   "surname": "",
+   "given_names": [
+    "Fares"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "47N",
+   "surname": "",
+   "given_names": [
+    "Naggiar"
+   ],
+   "status": "occupied",
+   "x": 76.59,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "20N",
+   "surname": "",
+   "given_names": [
+    "Zlatkov"
+   ],
+   "status": "occupied",
+   "x": 80.68,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "23N",
+   "surname": "",
+   "given_names": [
+    "N. De Larato"
+   ],
+   "status": "occupied",
+   "x": 84.77,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "26N",
+   "surname": "",
+   "given_names": [
+    "Abodeely"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "29N",
+   "surname": "",
+   "given_names": [
+    "Mihai Constantin"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 17.57,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "32N",
+   "surname": "",
+   "given_names": [
+    "Fr. Alexander Padlo"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "34N",
+   "surname": "",
+   "given_names": [
+    "Dubov"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "19N",
+   "surname": "",
+   "given_names": [
+    "Zlatkov"
+   ],
+   "status": "occupied",
+   "x": 60.23,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "22N",
+   "surname": "",
+   "given_names": [
+    "Chigrin"
+   ],
+   "status": "occupied",
+   "x": 64.32,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "25N",
+   "surname": "",
+   "given_names": [
+    "Abodeely"
+   ],
+   "status": "occupied",
+   "x": 68.41,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "28N",
+   "surname": "",
+   "given_names": [
+    "John Magouls"
+   ],
+   "status": "occupied",
+   "x": 72.5,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "31N",
+   "surname": "",
+   "given_names": [
+    "Serban Tarnavschi"
+   ],
+   "status": "occupied",
+   "x": 76.59,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "33N",
+   "surname": "",
+   "given_names": [
+    "Vasyhyslav Dubov"
+   ],
+   "status": "occupied",
+   "x": 80.68,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "18N",
+   "surname": "",
+   "given_names": [
+    "Vojkan Zlatkov"
+   ],
+   "status": "occupied",
+   "x": 84.77,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "21N",
+   "surname": "",
+   "given_names": [
+    "Chigrin"
+   ],
+   "status": "occupied",
+   "x": 88.86,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "24N",
+   "surname": "",
+   "given_names": [
+    "J. De Larato"
+   ],
+   "status": "occupied",
+   "x": 92.95,
+   "y": 20.14,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "27N",
+   "surname": "",
+   "given_names": [
+    "Fotine Magouls"
+   ],
+   "status": "occupied",
+   "x": 52.05,
+   "y": 22.71,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "30N",
+   "surname": "",
+   "given_names": [
+    "Niculina Tarnavschi"
+   ],
+   "status": "occupied",
+   "x": 56.14,
+   "y": 22.71,
+   "page": "pg3",
+   "section": "N"
+  },
+  {
+   "plot_number": "194,195,196",
+   "surname": "Fetchina",
+   "given_names": [
+    "Nicholas",
+    "Constantin Stepan",
+    "Laura Navmovski"
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "197,198,199",
+   "surname": "Navmovski",
+   "given_names": [
+    "Saso"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "185,186,187,188",
+   "surname": "Cavic",
+   "given_names": [
+    "Borica",
+    "Natalie Ratzkovich",
+    "Andrey Napylov",
+    "Lyubov Napylov"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "193,192,191",
+   "surname": "Fetchina",
+   "given_names": [
+    "George",
+    "Victoria Pylneva",
+    "Seraphima Fedorovna"
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "190,189",
+   "surname": "Kachek",
+   "given_names": [
+    "Theodora",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "178",
+   "surname": "Fares",
+   "given_names": [
+    "Michael",
+    "C. Naggler"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "179",
+   "surname": "Marmarinos",
+   "given_names": [
+    "Irene"
+   ],
+   "status": "occupied",
+   "x": 25.27,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "180",
+   "surname": "Stephens",
+   "given_names": [
+    "Adrienne"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "181",
+   "surname": "Fares",
+   "given_names": [
+    "Ishak Guirguis"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "182",
+   "surname": "Fares",
+   "given_names": [],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "176",
+   "surname": "Zahodnick",
+   "given_names": [
+    "Helen",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 38.36,
+   "y": 62.92,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "175",
+   "surname": "Zaeko",
+   "given_names": [
+    "Paul"
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "174",
+   "surname": "Morosha",
+   "given_names": [
+    "Katherine",
+    "Barbara Tutolo"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "168",
+   "surname": "Lapchuk",
+   "given_names": [
+    "Alexandra"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "167",
+   "surname": "Lapchuk",
+   "given_names": [
+    "Dn. Gregory",
+    "Argyra"
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "166",
+   "surname": "Roman",
+   "given_names": [
+    "Fr. Jaroslav",
+    "Fr. James Parsells",
+    "Peter Parsells"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "165",
+   "surname": "Parsells",
+   "given_names": [
+    "Ivanna",
+    "Heather"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "164",
+   "surname": "",
+   "given_names": [],
+   "status": "unavailable",
+   "x": 25.27,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "159",
+   "surname": "Macinko",
+   "given_names": [
+    "John",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "158",
+   "surname": "Reigler",
+   "given_names": [
+    "David",
+    "Daria",
+    "Douglas"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "157",
+   "surname": "Holovach",
+   "given_names": [
+    "Zena",
+    "William Brian"
+   ],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "156",
+   "surname": "Neidig",
+   "given_names": [
+    "Stylianos"
+   ],
+   "status": "occupied",
+   "x": 38.36,
+   "y": 68.75,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "151",
+   "surname": "Jackowlew",
+   "given_names": [
+    "John T.",
+    "John I.",
+    "Emma"
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "150",
+   "surname": "Bodenchuk",
+   "given_names": [
+    "Raymond",
+    "Xenia"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "149",
+   "surname": "Onuschak",
+   "given_names": [
+    "Tatiana",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "148",
+   "surname": "Suseck",
+   "given_names": [
+    "John",
+    "Mary E."
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "147",
+   "surname": "Putyrski",
+   "given_names": [
+    "Margaret",
+    "Constantine"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "668,669,670",
+   "surname": "",
+   "given_names": [
+    "Richard Kloss",
+    "Scott Kloss"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "663,664,665,667",
+   "surname": "",
+   "given_names": [
+    "Irene Kavchok",
+    "Ronald Kavchok",
+    "Timothy Smith",
+    "Marie Smith"
+   ],
+   "status": "occupied",
+   "x": 25.27,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "661/662",
+   "surname": "",
+   "given_names": [
+    "Helen Monko",
+    "Paul Monko"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "660",
+   "surname": "",
+   "given_names": [
+    "Edmund Kornacki"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "659",
+   "surname": "Vajda",
+   "given_names": [
+    "Marianna"
+   ],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "658",
+   "surname": "Vajda",
+   "given_names": [
+    "Stephan"
+   ],
+   "status": "occupied",
+   "x": 38.36,
+   "y": 74.58,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "685",
+   "surname": "",
+   "given_names": [
+    "Richard Haitch"
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "684",
+   "surname": "",
+   "given_names": [
+    "Audrey Killer Haitch"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "683",
+   "surname": "",
+   "given_names": [
+    "Gregory Tscherwinski"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "682",
+   "surname": "",
+   "given_names": [
+    "Lawrence M. Kloss"
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "706",
+   "surname": "",
+   "given_names": [
+    "Edmund Kornacki"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "705",
+   "surname": "Pegene",
+   "given_names": [
+    "Dimitri",
+    "Mary"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "702",
+   "surname": "Naruta",
+   "given_names": [
+    "Alex",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 25.27,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "728",
+   "surname": "",
+   "given_names": [
+    "Helen Lysy"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "727",
+   "surname": "Rech",
+   "given_names": [
+    "George"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "726",
+   "surname": "Woychio",
+   "given_names": [
+    "Stephen"
+   ],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "725",
+   "surname": "",
+   "given_names": [
+    "Daniel Victorenko"
+   ],
+   "status": "occupied",
+   "x": 38.36,
+   "y": 80.42,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "749",
+   "surname": "",
+   "given_names": [
+    "William Fetchina Jr."
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "747",
+   "surname": "",
+   "given_names": [
+    "George Perun"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "746",
+   "surname": "",
+   "given_names": [
+    "Vera Gromack"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "745",
+   "surname": "",
+   "given_names": [
+    "Alexander Gromack"
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "744",
+   "surname": "",
+   "given_names": [
+    "Abraham Yashuk"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "769",
+   "surname": "",
+   "given_names": [
+    "Ufin Nesteruk"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "768",
+   "surname": "",
+   "given_names": [
+    "Mary Fetchina"
+   ],
+   "status": "occupied",
+   "x": 25.27,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "767",
+   "surname": "",
+   "given_names": [
+    "William Fetchina"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "766",
+   "surname": "Boguszewski",
+   "given_names": [
+    "Wojciech",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "764",
+   "surname": "Sarko",
+   "given_names": [
+    "Palagia",
+    "Radeon"
+   ],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "791",
+   "surname": "Koziar",
+   "given_names": [
+    "Stephen",
+    "Christina"
+   ],
+   "status": "occupied",
+   "x": 38.36,
+   "y": 86.25,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "788,787,786",
+   "surname": "",
+   "given_names": [
+    "Sophie Bruskie"
+   ],
+   "status": "occupied",
+   "x": 5.64,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "785,784,783",
+   "surname": "Koles",
+   "given_names": [
+    "William Jr.",
+    "Terry Beth"
+   ],
+   "status": "occupied",
+   "x": 8.91,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "797",
+   "surname": "",
+   "given_names": [
+    "Gregory Halkovich"
+   ],
+   "status": "occupied",
+   "x": 12.18,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "796",
+   "surname": "",
+   "given_names": [
+    "Constantine Yuskevich"
+   ],
+   "status": "occupied",
+   "x": 15.45,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "795",
+   "surname": "",
+   "given_names": [
+    "Constantin Yancevich"
+   ],
+   "status": "occupied",
+   "x": 18.73,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "794",
+   "surname": "Koles",
+   "given_names": [
+    "Mary Krivka",
+    "William"
+   ],
+   "status": "occupied",
+   "x": 22.0,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "802",
+   "surname": "Rose",
+   "given_names": [
+    "Douglas",
+    "Sally"
+   ],
+   "status": "occupied",
+   "x": 25.27,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "801",
+   "surname": "Romanofsky",
+   "given_names": [
+    "Mary",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 28.55,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "800",
+   "surname": "Skwarla",
+   "given_names": [
+    "Anna",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 31.82,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "799",
+   "surname": "Hnatuk",
+   "given_names": [
+    "Helen",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 35.09,
+   "y": 92.08,
+   "page": "pg3",
+   "section": "S"
+  },
+  {
+   "plot_number": "864",
+   "surname": "Horbel",
+   "given_names": [
+    "Helen",
+    "Max",
+    "Kuzma Savich"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "862",
+   "surname": "Kozich",
+   "given_names": [
+    "Alexander",
+    "Ksenia"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "861",
+   "surname": "Horbel",
+   "given_names": [
+    "Elias",
+    "Theodosius"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "860",
+   "surname": "Horbel",
+   "given_names": [
+    "Alex"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "859",
+   "surname": "Zeban",
+   "given_names": [
+    "Ann P.",
+    "Peter D.",
+    "Damian",
+    "Julia"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "870",
+   "surname": "Balogh",
+   "given_names": [
+    "Joan",
+    "Lazslo"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "869",
+   "surname": "Szwahla",
+   "given_names": [
+    "Stephen",
+    "Mary"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "868",
+   "surname": "Adamchak",
+   "given_names": [
+    "Theodore",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "867",
+   "surname": "Walakin",
+   "given_names": [
+    "Jacob"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 32.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "866",
+   "surname": "Bell",
+   "given_names": [
+    "Robert",
+    "Sandra"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "865",
+   "surname": "Hriniak",
+   "given_names": [
+    "Jacob",
+    "Katherine",
+    "Andrew Sr."
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "876",
+   "surname": "Sedorkevich",
+   "given_names": [
+    "Steven",
+    "Catherine"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "875",
+   "surname": "",
+   "given_names": [
+    "Pearl Kulwinsky",
+    "Henry Olszyk",
+    "Sophie Olszyk"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "874",
+   "surname": "Kuchner",
+   "given_names": [
+    "Artem",
+    "Anna"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "873",
+   "surname": "",
+   "given_names": [
+    "Stephen Holovach"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "872",
+   "surname": "Holovach",
+   "given_names": [
+    "John",
+    "Ann"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "871",
+   "surname": "Hriniak",
+   "given_names": [
+    "Josephine P.",
+    "Gregory"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "882",
+   "surname": "",
+   "given_names": [
+    "Alexy Lasik"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 37.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "881",
+   "surname": "Kostycz",
+   "given_names": [
+    "Laverne H.",
+    "Anastasia S."
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "880",
+   "surname": "Bolash",
+   "given_names": [
+    "Raymond",
+    "Anthony",
+    "Mary"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "879",
+   "surname": "",
+   "given_names": [
+    "Helen Stashkevetch"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "878",
+   "surname": "Galida",
+   "given_names": [
+    "Julia",
+    "John"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "877",
+   "surname": "Hriniak",
+   "given_names": [
+    "Andrew Jr."
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "888",
+   "surname": "Motoviloff",
+   "given_names": [],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "887",
+   "surname": "Motoviloff",
+   "given_names": [
+    "Anna",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "886",
+   "surname": "Wasylchenko",
+   "given_names": [
+    "Alexander",
+    "Nina"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "884",
+   "surname": "Holovach",
+   "given_names": [
+    "Helen",
+    "Steven"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 42.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "894",
+   "surname": "Syubiak",
+   "given_names": [
+    "Anna",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "893",
+   "surname": "Trehubets",
+   "given_names": [
+    "Steven",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "892",
+   "surname": "Sudillo",
+   "given_names": [
+    "Christine",
+    "Julian"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "891",
+   "surname": "Martinchuk",
+   "given_names": [
+    "Anna",
+    "Leon"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "890",
+   "surname": "Lapa",
+   "given_names": [
+    "Natalie",
+    "John",
+    "John Kisel"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "889",
+   "surname": "Knaff",
+   "given_names": [
+    "Mary",
+    "Henry"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "900",
+   "surname": "",
+   "given_names": [
+    "John Ward",
+    "Stephanie Ward",
+    "Peter Hnatuk"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "899",
+   "surname": "Kulina",
+   "given_names": [
+    "Helen Hnatuk",
+    "Helen",
+    "Philip"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "898",
+   "surname": "Kulina",
+   "given_names": [
+    "Alexander",
+    "Alexandra",
+    "Peter"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 47.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "897",
+   "surname": "Kulina",
+   "given_names": [
+    "Nicholas",
+    "Stephen",
+    "Helen"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "895,896",
+   "surname": "Mogilevsky",
+   "given_names": [
+    "Anna",
+    "Andrew",
+    "Jacob",
+    "Nadia"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "906",
+   "surname": "",
+   "given_names": [
+    "Peter M Hnatuk",
+    "Susan Pribish",
+    "Stephen Sr. Pribish"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "905",
+   "surname": "Kulina",
+   "given_names": [
+    "Joseph",
+    "Alice",
+    "Julie"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "904",
+   "surname": "Kulina",
+   "given_names": [
+    "John P Sr.",
+    "Natalie",
+    "Paul"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "903",
+   "surname": "Kachek",
+   "given_names": [
+    "Charles",
+    "Stephanie"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "902",
+   "surname": "",
+   "given_names": [
+    "Seraphina Spak"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "901",
+   "surname": "Bartusak",
+   "given_names": [
+    "Clara",
+    "Elias"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "911",
+   "surname": "Rosocha",
+   "given_names": [
+    "John Jr.",
+    "Joan"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 52.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "910",
+   "surname": "Rosocha",
+   "given_names": [
+    "Mary",
+    "John Sr."
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "909",
+   "surname": "Fedchin",
+   "given_names": [
+    "Josephine",
+    "Alexis"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "908",
+   "surname": "Cimpko",
+   "given_names": [],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "907",
+   "surname": "Cimpko",
+   "given_names": [
+    "Anna",
+    "Thomas",
+    "Harry"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "917",
+   "surname": "Nevitt",
+   "given_names": [],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "916",
+   "surname": "Nevitt",
+   "given_names": [
+    "Richard",
+    "Tessie"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "915",
+   "surname": "Rosocha",
+   "given_names": [
+    "Charles"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "914",
+   "surname": "Kalevich",
+   "given_names": [
+    "Ksenia"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "913",
+   "surname": "Chulosky",
+   "given_names": [
+    "Anna",
+    "Joseph"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 57.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "924",
+   "surname": "Orlovskaya",
+   "given_names": [
+    "Galina"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "921",
+   "surname": "Shestakor",
+   "given_names": [
+    "Tatiana"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "920",
+   "surname": "Piscadlo",
+   "given_names": [
+    "Olga",
+    "Steven"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "919",
+   "surname": "Hamernick",
+   "given_names": [
+    "Stanley",
+    "Joseph",
+    "Theresa"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "927",
+   "surname": "Michaelovsky",
+   "given_names": [
+    "Ruth"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "926",
+   "surname": "Ostapovich",
+   "given_names": [
+    "Susan",
+    "Mary Blisak"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "925",
+   "surname": "Blisak",
+   "given_names": [
+    "Steven",
+    "Mary",
+    "Steven"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "933",
+   "surname": "Barna",
+   "given_names": [
+    "Helen Barna"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "931/932",
+   "surname": "Chromoho",
+   "given_names": [
+    "Peter",
+    "Peter",
+    "Elias"
+   ],
+   "status": "occupied",
+   "x": 93.78,
+   "y": 62.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "940",
+   "surname": "Walaski",
+   "given_names": [
+    "Leonard J",
+    "Julia B"
+   ],
+   "status": "occupied",
+   "x": 58.22,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "938",
+   "surname": "Barna",
+   "given_names": [
+    "Afton",
+    "Tekla",
+    "Michael"
+   ],
+   "status": "occupied",
+   "x": 62.67,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "937",
+   "surname": "Barna",
+   "given_names": [
+    "Olga"
+   ],
+   "status": "occupied",
+   "x": 67.11,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "57",
+   "surname": "Warin",
+   "given_names": [
+    "Michael",
+    "Ann"
+   ],
+   "status": "occupied",
+   "x": 71.56,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "56",
+   "surname": "Gorbatuk",
+   "given_names": [
+    "Theodore",
+    "Olga"
+   ],
+   "status": "occupied",
+   "x": 76.0,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "55",
+   "surname": "Lorenick",
+   "given_names": [
+    "Peter",
+    "Rose"
+   ],
+   "status": "occupied",
+   "x": 80.44,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "54",
+   "surname": "Hobora",
+   "given_names": [
+    "Michael",
+    "Nicholas Barnosky"
+   ],
+   "status": "occupied",
+   "x": 84.89,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  },
+  {
+   "plot_number": "53",
+   "surname": "Harcosn",
+   "given_names": [
+    "Thomas"
+   ],
+   "status": "occupied",
+   "x": 89.33,
+   "y": 67.5,
+   "page": "pg1",
+   "section": "E"
+  }
+ ]
+}
