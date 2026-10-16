@@ -9,8 +9,11 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import Tooltip from '@mui/material/Tooltip';
 import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
 
 import { paths } from 'src/routes/paths';
 import { RouterLink } from 'src/routes/components';
@@ -51,10 +54,39 @@ function buildReel(folders: HeroVideoFolder[]): ReelClip[] {
   return folders.flatMap((folder) => folder.videos.map((file) => ({ date: folder.date, file })));
 }
 
+/** ISO-ish language codes used in clip filenames, e.g. "om-warning_ko.mp4". */
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  es: 'Spanish',
+  el: 'Greek',
+  ru: 'Russian',
+  ro: 'Romanian',
+  bg: 'Bulgarian',
+  sr: 'Serbian',
+  hr: 'Croatian',
+  uk: 'Ukrainian',
+  ka: 'Georgian',
+  ko: 'Korean',
+  ar: 'Arabic',
+  am: 'Amharic',
+  fr: 'French',
+  'zh-tw': 'Chinese (Traditional)',
+  'zh-cn': 'Chinese (Simplified)',
+};
+
+/** Reads a trailing "_<code>" language suffix off a clip's filename, if present. */
+function getLanguageLabel(file: string): string | null {
+  const match = /_([a-z]{2}(?:-[a-z]{2})?)\.[a-z0-9]+$/i.exec(file);
+  if (!match) return null;
+  const code = match[1].toLowerCase();
+  return LANGUAGE_NAMES[code] || code.toUpperCase();
+}
+
 export function HomeHero({ sx, ...other }: BoxProps) {
   const reduceMotion = useReducedMotion();
 
   const sectionRef = useRef<HTMLDivElement>(null);
+  const reelVideoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
 
   // Auto-cycling "latest" video reel: image for a few seconds, then every
@@ -63,6 +95,9 @@ export function HomeHero({ sx, ...other }: BoxProps) {
   const [reel, setReel] = useState<ReelClip[]>([]);
   const [reelIndex, setReelIndex] = useState(0);
   const [reelPlaying, setReelPlaying] = useState(false);
+  const [reelPaused, setReelPaused] = useState(false);
+  const [reelMuted, setReelMuted] = useState(false);
+  const [reelProgress, setReelProgress] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -81,13 +116,28 @@ export function HomeHero({ sx, ...other }: BoxProps) {
     return () => clearTimeout(timer);
   }, [showVideo, reelPlaying, reel.length]);
 
+  const goToReelClip = (index: number) => {
+    const count = reel.length;
+    setReelIndex(((index % count) + count) % count);
+    setReelPaused(false);
+    setReelProgress(0);
+  };
+
   const handleReelEnded = () => {
-    setReelIndex((index) => {
-      const next = index + 1;
-      if (next < reel.length) return next;
+    const next = reelIndex + 1;
+    if (next < reel.length) {
+      setReelIndex(next);
+    } else {
       setReelPlaying(false);
-      return 0;
-    });
+      setReelIndex(0);
+    }
+  };
+
+  const handleTogglePlayback = () => {
+    const video = reelVideoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => undefined);
+    else video.pause();
   };
 
   const physics = { damping: 22, mass: 0.3, stiffness: 90 };
@@ -273,6 +323,90 @@ export function HomeHero({ sx, ...other }: BoxProps) {
     </Box>
   );
 
+  const reelClip = reel[reelIndex];
+  const reelLanguage = reelClip ? getLanguageLabel(reelClip.file) : null;
+
+  const renderReelControls = () => (
+    <Box
+      component={m.div}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      sx={{
+        left: 0,
+        right: 0,
+        bottom: 0,
+        position: 'absolute',
+      }}
+    >
+      <LinearProgress
+        variant="determinate"
+        value={reelProgress}
+        sx={{
+          height: 3,
+          bgcolor: 'rgba(255, 255, 255, 0.24)',
+          '& .MuiLinearProgress-bar': { bgcolor: 'primary.main' },
+        }}
+      />
+
+      <Box
+        sx={[
+          (theme) => ({
+            borderRadius: '0 0 4px 4px',
+            px: { xs: 1.25, sm: 2 },
+            py: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 0.5, sm: 1 },
+            backdropFilter: 'blur(6px)',
+            bgcolor: varAlpha(theme.vars.palette.common.blackChannel, 0.55),
+          }),
+        ]}
+      >
+      <Tooltip title={reelPaused ? 'Play' : 'Pause'}>
+        <IconButton size="small" onClick={handleTogglePlayback} sx={{ color: 'common.white' }}>
+          <Iconify width={18} icon={(reelPaused ? 'solar:play-bold' : 'solar:pause-bold') as any} />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title={reelMuted ? 'Unmute' : 'Mute'}>
+        <IconButton size="small" onClick={() => setReelMuted((value) => !value)} sx={{ color: 'common.white' }}>
+          <Iconify width={18} icon={(reelMuted ? 'solar:volume-cross-bold' : 'solar:volume-loud-bold') as any} />
+        </IconButton>
+      </Tooltip>
+
+      <Divider orientation="vertical" flexItem sx={{ borderColor: 'rgba(255, 255, 255, 0.24)', my: 0.5 }} />
+
+      <Typography
+        variant="caption"
+        noWrap
+        sx={{ color: 'common.white', flexGrow: 1, fontWeight: 'fontWeightMedium' }}
+      >
+        {reelLanguage ? `Playing · ${reelLanguage}` : 'Playing'}
+        {reel.length > 1 && (
+          <Box component="span" sx={{ color: 'grey.400', ml: 0.75 }}>
+            {reelIndex + 1} / {reel.length}
+          </Box>
+        )}
+      </Typography>
+
+      {reel.length > 1 && (
+        <>
+          <Tooltip title="Previous clip">
+            <IconButton size="small" onClick={() => goToReelClip(reelIndex - 1)} sx={{ color: 'common.white' }}>
+              <Iconify width={18} icon={'solar:skip-previous-bold' as any} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next clip">
+            <IconButton size="small" onClick={() => goToReelClip(reelIndex + 1)} sx={{ color: 'common.white' }}>
+              <Iconify width={18} icon={'solar:skip-next-bold' as any} />
+            </IconButton>
+          </Tooltip>
+        </>
+      )}
+      </Box>
+    </Box>
+  );
+
   const renderArtwork = () => (
     <Box
       component={m.div}
@@ -296,20 +430,31 @@ export function HomeHero({ sx, ...other }: BoxProps) {
           }}
         />
       ) : reelPlaying && reel[reelIndex] ? (
-        <Box
-          key={`${reel[reelIndex].date}/${reel[reelIndex].file}`}
-          component="video"
-          src={`${CONFIG.assetsDir}/assets/video/latest/${reel[reelIndex].date}/${reel[reelIndex].file}`}
-          autoPlay
-          playsInline
-          onEnded={handleReelEnded}
-          sx={{
-            width: 1,
-            display: 'block',
-            aspectRatio: ARTWORK_RATIO,
-            borderRadius: 1,
-          }}
-        />
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            key={`${reel[reelIndex].date}/${reel[reelIndex].file}`}
+            ref={reelVideoRef}
+            component="video"
+            src={`${CONFIG.assetsDir}/assets/video/latest/${reel[reelIndex].date}/${reel[reelIndex].file}`}
+            autoPlay
+            playsInline
+            muted={reelMuted}
+            onEnded={handleReelEnded}
+            onPlay={() => setReelPaused(false)}
+            onPause={() => setReelPaused(true)}
+            onTimeUpdate={(event) => {
+              const video = event.currentTarget;
+              setReelProgress(video.duration ? (video.currentTime / video.duration) * 100 : 0);
+            }}
+            sx={{
+              width: 1,
+              display: 'block',
+              aspectRatio: ARTWORK_RATIO,
+              borderRadius: 1,
+            }}
+          />
+          {renderReelControls()}
+        </Box>
       ) : (
         <Box
           component={m.img}
