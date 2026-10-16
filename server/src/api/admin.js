@@ -739,8 +739,22 @@ router.get('/churches/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Parish clergy may read counts for their own church. Platform admins may read any church.
+const requireChurchRecordStats = (req, res, next) => {
+    requireRole(['admin', 'super_admin', 'church_admin', 'manager', 'priest'])(req, res, () => {
+        const role = req.session?.user?.role || req.user?.role;
+        if (role === 'admin' || role === 'super_admin') return next();
+        const own = Number(req.user?.church_id || req.session?.user?.church_id);
+        const requested = parseInt(req.params.id, 10);
+        if (!own || own !== requested) {
+            return res.status(403).json({ success: false, message: 'Insufficient permissions' });
+        }
+        next();
+    });
+};
+
 // GET /api/admin/churches/:id/stats - Sacramental record counts for the Parish Settings overview tab
-router.get('/churches/:id/stats', requireAdmin, async (req, res) => {
+router.get('/churches/:id/stats', requireChurchRecordStats, async (req, res) => {
     try {
         const churchId = parseInt(req.params.id);
         if (isNaN(churchId)) {
