@@ -1,0 +1,10 @@
+{
+  "mode": "full",
+  "memory": 8192,
+  "installPackage": "",
+  "legacyPeerDeps": true,
+  "skipInstall": false,
+  "dryRun": true,
+  "buildTarget": "frontend",
+  "buildPath": "/var/www/orthodoxmetrics/prod"
+}

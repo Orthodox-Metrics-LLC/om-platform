@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://orthodoxmetrics.com/schemas/cemetery-map/v1",
+  "title": "CemeteryMapDocument",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "churchId",
+    "sourcePdf",
+    "generatedAt",
+    "updatedAt",
+    "pages",
+    "sections",
+    "roads",
+    "routeNodes",
+    "routeEdges",
+    "plots"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "churchId": { "type": "integer", "minimum": 1 },
+    "sourcePdf": { "type": "string", "minLength": 1 },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "pages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/page" }
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "roads": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/road" }
+    },
+    "roundabout": { "$ref": "#/$defs/roundabout" },
+    "entrance": { "$ref": "#/$defs/entrance" },
+    "routeNodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/routeNode" }
+    },
+    "routeEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/routeEdge" }
+    },
+    "plots": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/plot" }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0 },
+        "y": { "type": "number", "minimum": 0 }
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": [
+        "pageNumber",
+        "pdfWidthPts",
+        "pdfHeightPts",
+        "normalizedWidth",
+        "normalizedHeight",
+        "imageFile",
+        "imageWidthPx",
+        "imageHeightPx"
+      ],
+      "properties": {
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "pdfWidthPts": { "type": "number", "minimum": 1 },
+        "pdfHeightPts": { "type": "number", "minimum": 1 },
+        "normalizedWidth": { "const": 1000 },
+        "normalizedHeight": { "type": "number", "minimum": 1 },
+        "imageFile": { "type": "string" },
+        "imageWidthPx": { "type": "integer", "minimum": 1 },
+        "imageHeightPx": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "plot": {
+      "type": "object",
+      "required": ["id", "plotNumber", "sectionCode", "status", "pageNumber", "shape"],
+      "properties": {
+        "id": { "type": "string" },
+        "plotNumber": { "type": "string" },
+        "sectionCode": { "type": "string" },
+        "status": {
+          "enum": ["available", "reserved", "occupied", "unavailable"]
+        },
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "shape": { "enum": ["rect", "polygon"] },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "w": { "type": "number", "minimum": 0 },
+        "h": { "type": "number", "minimum": 0 },
+        "points": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/point" }
+        },
+        "occupantNames": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" },
+        "needsReview": { "type": "boolean" },
+        "duplicateOf": { "type": ["string", "null"] },
+        "source": { "enum": ["pdf_digitizer", "import", "legacy"] }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["code", "name", "pageNumber"],
+      "properties": {
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "labelPoint": { "$ref": "#/$defs/point" },
+        "bounds": {
+          "type": "object",
+          "required": ["x", "y", "w", "h"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "w": { "type": "number" },
+            "h": { "type": "number" }
+          }
+        }
+      }
+    },
+    "road": {
+      "type": "object",
+      "required": ["id", "pageNumber", "kind", "points"],
+      "properties": {
+        "id": { "type": "string" },
+        "pageNumber": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["road", "path", "driveway"] },
+        "points": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/point" }
+        },
+        "width": { "type": "number" },
+        "label": { "type": "string" }
+      }
+    },
+    "roundabout": {
+      "type": "object",
+      "required": ["pageNumber", "center", "outerRadius"],
+      "properties": {
+        "pageNumber": { "type": "integer" },
+        "center": { "$ref": "#/$defs/point" },
+        "outerRadius": { "type": "number" },
+        "islandRadius": { "type": "number" }
+      }
+    },
+    "entrance": {
+      "type": "object",
+      "required": ["pageNumber", "point"],
+      "properties": {
+        "pageNumber": { "type": "integer" },
+        "point": { "$ref": "#/$defs/point" },
+        "label": { "type": "string" }
+      }
+    },
+    "routeNode": {
+      "type": "object",
+      "required": ["id", "pageNumber", "point", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "pageNumber": { "type": "integer" },
+        "point": { "$ref": "#/$defs/point" },
+        "label": { "type": "string" },
+        "kind": {
+          "enum": ["entrance", "roundabout", "junction", "gate", "waypoint"]
+        }
+      }
+    },
+    "routeEdge": {
+      "type": "object",
+      "required": ["id", "from", "to", "pageNumber"],
+      "properties": {
+        "id": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "pageNumber": { "type": "integer" },
+        "bidirectional": { "type": "boolean" }
+      }
+    }
+  }
+}

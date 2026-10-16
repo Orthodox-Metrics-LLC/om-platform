@@ -1,0 +1,927 @@
+const { getAppPool } = require('../config/db-compat');
+const express = require('express');
+const router = express.Router();
+const crypto = require('crypto');
+const { promisePool } = require('../config/db-compat');
+const { requireAuth } = require('../middleware/auth');
+const { sendVerificationEmail } = require('../utils/emailService');
+
+const KEYCLOAK_BOOTSTRAP_PATH =
+  process.env.KEYCLOAK_BOOTSTRAP_SCRIPT || '/var/www/omai/_runtime/server/scripts/keycloak-bootstrap.js';
+
+function loadKeycloakModule() {
+  return require(KEYCLOAK_BOOTSTRAP_PATH);
+}
+
+/** Verify password against Keycloak orthodoxmetrics realm (OIDC users). */
+async function verifyKeycloakPassword(email, password) {
+    try {
+        const fs = require('fs');
+        const envPath = process.env.KEYCLOAK_ENV_FILE || '/var/www/omai/.env.keycloak';
+        if (!fs.existsSync(envPath)) return false;
+        const env = {};
+        for (const raw of fs.readFileSync(envPath, 'utf8').split('\n')) {
+            const line = raw.trim();
+            if (!line || line.startsWith('#')) continue;
+            const eq = line.indexOf('=');
+            if (eq < 0) continue;
+            env[line.slice(0, eq).trim()] = line.slice(eq + 1).trim();
+        }
+        const KC_URL = (env.KC_URL || '').replace(/\/+$/, '');
+        const clientId = env.OIDC_ORTHODOXMETRICS_CLIENT_ID || 'om-app';
+        const clientSecret = env.OIDC_ORTHODOXMETRICS_CLIENT_SECRET || env.KC_CLIENT_SECRET_ORTHODOXMETRICS;
+        if (!KC_URL || !clientSecret) return false;
+        const tokenUrl = `${KC_URL}/realms/orthodoxmetrics/protocol/openid-connect/token`;
+        const body = new URLSearchParams({
+            grant_type: 'password',
+            client_id: clientId,
+            client_secret: clientSecret,
+            username: String(email).trim(),
+            password: String(password),
+        });
+        const res = await fetch(tokenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        });
+        return res.ok;
+    } catch (err) {
+        console.warn('[profile] Keycloak password verify failed:', err.message);
+        return false;
+    }
+}
+
+async function syncKeycloakPassword(email, password) {
+    try {
+        const { syncKeycloakPasswordForEmail } = loadKeycloakModule();
+        const results = await syncKeycloakPasswordForEmail(email, password);
+        const orthodox = (results || []).find((r) => r.realm === 'orthodoxmetrics');
+        if (orthodox?.skipped && orthodox.reason === 'federated') {
+            return { ok: false, federated: true, results };
+        }
+        const anySet = (results || []).some((r) => r.passwordSet);
+        const anySkippedFederated = (results || []).some((r) => r.skipped && r.reason === 'federated');
+        if (anySkippedFederated && !anySet) {
+            return { ok: false, federated: true, results };
+        }
+        return { ok: anySet || (results || []).length === 0, federated: false, results };
+    } catch (err) {
+        console.warn('[profile] Keycloak password sync failed:', err.message);
+        return { ok: false, federated: false, error: err.message, results: [] };
+    }
+}
+
+async function syncKeycloakProfile(user) {
+    if (!user?.email) return;
+    try {
+        const kc = loadKeycloakModule();
+        const realms = kc.PARISH_ONBOARD_KC_REALMS || ['orthodoxmetrics'];
+        await kc.provisionOmUserInKeycloak({
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            role: user.role,
+            enabled: true,
+            realms,
+        });
+    } catch (err) {
+        console.warn('[profile] Keycloak profile sync failed:', err.message);
+    }
+}
+
+async function resolveIdentityAuth(email) {
+    try {
+        const kc = loadKeycloakModule();
+        return await kc.getIdentityAuthStatus(email);
+    } catch (err) {
+        console.warn('[profile] identity auth lookup failed:', err.message);
+        return {
+            auth_provider: 'local',
+            password_managed_externally: false,
+            identity_realm: null,
+            keycloak_user_id: null,
+        };
+    }
+}
+
+// Get user profile data (root route for /api/user/profile)
+router.get('/', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        // Get user data from individual columns in users table
+        const [users] = await getAppPool().query(`
+            SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.display_name,
+                   u.phone, u.company, u.location, u.bio, u.website, u.birthday,
+                   u.status_message, u.avatar_url, u.banner_url, u.job_title,
+                   u.church_affiliation, u.social_links, u.privacy_settings,
+                   u.currency, u.ui_theme, u.church_id, u.profile_visibility,
+                   u.preferred_language, u.timezone, u.created_at, u.last_login,
+                   COALESCE(c.church_name, c.name) AS church_name
+            FROM orthodoxmetrics_db.users u
+            LEFT JOIN orthodoxmetrics_db.churches c ON c.id = u.church_id
+            WHERE u.id = ?
+        `, [userId]);
+
+        let profileData = {};
+        if (users.length > 0) {
+            const user = users[0];
+
+            // Parse JSON columns if stored as strings
+            let socialLinks = user.social_links;
+            if (typeof socialLinks === 'string') {
+                try { socialLinks = JSON.parse(socialLinks); } catch (e) { socialLinks = null; }
+            }
+            let privacySettings = user.privacy_settings;
+            if (typeof privacySettings === 'string') {
+                try { privacySettings = JSON.parse(privacySettings); } catch (e) { privacySettings = null; }
+            }
+
+            profileData = {
+                user_id: user.id,
+                display_name: user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim(),
+                bio: user.bio,
+                location: user.location,
+                website: user.website,
+                birthday: user.birthday,
+                status_message: user.status_message,
+                profile_theme: user.ui_theme || 'default',
+                profile_image_url: user.avatar_url,
+                cover_image_url: user.banner_url,
+                privacy_settings: privacySettings,
+                social_links: socialLinks,
+                job_title: user.job_title,
+                company: user.company,
+                phone: user.phone,
+                currency: user.currency,
+                church_affiliation: user.church_affiliation,
+                church_id: user.church_id,
+                church_name: user.church_name || null,
+                profile_visibility: user.profile_visibility || 'private',
+                preferred_language: user.preferred_language,
+                timezone: user.timezone,
+                created_at: user.created_at,
+                last_login: user.last_login,
+                // User basic info
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+                role: user.role
+            };
+        }
+
+        res.json({
+            success: true,
+            profile: profileData
+        });
+
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch user profile' });
+    }
+});
+
+// Update user profile data (root route for /api/user/profile)
+router.put('/', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        const {
+            display_name,
+            first_name,
+            last_name,
+            bio,
+            location,
+            website,
+            birthday,
+            status_message,
+            profile_theme,
+            profile_image_url,
+            cover_image_url,
+            privacy_settings,
+            social_links,
+            church_affiliation,
+            job_title,
+            company,
+            phone,
+            currency,
+            profile_visibility,
+            preferred_language,
+            timezone
+        } = req.body;
+
+        if (profile_visibility !== undefined && !['public', 'friends', 'private'].includes(profile_visibility)) {
+            return res.status(400).json({ success: false, message: 'Invalid profile_visibility' });
+        }
+
+        // Only super_admin may change their own email; everyone else needs a super_admin to do it.
+        const { email: newEmail } = req.body;
+        if (newEmail !== undefined) {
+            const actorRole = req.session?.user?.role || req.user?.role;
+            if (actorRole !== 'super_admin') {
+                return res.status(403).json({ success: false, message: 'Contact a super administrator to change your email address' });
+            }
+            const normalized = String(newEmail).trim().toLowerCase();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
+                return res.status(400).json({ success: false, message: 'Enter a valid email address' });
+            }
+            const [taken] = await getAppPool().query(
+                'SELECT id FROM orthodoxmetrics_db.users WHERE LOWER(email) = ? AND id != ?',
+                [normalized, userId]
+            );
+            if (taken.length) return res.status(400).json({ success: false, message: 'Email is already in use' });
+        }
+
+        // Build SET clause from provided fields, mapping to actual column names
+        const setClauses = [];
+        const setValues = [];
+
+        const columnMap = {
+            display_name: 'display_name',
+            first_name: 'first_name',
+            last_name: 'last_name',
+            bio: 'bio',
+            location: 'location',
+            website: 'website',
+            birthday: 'birthday',
+            status_message: 'status_message',
+            profile_theme: 'ui_theme',
+            profile_image_url: 'avatar_url',
+            cover_image_url: 'banner_url',
+            church_affiliation: 'church_affiliation',
+            job_title: 'job_title',
+            company: 'company',
+            phone: 'phone',
+            currency: 'currency',
+            profile_visibility: 'profile_visibility',
+            preferred_language: 'preferred_language',
+            timezone: 'timezone',
+        };
+
+        const fieldValues = {
+            display_name, first_name, last_name, bio, location, website, birthday, status_message,
+            profile_theme, profile_image_url, cover_image_url,
+            church_affiliation, job_title, company, phone, currency,
+            profile_visibility, preferred_language, timezone
+        };
+        if (newEmail !== undefined) {
+            columnMap.email = 'email';
+            fieldValues.email = String(newEmail).trim().toLowerCase();
+        }
+
+        for (const [field, value] of Object.entries(fieldValues)) {
+            if (value !== undefined) {
+                setClauses.push(`${columnMap[field]} = ?`);
+                setValues.push(value);
+            }
+        }
+
+        // JSON columns
+        if (privacy_settings !== undefined) {
+            setClauses.push('privacy_settings = ?');
+            setValues.push(typeof privacy_settings === 'string' ? privacy_settings : JSON.stringify(privacy_settings));
+        }
+        if (social_links !== undefined) {
+            setClauses.push('social_links = ?');
+            setValues.push(typeof social_links === 'string' ? social_links : JSON.stringify(social_links));
+        }
+
+        if (setClauses.length > 0) {
+            setClauses.push('updated_at = CURRENT_TIMESTAMP');
+            setValues.push(userId);
+            await getAppPool().query(
+                `UPDATE orthodoxmetrics_db.users SET ${setClauses.join(', ')} WHERE id = ?`,
+                setValues
+            );
+        }
+
+        const [updatedUsers] = await getAppPool().query(
+            'SELECT email, first_name, last_name, role FROM orthodoxmetrics_db.users WHERE id = ? LIMIT 1',
+            [userId]
+        );
+        if (updatedUsers.length) {
+            await syncKeycloakProfile(updatedUsers[0]);
+        }
+
+        console.log(`📸 User profile updated for user ${userId}`);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to update user profile' });
+    }
+});
+
+// Update profile images specifically
+router.put('/images', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        const { profile_image_url, cover_image_url } = req.body;
+
+        // Update image columns directly
+        const setClauses = [];
+        const setValues = [];
+        if (profile_image_url !== undefined) {
+            setClauses.push('avatar_url = ?');
+            setValues.push(profile_image_url);
+        }
+        if (cover_image_url !== undefined) {
+            setClauses.push('banner_url = ?');
+            setValues.push(cover_image_url);
+        }
+
+        if (setClauses.length > 0) {
+            setClauses.push('updated_at = CURRENT_TIMESTAMP');
+            setValues.push(userId);
+            await getAppPool().query(
+                `UPDATE orthodoxmetrics_db.users SET ${setClauses.join(', ')} WHERE id = ?`,
+                setValues
+            );
+        }
+
+        console.log(`📸 Profile images updated for user ${userId}: profile=${profile_image_url || 'unchanged'}, cover=${cover_image_url || 'unchanged'}`);
+
+        res.json({
+            success: true,
+            message: 'Profile images updated successfully'
+        });
+
+    } catch (error) {
+        console.error('Error updating profile images:', error);
+        res.status(500).json({ success: false, message: 'Failed to update profile images' });
+    }
+});
+
+// Change password (self-service)
+router.put('/password', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+
+        // Validate inputs
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current password, new password, and confirm password are required'
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password and confirm password do not match'
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password must be at least 8 characters long'
+            });
+        }
+
+        // Get user's current password hash and email (for Keycloak verify/sync)
+        const [users] = await getAppPool().query(
+            'SELECT password_hash, email FROM orthodoxmetrics_db.users WHERE id = ?',
+            [userId]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const userEmail = users[0].email;
+        const identity = userEmail ? await resolveIdentityAuth(userEmail) : {
+            auth_provider: 'local',
+            password_managed_externally: false,
+        };
+
+        if (identity.password_managed_externally) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your password is managed by your organization (Active Directory). Change it through your IT department or Windows account settings, then sign in again.',
+                auth_provider: identity.auth_provider,
+            });
+        }
+
+        // Verify current password (DB hash and/or Keycloak — parish login uses Keycloak)
+        const bcrypt = require('bcrypt');
+        let isValidPassword = false;
+        if (users[0].password_hash) {
+            isValidPassword = await bcrypt.compare(currentPassword, users[0].password_hash);
+        }
+        if (!isValidPassword && userEmail) {
+            isValidPassword = await verifyKeycloakPassword(userEmail, currentPassword);
+        }
+
+        if (!isValidPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current password is incorrect'
+            });
+        }
+
+        // Hash new password
+        const saltRounds = 12;
+        const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+        // Update password + password_changed_at
+        await getAppPool().query(
+            'UPDATE orthodoxmetrics_db.users SET password_hash = ?, password_changed_at = NOW(), updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [newPasswordHash, userId]
+        );
+
+        // Revoke all other refresh tokens (keep current session alive)
+        const crypto = require('crypto');
+        const refreshToken =
+            req.cookies?.refresh_token
+            || req.headers['x-refresh-token']
+            || req.body?.refresh_token;
+        let sessionsRevoked = 0;
+        if (refreshToken) {
+            const currentTokenHash = crypto.createHash('sha256').update(String(refreshToken)).digest('hex');
+            const [result] = await getAppPool().query(
+                'UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = ? AND token_hash != ? AND revoked_at IS NULL',
+                [userId, currentTokenHash]
+            );
+            sessionsRevoked = result.affectedRows;
+        } else {
+            // No refresh token — revoke all (edge case)
+            const [result] = await getAppPool().query(
+                'UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL',
+                [userId]
+            );
+            sessionsRevoked = result.affectedRows;
+        }
+
+        // Log to activity_log
+        getAppPool().query(
+            `INSERT INTO activity_log (user_id, action, details, ip_address, user_agent, created_at)
+             VALUES (?, 'password_changed', ?, ?, ?, NOW())`,
+            [
+                userId,
+                JSON.stringify({ sessions_revoked: sessionsRevoked }),
+                req.ip || 'unknown',
+                (req.get('User-Agent') || 'unknown').substring(0, 255),
+            ]
+        ).catch((err) => console.error('Failed to log password_changed activity:', err.message));
+
+        if (userEmail) {
+            const kcSync = await syncKeycloakPassword(userEmail, newPassword);
+            if (identity.auth_provider === 'keycloak' && !kcSync.ok) {
+                return res.status(502).json({
+                    success: false,
+                    message: kcSync.federated
+                        ? 'Your account uses Active Directory federation. Password changes must be done through your organization.'
+                        : 'Password saved locally but Keycloak sync failed. Please try again or contact support.',
+                    auth_provider: identity.auth_provider,
+                });
+            }
+        }
+
+        console.log(`🔐 Password changed for user ${userId}, revoked ${sessionsRevoked} other session(s)`);
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully',
+            sessions_revoked: sessionsRevoked,
+        });
+
+    } catch (error) {
+        console.error('Error changing password:', error);
+        res.status(500).json({ success: false, message: 'Failed to change password' });
+    }
+});
+
+// GET /api/user/profile/security-status — security metadata for Password & Auth page
+router.get('/security-status', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        // User timestamps
+        const [users] = await getAppPool().query(
+            'SELECT created_at, last_login, password_changed_at, email_verified, verification_status FROM orthodoxmetrics_db.users WHERE id = ?',
+            [userId]
+        );
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const user = users[0];
+
+        // Active session count
+        const [sessionRows] = await getAppPool().query(
+            'SELECT COUNT(*) as active_sessions FROM refresh_tokens WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()',
+            [userId]
+        );
+
+        // Last verification email sent (for cooldown display)
+        const [verifyRows] = await getAppPool().query(
+            'SELECT created_at FROM email_verification_tokens WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+            [userId]
+        );
+
+        const identity = user.email ? await resolveIdentityAuth(user.email) : {
+            auth_provider: 'local',
+            password_managed_externally: false,
+            identity_realm: null,
+        };
+
+        res.json({
+            success: true,
+            security: {
+                account_created_at: user.created_at,
+                last_login: user.last_login,
+                password_changed_at: user.password_changed_at,
+                email_verified: !!user.email_verified,
+                verification_status: user.verification_status || 'none',
+                verification_sent_at: verifyRows.length > 0 ? verifyRows[0].created_at : null,
+                active_sessions: sessionRows[0].active_sessions,
+                two_factor_enabled: false, // No 2FA infrastructure exists yet
+                auth_provider: identity.auth_provider,
+                password_managed_externally: !!identity.password_managed_externally,
+                identity_realm: identity.identity_realm || null,
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching security status:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch security status' });
+    }
+});
+
+// POST /api/user/profile/resend-verification — send (or re-send) email verification link
+router.post('/resend-verification', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+
+        const pool = getAppPool();
+
+        // Get user email and verification status
+        const [users] = await pool.query(
+            'SELECT email, first_name, email_verified FROM orthodoxmetrics_db.users WHERE id = ?',
+            [userId]
+        );
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const user = users[0];
+
+        // Already verified — no-op
+        if (user.email_verified) {
+            return res.json({ success: true, message: 'Email is already verified.' });
+        }
+
+        // Rate limit: max 1 verification email per 2 minutes
+        const [recent] = await pool.query(
+            'SELECT created_at FROM email_verification_tokens WHERE user_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL 2 MINUTE) ORDER BY created_at DESC LIMIT 1',
+            [userId]
+        );
+        if (recent.length > 0) {
+            return res.status(429).json({
+                success: false,
+                message: 'A verification email was sent recently. Please wait a few minutes before trying again.',
+                retry_after_seconds: 120,
+            });
+        }
+
+        // Invalidate any existing unused tokens for this user
+        await pool.query(
+            'UPDATE email_verification_tokens SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL',
+            [userId]
+        );
+
+        // Generate token (48 bytes = 64 chars base64url)
+        const rawToken = crypto.randomBytes(48).toString('base64url');
+        const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await pool.query(
+            'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+            [userId, tokenHash, expiresAt]
+        );
+
+        // Update verification_status to pending
+        await pool.query(
+            'UPDATE orthodoxmetrics_db.users SET verification_status = ? WHERE id = ?',
+            ['pending', userId]
+        );
+
+        // Build verification URL
+        const baseUrl = process.env.FRONTEND_URL || 'https://orthodoxmetrics.com';
+        const verificationUrl = `${baseUrl}/auth/verify-email?token=${rawToken}`;
+
+        // Send email
+        await sendVerificationEmail(user.email, verificationUrl, user.first_name);
+
+        res.json({
+            success: true,
+            message: 'Verification email sent. Please check your inbox.',
+        });
+    } catch (error) {
+        console.error('Error sending verification email:', error);
+        res.status(500).json({ success: false, message: 'Unable to send verification email. Please try again later.' });
+    }
+});
+
+// POST /api/user/profile/verify-email — validate token and mark email as verified
+router.post('/verify-email', async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token || typeof token !== 'string') {
+            return res.status(400).json({ success: false, message: 'Verification token is required.' });
+        }
+
+        const pool = getAppPool();
+        const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+        // Find valid token
+        const [rows] = await pool.query(
+            'SELECT id, user_id, expires_at, used_at FROM email_verification_tokens WHERE token_hash = ?',
+            [tokenHash]
+        );
+
+        if (rows.length === 0) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired verification link.' });
+        }
+
+        const tokenRow = rows[0];
+
+        if (tokenRow.used_at) {
+            return res.status(400).json({ success: false, message: 'This verification link has already been used.' });
+        }
+
+        if (new Date(tokenRow.expires_at) < new Date()) {
+            return res.status(400).json({ success: false, message: 'This verification link has expired. Please request a new one.' });
+        }
+
+        // Mark token as used
+        await pool.query(
+            'UPDATE email_verification_tokens SET used_at = NOW() WHERE id = ?',
+            [tokenRow.id]
+        );
+
+        // Mark user as verified
+        await pool.query(
+            'UPDATE orthodoxmetrics_db.users SET email_verified = 1, verification_status = ? WHERE id = ?',
+            ['verified', tokenRow.user_id]
+        );
+
+        res.json({ success: true, message: 'Email verified successfully.' });
+    } catch (error) {
+        console.error('Error verifying email:', error);
+        res.status(500).json({ success: false, message: 'Verification failed. Please try again.' });
+    }
+});
+
+// GET /api/user/profile/subscription — read-only view of the account/church plan
+router.get('/subscription', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session?.user?.id || req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'User not authenticated' });
+        }
+        const [users] = await getAppPool().query(
+            `SELECT u.church_id, u.billing_status, u.account_balance, u.last_payment_date, u.next_payment_due,
+                    COALESCE(c.church_name, c.name) AS church_name
+             FROM orthodoxmetrics_db.users u
+             LEFT JOIN orthodoxmetrics_db.churches c ON c.id = u.church_id
+             WHERE u.id = ? LIMIT 1`,
+            [userId]
+        );
+        if (!users.length) return res.status(404).json({ success: false, message: 'User not found' });
+        const u = users[0];
+
+        let subscription = null;
+        if (u.church_id) {
+            const [subs] = await getAppPool().query(
+                `SELECT s.id, s.status, s.billing_cycle, s.start_date, s.end_date, s.renewal_date,
+                        s.amount, s.currency, s.payment_method,
+                        p.plan_code, p.name_multilang, p.max_users, p.max_records, p.max_storage_gb
+                 FROM orthodoxmetrics_db.subscriptions s
+                 LEFT JOIN orthodoxmetrics_db.billing_plans p ON p.id = s.plan_id
+                 WHERE s.church_id = ?
+                 ORDER BY FIELD(s.status, 'active', 'trial', 'suspended', 'expired', 'cancelled'), s.renewal_date DESC
+                 LIMIT 1`,
+                [u.church_id]
+            );
+            if (subs.length) {
+                const s = subs[0];
+                let planName = s.plan_code || null;
+                try {
+                    const names = typeof s.name_multilang === 'string' ? JSON.parse(s.name_multilang) : s.name_multilang;
+                    planName = names?.en || names?.[Object.keys(names || {})[0]] || planName;
+                } catch (e) { /* keep plan_code */ }
+                subscription = {
+                    id: s.id,
+                    status: s.status,
+                    billing_cycle: s.billing_cycle,
+                    start_date: s.start_date,
+                    end_date: s.end_date,
+                    renewal_date: s.renewal_date,
+                    amount: s.amount,
+                    currency: s.currency,
+                    payment_method: s.payment_method,
+                    plan_code: s.plan_code,
+                    plan_name: planName,
+                    limits: { max_users: s.max_users, max_records: s.max_records, max_storage_gb: s.max_storage_gb },
+                };
+            }
+        }
+
+        let billingEnabled = false;
+        try {
+            billingEnabled = !!require('../services/stripeBillingService').publicConfig().enabled;
+        } catch (e) { billingEnabled = false; }
+
+        res.json({
+            success: true,
+            church: u.church_id ? { id: u.church_id, name: u.church_name } : null,
+            account: {
+                billing_status: u.billing_status,
+                account_balance: u.account_balance,
+                last_payment_date: u.last_payment_date,
+                next_payment_due: u.next_payment_due,
+            },
+            subscription,
+            billing_portal_enabled: billingEnabled,
+        });
+    } catch (error) {
+        console.error('Error fetching subscription:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch subscription' });
+    }
+});
+
+// =============================================================================
+// LINKED PROFILES (super_admin only) — pinned accounts the admin can switch to
+// via /api/admin/impersonate. Stored in user_social_settings.custom_settings JSON.
+// =============================================================================
+
+const LINKED_PROFILES_KEY = 'linked_profile_ids';
+
+const requireSuperAdmin = (req, res, next) => {
+    const role = req.session?.user?.role || req.user?.role;
+    // While impersonating, the real identity lives in session.originalAdmin
+    const originalRole = req.session?.originalAdmin?.role;
+    if (role === 'super_admin' || originalRole === 'super_admin') return next();
+    return res.status(403).json({ success: false, message: 'super_admin role required' });
+};
+
+// The account that owns the pinned list is always the real admin, even mid-impersonation.
+const ownerIdFor = (req) => req.session?.originalAdmin?.id || req.session?.user?.id || req.user?.id;
+
+async function readLinkedProfileIds(ownerId) {
+    const [rows] = await getAppPool().query(
+        'SELECT custom_settings FROM orthodoxmetrics_db.user_social_settings WHERE user_id = ? LIMIT 1',
+        [ownerId]
+    );
+    if (!rows.length || !rows[0].custom_settings) return [];
+    try {
+        const parsed = JSON.parse(rows[0].custom_settings);
+        return Array.isArray(parsed?.[LINKED_PROFILES_KEY])
+            ? parsed[LINKED_PROFILES_KEY].map(Number).filter(Number.isInteger)
+            : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+async function writeLinkedProfileIds(ownerId, ids) {
+    const [rows] = await getAppPool().query(
+        'SELECT custom_settings FROM orthodoxmetrics_db.user_social_settings WHERE user_id = ? LIMIT 1',
+        [ownerId]
+    );
+    let custom = {};
+    if (rows.length && rows[0].custom_settings) {
+        try { custom = JSON.parse(rows[0].custom_settings) || {}; } catch (e) { custom = {}; }
+    }
+    custom[LINKED_PROFILES_KEY] = ids;
+    const json = JSON.stringify(custom);
+    if (rows.length) {
+        await getAppPool().query(
+            'UPDATE orthodoxmetrics_db.user_social_settings SET custom_settings = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+            [json, ownerId]
+        );
+    } else {
+        await getAppPool().query(
+            'INSERT INTO orthodoxmetrics_db.user_social_settings (user_id, custom_settings) VALUES (?, ?)',
+            [ownerId, json]
+        );
+    }
+}
+
+async function loadProfileSummaries(ids) {
+    if (!ids.length) return [];
+    const [rows] = await getAppPool().query(
+        `SELECT u.id, u.email, u.first_name, u.last_name, u.display_name, u.role, u.avatar_url,
+                u.church_id, COALESCE(c.church_name, c.name) AS church_name
+         FROM orthodoxmetrics_db.users u
+         LEFT JOIN orthodoxmetrics_db.churches c ON c.id = u.church_id
+         WHERE u.id IN (?) AND u.is_active = 1`,
+        [ids]
+    );
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
+// GET /api/user/profile/linked-profiles
+router.get('/linked-profiles', requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+        const ownerId = ownerIdFor(req);
+        const ids = await readLinkedProfileIds(ownerId);
+        res.json({ success: true, owner_id: ownerId, profiles: await loadProfileSummaries(ids) });
+    } catch (error) {
+        console.error('Error fetching linked profiles:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch linked profiles' });
+    }
+});
+
+// POST /api/user/profile/linked-profiles  { user_id }
+router.post('/linked-profiles', requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+        const ownerId = ownerIdFor(req);
+        const targetId = Number(req.body?.user_id);
+        if (!Number.isInteger(targetId) || targetId <= 0) {
+            return res.status(400).json({ success: false, message: 'user_id is required' });
+        }
+        if (targetId === Number(ownerId)) {
+            return res.status(400).json({ success: false, message: 'Cannot link your own account' });
+        }
+        const [target] = await getAppPool().query(
+            'SELECT id FROM orthodoxmetrics_db.users WHERE id = ? AND is_active = 1',
+            [targetId]
+        );
+        if (!target.length) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const ids = await readLinkedProfileIds(ownerId);
+        if (!ids.includes(targetId)) ids.push(targetId);
+        await writeLinkedProfileIds(ownerId, ids);
+        res.json({ success: true, profiles: await loadProfileSummaries(ids) });
+    } catch (error) {
+        console.error('Error adding linked profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to add linked profile' });
+    }
+});
+
+// DELETE /api/user/profile/linked-profiles/:userId
+router.delete('/linked-profiles/:userId', requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+        const ownerId = ownerIdFor(req);
+        const targetId = Number(req.params.userId);
+        const ids = (await readLinkedProfileIds(ownerId)).filter((id) => id !== targetId);
+        await writeLinkedProfileIds(ownerId, ids);
+        res.json({ success: true, profiles: await loadProfileSummaries(ids) });
+    } catch (error) {
+        console.error('Error removing linked profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove linked profile' });
+    }
+});
+
+// GET /api/user/profile/linked-profiles/search?q=  — pick an account to link
+router.get('/linked-profiles/search', requireAuth, requireSuperAdmin, async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim();
+        if (q.length < 2) return res.json({ success: true, users: [] });
+        const like = `%${q}%`;
+        const [rows] = await getAppPool().query(
+            `SELECT u.id, u.email, u.first_name, u.last_name, u.display_name, u.role, u.avatar_url,
+                    u.church_id, COALESCE(c.church_name, c.name) AS church_name
+             FROM orthodoxmetrics_db.users u
+             LEFT JOIN orthodoxmetrics_db.churches c ON c.id = u.church_id
+             WHERE u.is_active = 1 AND u.id != ?
+               AND (u.email LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ? OR u.display_name LIKE ?)
+             ORDER BY u.last_name, u.first_name LIMIT 20`,
+            [ownerIdFor(req), like, like, like, like]
+        );
+        res.json({ success: true, users: rows });
+    } catch (error) {
+        console.error('Error searching users for linked profiles:', error);
+        res.status(500).json({ success: false, message: 'Failed to search users' });
+    }
+});
+
+module.exports = router;

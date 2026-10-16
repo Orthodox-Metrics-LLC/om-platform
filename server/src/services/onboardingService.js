@@ -1,0 +1,1301 @@
+/**
+ * Enrollment onboarding service — ONB_<ULID> lifecycle (source of truth).
+ */
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const { getAppPool } = require('../config/db');
+const { applyOnboardingPhaseWrite } = require('../utils/churchOnboardingPhase');
+const { generateOnboardingRequestId, isValidOnboardingRequestId } = require('../utils/onboardingId');
+const onboardingCrm = require('./onboardingCrmService');
+const layoutCatalog = require('./ocrLayoutCatalogService');
+
+const VALID_RECORD_TYPES = ['baptism', 'marriage', 'funeral', 'chrismation', 'custom', 'other'];
+const MODULE_TO_RECORD = { baptism: 'baptism', marriage: 'marriage', funeral: 'funeral', custom: 'custom' };
+
+const STATUS_TRANSITIONS = {
+  postal_verification_pending: ['submitted', 'rejected', 'cancelled'],
+  submitted: ['reviewing', 'payment_pending', 'rejected', 'cancelled'],
+  reviewing: ['payment_pending', 'rejected', 'cancelled'],
+  payment_pending: ['payment_received', 'rejected', 'cancelled'],
+  payment_received: ['provisioning', 'rejected', 'cancelled'],
+  provisioning: ['admin_account_created', 'rejected', 'cancelled'],
+  admin_account_created: ['awaiting_first_login'],
+  awaiting_first_login: ['record_tables_review'],
+  record_tables_review: ['active'],
+  active: [],
+  rejected: [],
+  cancelled: [],
+};
+
+const PAYMENT_TRANSITIONS = {
+  not_required: ['pending', 'waived'],
+  pending: ['invoice_sent', 'paid', 'failed', 'waived'],
+  invoice_sent: ['paid', 'failed', 'waived'],
+  paid: ['refunded'],
+  failed: ['pending', 'invoice_sent'],
+  refunded: [],
+  waived: ['refunded'],
+};
+
+const PROVISIONING_TRANSITIONS = {
+  not_started: ['queued', 'in_progress', 'failed'],
+  queued: ['in_progress', 'failed'],
+  in_progress: ['church_created', 'admin_created', 'completed', 'failed'],
+  church_created: ['admin_created', 'completed', 'failed'],
+  admin_created: ['completed', 'failed'],
+  completed: [],
+  failed: ['queued', 'in_progress'],
+};
+
+const DEFAULT_COLUMNS = {
+  baptism: [
+    { column_key: 'child_first_name', display_label: 'Child First Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 1 },
+    { column_key: 'child_last_name', display_label: 'Child Last Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 2 },
+    { column_key: 'date_of_birth', display_label: 'Date of Birth', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 3 },
+    { column_key: 'baptism_date', display_label: 'Date of Baptism', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 4 },
+    { column_key: 'birthplace', display_label: 'Place of Birth', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 5 },
+    { column_key: 'parents', display_label: 'Parents', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 6 },
+    { column_key: 'sponsors', display_label: 'Sponsors', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 7 },
+    { column_key: 'officiating_priest', display_label: 'Officiating Priest', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 8 },
+    { column_key: 'notes', display_label: 'Notes', data_type: 'textarea', required: false, visible: true, editable: true, source: 'system_default', sort_order: 9 },
+  ],
+  marriage: [
+    { column_key: 'marriage_date', display_label: 'Marriage Date', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 1 },
+    { column_key: 'groom_first_name', display_label: 'Groom First Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 2 },
+    { column_key: 'groom_last_name', display_label: 'Groom Last Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 3 },
+    { column_key: 'bride_first_name', display_label: 'Bride First Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 4 },
+    { column_key: 'bride_last_name', display_label: 'Bride Last Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 5 },
+    { column_key: 'parents', display_label: 'Parents', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 6 },
+    { column_key: 'witnesses', display_label: 'Witnesses', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 7 },
+    { column_key: 'license', display_label: 'Marriage License', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 8 },
+    { column_key: 'officiating_priest', display_label: 'Officiating Priest', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 9 },
+    { column_key: 'notes', display_label: 'Notes', data_type: 'textarea', required: false, visible: true, editable: true, source: 'system_default', sort_order: 10 },
+  ],
+  funeral: [
+    { column_key: 'date_of_death', display_label: 'Date of Death', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 1 },
+    { column_key: 'burial_date', display_label: 'Burial Date', data_type: 'date', required: false, visible: true, editable: true, source: 'system_default', sort_order: 2 },
+    { column_key: 'deceased_first_name', display_label: 'Deceased First Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 3 },
+    { column_key: 'deceased_last_name', display_label: 'Deceased Last Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 4 },
+    { column_key: 'age', display_label: 'Age', data_type: 'number', required: false, visible: true, editable: true, source: 'system_default', sort_order: 5 },
+    { column_key: 'officiating_priest', display_label: 'Officiating Priest', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 6 },
+    { column_key: 'burial_location', display_label: 'Burial Location', data_type: 'text', required: false, visible: true, editable: true, source: 'system_default', sort_order: 7 },
+    { column_key: 'notes', display_label: 'Notes', data_type: 'textarea', required: false, visible: true, editable: true, source: 'system_default', sort_order: 8 },
+  ],
+  chrismation: [
+    { column_key: 'chrismation_date', display_label: 'Date of Chrismation', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 1 },
+    { column_key: 'first_name', display_label: 'First Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 2 },
+    { column_key: 'last_name', display_label: 'Last Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 3 },
+    { column_key: 'sponsor_name', display_label: 'Sponsor Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 4 },
+    { column_key: 'officiating_priest', display_label: 'Officiating Priest', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 5 },
+    { column_key: 'notes', display_label: 'Notes', data_type: 'textarea', required: false, visible: true, editable: true, source: 'system_default', sort_order: 6 },
+  ],
+  custom: [
+    { column_key: 'record_date', display_label: 'Record Date', data_type: 'date', required: true, visible: true, editable: true, source: 'system_default', sort_order: 1 },
+    { column_key: 'subject_name', display_label: 'Subject Name', data_type: 'text', required: true, visible: true, editable: true, source: 'system_default', sort_order: 2 },
+    { column_key: 'notes', display_label: 'Notes', data_type: 'textarea', required: false, visible: true, editable: true, source: 'system_default', sort_order: 3 },
+  ],
+};
+
+function getActor(req) {
+  const u = req?.session?.user || req?.user;
+  return { actorUserId: u?.id || u?.userId || null, actorRole: u?.role || null };
+}
+
+function parseModules(modules) {
+  if (!modules || typeof modules !== 'object') return [];
+  return Object.entries(modules)
+    .filter(([, v]) => v)
+    .map(([k]) => MODULE_TO_RECORD[k] || k)
+    .filter((t) => VALID_RECORD_TYPES.includes(t));
+}
+
+function buildSubmittedName(firstName, lastName, contactName) {
+  if (contactName) return String(contactName).trim();
+  return [firstName, lastName].filter(Boolean).join(' ').trim();
+}
+
+async function recordEvent(pool, onboardingRequestId, eventType, opts = {}) {
+  await pool.query(
+    `INSERT INTO onboarding_events
+     (onboarding_request_id, event_type, old_status, new_status, actor_user_id, actor_role, notes, metadata_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      onboardingRequestId,
+      eventType,
+      opts.oldStatus || null,
+      opts.newStatus || null,
+      opts.actorUserId || null,
+      opts.actorRole || null,
+      opts.notes || null,
+      opts.metadata ? JSON.stringify(opts.metadata) : null,
+    ]
+  );
+}
+
+async function getByPublicId(onboardingRequestId, { includeDeleted = false } = {}) {
+  if (!isValidOnboardingRequestId(onboardingRequestId)) return null;
+  const pool = getAppPool();
+  const [rows] = await pool.query(
+    `SELECT * FROM onboarding_requests WHERE onboarding_request_id = ? LIMIT 1`,
+    [onboardingRequestId]
+  );
+  if (!rows.length) return null;
+  const row = rows[0];
+  if (!includeDeleted && row.deleted_at) return null;
+  row.submitted_payload_json = typeof row.submitted_payload_json === 'string'
+    ? JSON.parse(row.submitted_payload_json) : row.submitted_payload_json;
+  row.selected_record_tables_json = typeof row.selected_record_tables_json === 'string'
+    ? JSON.parse(row.selected_record_tables_json) : row.selected_record_tables_json;
+  return row;
+}
+
+async function getEvents(onboardingRequestId) {
+  const pool = getAppPool();
+  const [rows] = await pool.query(
+    `SELECT * FROM onboarding_events WHERE onboarding_request_id = ? ORDER BY created_at ASC`,
+    [onboardingRequestId]
+  );
+  return rows.map((r) => ({
+    ...r,
+    metadata_json: r.metadata_json && typeof r.metadata_json === 'string'
+      ? JSON.parse(r.metadata_json) : r.metadata_json,
+  }));
+}
+
+/**
+ * Admin list visibility rules:
+ * - Soft-deleted rows (deleted_at IS NOT NULL) are always hidden.
+ * - Cancelled/rejected rows older than TERMINAL_RETENTION_DAYS are hidden.
+ *   Timestamp: closed_at (set on reject/cancel). Legacy fallback: updated_at.
+ */
+const TERMINAL_RETENTION_DAYS = 30;
+
+async function listRequests({ status, search, limit = 100, offset = 0, includeHidden = false } = {}) {
+  const pool = getAppPool();
+  const conditions = [];
+  const params = [];
+  if (!includeHidden) {
+    conditions.push('deleted_at IS NULL');
+    conditions.push(
+      `NOT (
+        status IN ('rejected', 'cancelled')
+        AND COALESCE(closed_at, updated_at) < DATE_SUB(NOW(), INTERVAL ? DAY)
+      )`
+    );
+    params.push(TERMINAL_RETENTION_DAYS);
+  }
+  if (status) {
+    conditions.push('status = ?');
+    params.push(status);
+  }
+  if (search) {
+    conditions.push('(parish_name LIKE ? OR submitted_by_email LIKE ? OR onboarding_request_id LIKE ?)');
+    const q = `%${search}%`;
+    params.push(q, q, q);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const [rows] = await pool.query(
+    `SELECT onboarding_request_id, parish_name, submitted_by_name, submitted_by_email,
+            status, payment_status, provisioning_status, created_at, updated_at,
+            closed_at, deleted_at
+     FROM onboarding_requests ${where}
+     ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+    [...params, Math.min(limit, 500), offset]
+  );
+  return rows;
+}
+
+async function createFromEnrollment(payload, { crmRecordId = null, sourcePage = '/enroll' } = {}) {
+  const pool = getAppPool();
+  const {
+    churchName, firstName, lastName, contactName, email, phone,
+    city, state, stateCode, zip, country, timezone, jurisdiction,
+    modules, recordImportMethod, startTimeline, parishSize, referral, notes,
+  } = payload;
+
+  const parishName = String(churchName || '').trim();
+  const submittedEmail = String(email || '').trim().toLowerCase();
+  if (!parishName || !submittedEmail) {
+    throw new Error('Parish name and submitter email are required');
+  }
+
+  const selectedTables = parseModules(modules);
+  if (!selectedTables.length) {
+    throw new Error('At least one valid record table type must be selected');
+  }
+
+  const onboardingRequestId = generateOnboardingRequestId();
+  const submittedByName = buildSubmittedName(firstName, lastName, contactName);
+  const fullPayload = {
+    ...payload,
+    sourcePage,
+    submittedAt: new Date().toISOString(),
+    onboarding_request_id: onboardingRequestId,
+  };
+
+  const [result] = await pool.query(
+    `INSERT INTO onboarding_requests (
+      onboarding_request_id, crm_record_id, submitted_by_name, submitted_by_email, submitted_by_phone,
+      parish_name, jurisdiction, city, state, country, postal_code, timezone,
+      status, payment_status, provisioning_status,
+      submitted_payload_json, selected_record_tables_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted', 'pending', 'not_started', ?, ?)`,
+    [
+      onboardingRequestId,
+      crmRecordId,
+      submittedByName,
+      submittedEmail,
+      phone || null,
+      parishName,
+      jurisdiction || null,
+      city || null,
+      state || stateCode || null,
+      country || 'United States',
+      zip || null,
+      timezone || null,
+      JSON.stringify(fullPayload),
+      JSON.stringify(selectedTables),
+    ]
+  );
+
+  await recordEvent(pool, onboardingRequestId, 'enrollment_submitted', {
+    newStatus: 'submitted',
+    notes: `Enrollment submitted from ${sourcePage}`,
+    metadata: { parishName, email: submittedEmail },
+  });
+
+  const request = await getByPublicId(onboardingRequestId);
+
+  try {
+    const crm = await onboardingCrm.createOrUpdateEnrollmentLead(request);
+    if (crm.crmRecordId && !crmRecordId) {
+      await pool.query(
+        'UPDATE onboarding_requests SET crm_record_id = ? WHERE onboarding_request_id = ?',
+        [crm.crmRecordId, onboardingRequestId]
+      );
+      request.crm_record_id = crm.crmRecordId;
+      await recordEvent(pool, onboardingRequestId, 'crm_linked', {
+        metadata: { crmRecordId: crm.crmRecordId, crmExternalRef: onboardingRequestId },
+      });
+    }
+  } catch (crmErr) {
+    await recordEvent(pool, onboardingRequestId, 'crm_link_failed', {
+      notes: crmErr.message,
+    });
+  }
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, null);
+  return { request, internalId: result.insertId };
+}
+
+async function syncEnrollmentExecution(pool, onboardingRequestId, req) {
+  try {
+    const sync = require('./workflowExecutionSync');
+    const actor = req ? getActor(req) : { actorUserId: null };
+    await sync.syncEnrollment(pool, onboardingRequestId, {
+      actorUserId: actor.actorUserId,
+      actorType: req ? (actor.actorRole === 'admin' || actor.actorRole === 'super_admin' ? 'admin' : 'user') : 'system',
+    });
+  } catch (err) {
+    console.warn('[onboarding] execution sync:', err.message);
+  }
+}
+
+function assertTransition(map, current, next, label) {
+  const allowed = map[current] || [];
+  if (!allowed.includes(next)) {
+    throw new Error(`Invalid ${label} transition: ${current} → ${next}`);
+  }
+}
+
+async function updateStatus(onboardingRequestId, newStatus, req, notes, options = {}) {
+  const { adminOverride = false } = options;
+  const pool = getAppPool();
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row) throw new Error('Onboarding request not found');
+  if (['rejected', 'cancelled'].includes(row.status)) {
+    throw new Error('Cannot update a rejected or cancelled request');
+  }
+  if (newStatus === 'active' && !row.table_configuration_completed) {
+    throw new Error('Cannot activate before table configuration is complete');
+  }
+  const isTerminalDecision = ['rejected', 'cancelled'].includes(newStatus);
+  if (!isTerminalDecision && !adminOverride) {
+    assertTransition(STATUS_TRANSITIONS, row.status, newStatus, 'status');
+  }
+
+  const { actorUserId, actorRole } = getActor(req);
+  if (isTerminalDecision) {
+    await pool.query(
+      `UPDATE onboarding_requests
+       SET status = ?, closed_at = COALESCE(closed_at, NOW()), updated_at = NOW()
+       WHERE onboarding_request_id = ?`,
+      [newStatus, onboardingRequestId]
+    );
+  } else {
+    await pool.query(
+      'UPDATE onboarding_requests SET status = ?, updated_at = NOW() WHERE onboarding_request_id = ?',
+      [newStatus, onboardingRequestId]
+    );
+  }
+  await recordEvent(pool, onboardingRequestId, 'status_changed', {
+    oldStatus: row.status,
+    newStatus,
+    actorUserId,
+    actorRole,
+    notes,
+  });
+  await syncEnrollmentExecution(pool, onboardingRequestId, req);
+  return getByPublicId(onboardingRequestId);
+}
+
+/**
+ * Soft-delete one or more onboarding requests (admin list removal before 30-day purge).
+ * Does not touch active church/user data beyond clearing users.onboarding_request_id links.
+ */
+async function softDeleteRequests(onboardingRequestIds, req) {
+  const ids = (onboardingRequestIds || []).filter(isValidOnboardingRequestId);
+  if (!ids.length) return { deleted: 0, ids: [] };
+
+  const pool = getAppPool();
+  const { actorUserId, actorRole } = getActor(req);
+  const [result] = await pool.query(
+    `UPDATE onboarding_requests
+     SET deleted_at = NOW(), updated_at = NOW()
+     WHERE onboarding_request_id IN (?) AND deleted_at IS NULL`,
+    [ids]
+  );
+  for (const id of ids) {
+    await recordEvent(pool, id, 'soft_deleted', {
+      actorUserId,
+      actorRole,
+      notes: 'Removed from admin onboarding list',
+    });
+  }
+  return { deleted: result.affectedRows || 0, ids };
+}
+
+/**
+ * Bulk reject or cancel non-terminal requests.
+ */
+async function bulkSetTerminalStatus(onboardingRequestIds, newStatus, req, notes) {
+  if (!['rejected', 'cancelled'].includes(newStatus)) {
+    throw new Error('bulkSetTerminalStatus only supports rejected or cancelled');
+  }
+  const ids = (onboardingRequestIds || []).filter(isValidOnboardingRequestId);
+  const results = { ok: [], failed: [] };
+  for (const id of ids) {
+    try {
+      const request = await updateStatus(id, newStatus, req, notes, { adminOverride: true });
+      results.ok.push({ id, status: request.status });
+    } catch (err) {
+      results.failed.push({ id, error: err.message });
+    }
+  }
+  return results;
+}
+
+/**
+ * Hard-purge soft-deleted rows and cancelled/rejected rows past retention.
+ * Timestamp: closed_at (fallback updated_at). Returns counts.
+ */
+async function purgeStaleTerminalRequests({ olderThanDays = TERMINAL_RETENTION_DAYS } = {}) {
+  const pool = getAppPool();
+  const [stale] = await pool.query(
+    `SELECT onboarding_request_id FROM onboarding_requests
+     WHERE deleted_at IS NOT NULL
+        OR (
+          status IN ('rejected', 'cancelled')
+          AND COALESCE(closed_at, updated_at) < DATE_SUB(NOW(), INTERVAL ? DAY)
+        )`,
+    [olderThanDays]
+  );
+  const ids = stale.map((r) => r.onboarding_request_id);
+  if (!ids.length) {
+    return { purged: 0, ids: [], olderThanDays };
+  }
+
+  // Clear user links before deleting request rows
+  await pool.query(
+    'UPDATE users SET onboarding_request_id = NULL WHERE onboarding_request_id IN (?)',
+    [ids]
+  );
+  await pool.query(
+    'DELETE FROM onboarding_provisioning_steps WHERE onboarding_request_id IN (?)',
+    [ids]
+  );
+  await pool.query(
+    'DELETE FROM church_record_table_configurations WHERE onboarding_request_id IN (?)',
+    [ids]
+  );
+  await pool.query(
+    'DELETE FROM onboarding_events WHERE onboarding_request_id IN (?)',
+    [ids]
+  );
+  const [del] = await pool.query(
+    'DELETE FROM onboarding_requests WHERE onboarding_request_id IN (?)',
+    [ids]
+  );
+  return { purged: del.affectedRows || 0, ids, olderThanDays };
+}
+
+async function updatePayment(onboardingRequestId, newPaymentStatus, req, notes, options = {}) {
+  const { adminOverride = false } = options;
+  const pool = getAppPool();
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row) throw new Error('Onboarding request not found');
+  if (['rejected', 'cancelled'].includes(row.status)) {
+    throw new Error('Cannot update payment on a rejected or cancelled request');
+  }
+  if (!adminOverride) {
+    assertTransition(PAYMENT_TRANSITIONS, row.payment_status, newPaymentStatus, 'payment');
+  }
+
+  const { actorUserId, actorRole } = getActor(req);
+  let statusUpdate = null;
+  if (newPaymentStatus === 'paid' || newPaymentStatus === 'waived') {
+    if (row.status === 'payment_pending' || row.status === 'reviewing') {
+      statusUpdate = 'payment_received';
+    }
+  } else if (newPaymentStatus === 'invoice_sent' && row.status === 'reviewing') {
+    statusUpdate = 'payment_pending';
+  }
+
+  await pool.query(
+    'UPDATE onboarding_requests SET payment_status = ?, updated_at = NOW() WHERE onboarding_request_id = ?',
+    [newPaymentStatus, onboardingRequestId]
+  );
+  await recordEvent(pool, onboardingRequestId, 'payment_status_changed', {
+    oldStatus: row.payment_status,
+    newStatus: newPaymentStatus,
+    actorUserId,
+    actorRole,
+    notes,
+  });
+
+  if (statusUpdate) {
+    await pool.query(
+      'UPDATE onboarding_requests SET status = ? WHERE onboarding_request_id = ?',
+      [statusUpdate, onboardingRequestId]
+    );
+    await recordEvent(pool, onboardingRequestId, 'status_changed', {
+      oldStatus: row.status,
+      newStatus: statusUpdate,
+      actorUserId,
+      actorRole,
+      notes: `Auto-updated after payment → ${newPaymentStatus}`,
+    });
+  }
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, req);
+  // om-platform: keep the church's Invoices page in step with the enrollment payment (no-op until the church exists)
+  try { await require('../routes/om/invoices').ensureEnrollmentInvoice(onboardingRequestId); } catch (e) { console.warn('[onboarding] enrollment invoice sync failed:', e.message); }
+  return getByPublicId(onboardingRequestId);
+}
+
+async function updateProvisioning(onboardingRequestId, newProvStatus, req, notes, options = {}) {
+  const { adminOverride = false } = options;
+  const pool = getAppPool();
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row) throw new Error('Onboarding request not found');
+  if (['rejected', 'cancelled'].includes(row.status)) {
+    throw new Error('Cannot update provisioning on a rejected or cancelled request');
+  }
+  if (!adminOverride) {
+    assertTransition(PROVISIONING_TRANSITIONS, row.provisioning_status, newProvStatus, 'provisioning');
+  }
+
+  const { actorUserId, actorRole } = getActor(req);
+  let statusUpdate = null;
+  if (newProvStatus === 'queued' && ['payment_received', 'reviewing'].includes(row.status)) {
+    statusUpdate = 'provisioning';
+  }
+
+  await pool.query(
+    'UPDATE onboarding_requests SET provisioning_status = ?, updated_at = NOW() WHERE onboarding_request_id = ?',
+    [newProvStatus, onboardingRequestId]
+  );
+  await recordEvent(pool, onboardingRequestId, 'provisioning_status_changed', {
+    oldStatus: row.provisioning_status,
+    newStatus: newProvStatus,
+    actorUserId,
+    actorRole,
+    notes,
+  });
+
+  if (statusUpdate) {
+    await pool.query(
+      'UPDATE onboarding_requests SET status = ? WHERE onboarding_request_id = ?',
+      [statusUpdate, onboardingRequestId]
+    );
+    await recordEvent(pool, onboardingRequestId, 'status_changed', {
+      oldStatus: row.status,
+      newStatus: statusUpdate,
+      actorUserId,
+      actorRole,
+    });
+  }
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, req);
+  return getByPublicId(onboardingRequestId);
+}
+
+function generateTempPassword() {
+  const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
+  const bytes = crypto.randomBytes(16);
+  let pwd = '';
+  for (let i = 0; i < 16; i++) pwd += charset[bytes[i] % charset.length];
+  return pwd;
+}
+
+const KEYCLOAK_BOOTSTRAP_PATH =
+  process.env.KEYCLOAK_BOOTSTRAP_SCRIPT || '/var/www/omai/_runtime/server/scripts/keycloak-bootstrap.js';
+
+const PARISH_ONBOARD_REALM = 'orthodoxmetrics';
+
+/**
+ * Parish onboard accounts authenticate via Keycloak (orthodoxmetrics realm only).
+ * AD federation is READ_ONLY — federated users keep AD passwords; others get a KC temp password.
+ */
+async function provisionAdminIdentity({ email, first_name, last_name, role, password }) {
+  const kc = require(KEYCLOAK_BOOTSTRAP_PATH);
+  const onboardRealms = kc.PARISH_ONBOARD_KC_REALMS || [PARISH_ONBOARD_REALM];
+
+  const kcResult = await kc.provisionOmUserInKeycloak({
+    email,
+    first_name,
+    last_name,
+    role,
+    password,
+    enabled: true,
+    realms: onboardRealms,
+  });
+
+  const ldapSyncResults = [];
+  const merged = kc.loadMergedEnv();
+  if (merged.KC_LDAP_AD_CONNECTION_URL) {
+    for (const realm of onboardRealms) {
+      try {
+        const { componentId } = await kc.ensureLdapFederation(realm, merged);
+        if (componentId) {
+          await kc.triggerLdapSync(realm, componentId);
+          ldapSyncResults.push({ realm, synced: true });
+        }
+      } catch (err) {
+        console.warn(`[onboarding] AD/LDAP sync (${realm}):`, err.message);
+        ldapSyncResults.push({ realm, synced: false, error: err.message });
+      }
+    }
+  }
+
+  const federatedRealms = (kcResult.results || []).filter((r) => r.federated).map((r) => r.realm);
+  return { kcResult, ldapSyncResults, federatedRealms };
+}
+
+/** Explicit grant: parish enrollments may only enter orthodoxmetrics.com. */
+async function ensureParishOnboardRealmAccess(pool, userId, actorUserId) {
+  try {
+    await pool.query(
+      `INSERT INTO user_realm_access (user_id, realm_key, role, enabled, granted_by, notes)
+       VALUES (?, ?, 'church_admin', 1, ?, 'Parish enrollment — orthodoxmetrics.com only')
+       ON DUPLICATE KEY UPDATE enabled = 1, revoked_at = NULL, notes = VALUES(notes)`,
+      [userId, PARISH_ONBOARD_REALM, actorUserId || null]
+    );
+  } catch (err) {
+    if (err && err.code === 'ER_NO_SUCH_TABLE') {
+      console.warn('[onboarding] user_realm_access missing — realm lock uses onboarding_request_id');
+      return;
+    }
+    throw err;
+  }
+}
+
+async function ensureChurch(pool, row) {
+  const { linkCrmLeadToChurch } = require('./churchProvisionOrchestrator');
+  const { getOmaiPool } = require('../config/db');
+
+  if (row.church_id) {
+    const [ch] = await pool.query('SELECT id FROM churches WHERE id = ?', [row.church_id]);
+    if (ch.length) {
+      if (row.crm_record_id) {
+        await linkCrmLeadToChurch(row.crm_record_id, row.church_id);
+      }
+      return row.church_id;
+    }
+  }
+
+  const payload = row.submitted_payload_json || {};
+  const email = row.submitted_by_email;
+  const [existing] = await pool.query(
+    'SELECT id FROM churches WHERE email = ? OR (name = ? AND city <=> ?) LIMIT 1',
+    [email, row.parish_name, row.city || null]
+  );
+  if (existing.length) {
+    await pool.query(
+      'UPDATE onboarding_requests SET church_id = ? WHERE onboarding_request_id = ?',
+      [existing[0].id, row.onboarding_request_id]
+    );
+    if (row.crm_record_id) {
+      await linkCrmLeadToChurch(row.crm_record_id, existing[0].id);
+    }
+    return existing[0].id;
+  }
+
+  const [ins] = await pool.query(
+    `INSERT INTO churches (
+      name, church_name, email, phone, address, city, state_province, postal_code, country,
+      jurisdiction, is_active, onboarding_phase, crm_lead_id, client_status,
+      has_baptism_records, has_marriage_records, has_funeral_records, setup_complete
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, 'enrolling', ?, ?, ?, 0)`,
+    [
+      row.parish_name,
+      row.parish_name,
+      email,
+      row.submitted_by_phone,
+      payload.address || null,
+      row.city,
+      row.state,
+      row.postal_code,
+      row.country || 'United States',
+      row.jurisdiction,
+      row.crm_record_id,
+      (row.selected_record_tables_json || []).includes('baptism') ? 1 : 0,
+      (row.selected_record_tables_json || []).includes('marriage') ? 1 : 0,
+      (row.selected_record_tables_json || []).includes('funeral') ? 1 : 0,
+    ]
+  );
+  const churchId = ins.insertId;
+  await pool.query(
+    'UPDATE onboarding_requests SET church_id = ? WHERE onboarding_request_id = ?',
+    [churchId, row.onboarding_request_id]
+  );
+  if (row.crm_record_id) {
+    await linkCrmLeadToChurch(row.crm_record_id, churchId);
+    try {
+      await getOmaiPool().query(
+        "UPDATE omai_crm_leads SET pipeline_stage = 'deployment' WHERE id = ?",
+        [row.crm_record_id]
+      );
+    } catch (_) { /* non-fatal */ }
+  }
+  // Church now exists → backfill its enrollment invoice (paid receipt or open invoice) for om-platform.
+  try { await require('../routes/om/invoices').ensureEnrollmentInvoice(row.onboarding_request_id); } catch (e) { console.warn('[onboarding] enrollment invoice backfill failed:', e.message); }
+  return churchId;
+}
+
+async function createTemporaryAdmin(onboardingRequestId, req) {
+  const pool = getAppPool();
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row) throw new Error('Onboarding request not found');
+  if (!['paid', 'waived'].includes(row.payment_status)) {
+    throw new Error('Payment must be paid or waived before creating a temporary admin');
+  }
+  if (row.temporary_admin_user_id) {
+    throw new Error('Temporary admin already exists. Use resend instructions instead.');
+  }
+  if (['rejected', 'cancelled'].includes(row.status)) {
+    throw new Error('Cannot provision a rejected or cancelled request');
+  }
+
+  const { actorUserId, actorRole } = getActor(req);
+  const churchId = await ensureChurch(pool, row);
+
+  const { provisionTenantDb } = require('./tenantProvisioning');
+  const provResult = await provisionTenantDb(churchId, pool, {
+    source: 'onboarding',
+    initiatedBy: actorUserId,
+    allowExisting: true,
+  });
+  if (!provResult?.success) {
+    throw new Error(provResult?.error || 'Tenant database provisioning failed');
+  }
+
+  await pool.query(
+    'UPDATE churches SET client_status = ? WHERE id = ?',
+    ['enrolling', churchId]
+  );
+
+  await applyOnboardingPhaseWrite(pool, churchId, 2, { req, source: 'create-temporary-admin' });
+
+  await pool.query(
+    'UPDATE onboarding_requests SET provisioning_status = ? WHERE onboarding_request_id = ?',
+    ['in_progress', onboardingRequestId]
+  );
+
+  const payload = row.submitted_payload_json || {};
+  const firstName = payload.firstName || row.submitted_by_name.split(' ')[0] || 'Admin';
+  const lastName = payload.lastName || row.submitted_by_name.split(' ').slice(1).join(' ') || 'User';
+  const email = row.submitted_by_email;
+
+  const [existingUser] = await pool.query('SELECT id FROM users WHERE LOWER(email) = ?', [email]);
+  if (existingUser.length) {
+    throw new Error('A user with this email already exists');
+  }
+
+  const tempPassword = generateTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const [userIns] = await pool.query(
+    `INSERT INTO users (email, first_name, last_name, role, church_id, onboarding_request_id,
+      password_hash, must_change_password, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, 'manager', ?, ?, ?, 1, 1, NOW(), NOW())`,
+    [email, firstName, lastName, churchId, onboardingRequestId, passwordHash]
+  );
+  const userId = userIns.insertId;
+
+  let identityProvision;
+  try {
+    identityProvision = await provisionAdminIdentity({
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      role: 'manager',
+      password: tempPassword,
+    });
+    await ensureParishOnboardRealmAccess(pool, userId, actorUserId);
+  } catch (err) {
+    await recordEvent(pool, onboardingRequestId, 'identity_provision_failed', {
+      actorUserId,
+      actorRole,
+      notes: err.message,
+      metadata: { userId, churchId, provider: 'keycloak' },
+    });
+    throw new Error(`Local admin created but Keycloak/AD provisioning failed: ${err.message}`);
+  }
+
+  await pool.query(
+    `UPDATE onboarding_requests SET
+      temporary_admin_user_id = ?, status = 'awaiting_first_login',
+      provisioning_status = 'admin_created', church_id = ?, updated_at = NOW()
+     WHERE onboarding_request_id = ?`,
+    [userId, churchId, onboardingRequestId]
+  );
+
+  await recordEvent(pool, onboardingRequestId, 'temporary_admin_created', {
+    actorUserId,
+    actorRole,
+    newStatus: 'awaiting_first_login',
+    metadata: {
+      userId,
+      churchId,
+      keycloak: identityProvision.kcResult,
+      adFederated: identityProvision.federatedRealms,
+      ldapSync: identityProvision.ldapSyncResults,
+    },
+  });
+
+  await pool.query(
+    'UPDATE churches SET admin_email = ?, rector_name = ? WHERE id = ?',
+    [email, row.submitted_by_name, churchId]
+  );
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, req);
+  try {
+    const sync = require('./workflowExecutionSync');
+    await sync.syncChurchScopedWorkflows(pool, churchId, { actorUserId });
+  } catch (err) {
+    console.warn('[onboarding] church workflow sync:', err.message);
+  }
+
+  return {
+    request: await getByPublicId(onboardingRequestId),
+    tempPassword,
+    loginEmail: email,
+    churchId,
+    userId,
+    identityProvision,
+  };
+}
+
+/**
+ * Reset temporary admin password in OM DB and sync Keycloak + AD federation.
+ */
+async function resetTemporaryAdminCredentials(onboardingRequestId, req) {
+  const pool = getAppPool();
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row?.temporary_admin_user_id) {
+    throw new Error('No temporary admin exists');
+  }
+
+  const [users] = await pool.query(
+    'SELECT id, email, first_name, last_name, role FROM users WHERE id = ?',
+    [row.temporary_admin_user_id]
+  );
+  if (!users.length) throw new Error('Temporary admin user not found');
+
+  const user = users[0];
+  const tempPassword = generateTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  await pool.query(
+    'UPDATE users SET password_hash = ?, must_change_password = 1, updated_at = NOW() WHERE id = ?',
+    [passwordHash, user.id]
+  );
+
+  const { actorUserId, actorRole } = getActor(req);
+  let identityProvision;
+  try {
+    identityProvision = await provisionAdminIdentity({
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      role: user.role || 'manager',
+      password: tempPassword,
+    });
+    await ensureParishOnboardRealmAccess(pool, user.id, actorUserId);
+  } catch (err) {
+    await recordEvent(pool, onboardingRequestId, 'identity_provision_failed', {
+      actorUserId,
+      actorRole,
+      notes: err.message,
+      metadata: { userId: user.id, provider: 'keycloak', context: 'resend' },
+    });
+    throw new Error(`Password reset in OM DB but Keycloak/AD sync failed: ${err.message}`);
+  }
+
+  await recordEvent(pool, onboardingRequestId, 'temporary_admin_credentials_reset', {
+    actorUserId,
+    actorRole,
+    metadata: {
+      userId: user.id,
+      keycloak: identityProvision.kcResult,
+      adFederated: identityProvision.federatedRealms,
+    },
+  });
+
+  return {
+    request: row,
+    tempPassword,
+    loginEmail: user.email,
+    identityProvision,
+  };
+}
+
+async function getForUser(userId) {
+  const pool = getAppPool();
+  const [users] = await pool.query(
+    'SELECT id, church_id, onboarding_request_id, must_change_password FROM users WHERE id = ?',
+    [userId]
+  );
+  if (!users.length || !users[0].onboarding_request_id) return null;
+  const request = await getByPublicId(users[0].onboarding_request_id);
+  if (!request) return null;
+  return {
+    request,
+    mustChangePassword: !!users[0].must_change_password,
+    churchId: users[0].church_id,
+  };
+}
+
+function validateColumns(columns, recordType) {
+  const defaults = DEFAULT_COLUMNS[recordType] || DEFAULT_COLUMNS.custom;
+  const requiredKeys = defaults.filter((c) => c.required).map((c) => c.column_key);
+  const keys = new Set();
+  for (const col of columns) {
+    if (!col.column_key || !String(col.display_label || '').trim()) {
+      throw new Error('Each column requires column_key and display_label');
+    }
+    if (keys.has(col.column_key)) {
+      throw new Error(`Duplicate column key: ${col.column_key}`);
+    }
+    keys.add(col.column_key);
+  }
+  for (const rk of requiredKeys) {
+    if (!keys.has(rk)) {
+      throw new Error(`Required system column cannot be removed: ${rk}`);
+    }
+  }
+  return true;
+}
+
+async function getRecordTableDraft(userId) {
+  const ctx = await getForUser(userId);
+  if (!ctx) throw new Error('No onboarding request for this user');
+  const pool = getAppPool();
+  const selected = ctx.request.selected_record_tables_json || [];
+  const [saved] = await pool.query(
+    `SELECT record_type, table_key, display_name, columns_json, enabled
+     FROM church_record_table_configurations
+     WHERE onboarding_request_id = ? AND church_id = ?`,
+    [ctx.request.onboarding_request_id, ctx.churchId]
+  );
+
+  const savedMap = Object.fromEntries(saved.map((s) => [s.record_type, s]));
+
+  const tables = selected.map((recordType) => {
+    const tableKey = recordType === 'custom' ? 'custom_records' : `${recordType}_records`;
+    const savedRow = savedMap[recordType];
+    const columns = savedRow?.columns_json
+      ? (typeof savedRow.columns_json === 'string' ? JSON.parse(savedRow.columns_json) : savedRow.columns_json)
+      : (DEFAULT_COLUMNS[recordType] || DEFAULT_COLUMNS.custom).map((c) => ({ ...c, source: 'enrollment_selected' }));
+    return {
+      record_type: recordType,
+      table_key: tableKey,
+      display_name: savedRow?.display_name || `${recordType.charAt(0).toUpperCase()}${recordType.slice(1)} Records`,
+      columns,
+      recommended_columns: DEFAULT_COLUMNS[recordType] || DEFAULT_COLUMNS.custom,
+      enabled: savedRow?.enabled !== 0,
+    };
+  });
+
+  return {
+    onboarding_request_id: ctx.request.onboarding_request_id,
+    status: ctx.request.status,
+    table_configuration_completed: !!ctx.request.table_configuration_completed,
+    layout_configuration_completed: !!ctx.request.layout_configuration_completed,
+    must_change_password: ctx.mustChangePassword,
+    tables,
+  };
+}
+
+async function saveRecordTables(userId, tables, { draft = true } = {}) {
+  const ctx = await getForUser(userId);
+  if (!ctx) throw new Error('No onboarding request for this user');
+  if (ctx.request.table_configuration_completed && !draft) {
+    throw new Error('Table configuration already completed');
+  }
+
+  const pool = getAppPool();
+  const selected = new Set(ctx.request.selected_record_tables_json || []);
+
+  for (const table of tables) {
+    if (!selected.has(table.record_type)) {
+      throw new Error(`Record type not in enrollment selection: ${table.record_type}`);
+    }
+    validateColumns(table.columns || [], table.record_type);
+    const tableKey = table.table_key || `${table.record_type}_records`;
+    const cols = JSON.stringify(table.columns);
+    await pool.query(
+      `INSERT INTO church_record_table_configurations
+       (church_id, onboarding_request_id, record_type, table_key, display_name, columns_json, enabled, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), columns_json = VALUES(columns_json),
+         enabled = VALUES(enabled), updated_at = NOW(), created_by = VALUES(created_by)`,
+      [
+        ctx.churchId,
+        ctx.request.onboarding_request_id,
+        table.record_type,
+        tableKey,
+        table.display_name,
+        cols,
+        table.enabled !== false ? 1 : 0,
+        userId,
+      ]
+    );
+  }
+
+  await recordEvent(pool, ctx.request.onboarding_request_id, draft ? 'table_config_draft_saved' : 'table_config_saved', {
+    actorUserId: userId,
+    metadata: { tableCount: tables.length, draft },
+  });
+
+  return getRecordTableDraft(userId);
+}
+
+async function completeRecordTables(userId) {
+  const draft = await getRecordTableDraft(userId);
+  const pool = getAppPool();
+  const onboardingRequestId = draft.onboarding_request_id;
+
+  for (const table of draft.tables) {
+    validateColumns(table.columns, table.record_type);
+  }
+
+  await pool.query(
+    `UPDATE onboarding_requests SET
+      table_configuration_completed = 1, first_login_completed = 1,
+      status = 'record_tables_review', updated_at = NOW()
+     WHERE onboarding_request_id = ?`,
+    [onboardingRequestId]
+  );
+
+  await recordEvent(pool, onboardingRequestId, 'table_configuration_completed', {
+    actorUserId: userId,
+    newStatus: 'record_tables_review',
+  });
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, null);
+  return getByPublicId(onboardingRequestId);
+}
+
+function parseLayoutSelections(raw) {
+  if (!raw) return {};
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch (_) { return {}; }
+  }
+  return raw;
+}
+
+async function getRecordLayoutDraft(userId) {
+  const ctx = await getForUser(userId);
+  if (!ctx) throw new Error('No onboarding request for this user');
+  const selectedTypes = ctx.request.selected_record_tables_json || [];
+  const saved = parseLayoutSelections(ctx.request.selected_layout_catalog_json);
+  const catalog = layoutCatalog.getLayoutsForRecordTypes(selectedTypes);
+
+  const byType = {};
+  for (const rt of selectedTypes) {
+    byType[rt] = catalog.filter((l) => l.record_type === rt);
+  }
+
+  return {
+    onboarding_request_id: ctx.request.onboarding_request_id,
+    status: ctx.request.status,
+    table_configuration_completed: !!ctx.request.table_configuration_completed,
+    layout_configuration_completed: !!ctx.request.layout_configuration_completed,
+    must_change_password: ctx.mustChangePassword,
+    selected_record_types: selectedTypes,
+    catalog_by_type: byType,
+    selections: saved,
+  };
+}
+
+async function saveRecordLayouts(userId, selections, { draft = true } = {}) {
+  const ctx = await getForUser(userId);
+  if (!ctx) throw new Error('No onboarding request for this user');
+  if (!ctx.request.table_configuration_completed) {
+    throw new Error('Complete record table configuration first');
+  }
+  if (ctx.request.layout_configuration_completed && !draft) {
+    throw new Error('Layout configuration already completed');
+  }
+
+  const selectedTypes = ctx.request.selected_record_tables_json || [];
+  layoutCatalog.validateSelections(selectedTypes, selections);
+
+  const pool = getAppPool();
+  await pool.query(
+    `UPDATE onboarding_requests SET selected_layout_catalog_json = ?, updated_at = NOW()
+     WHERE onboarding_request_id = ?`,
+    [JSON.stringify(selections), ctx.request.onboarding_request_id]
+  );
+
+  await recordEvent(pool, ctx.request.onboarding_request_id, draft ? 'layout_config_draft_saved' : 'layout_config_saved', {
+    actorUserId: userId,
+    metadata: { recordTypes: selectedTypes, draft },
+  });
+
+  return getRecordLayoutDraft(userId);
+}
+
+async function completeRecordLayouts(userId) {
+  const draft = await getRecordLayoutDraft(userId);
+  const pool = getAppPool();
+  const onboardingRequestId = draft.onboarding_request_id;
+  const selectedTypes = draft.selected_record_types || [];
+  layoutCatalog.validateSelections(selectedTypes, draft.selections);
+
+  await pool.query(
+    `UPDATE onboarding_requests SET
+      layout_configuration_completed = 1, status = 'active', updated_at = NOW()
+     WHERE onboarding_request_id = ?`,
+    [onboardingRequestId]
+  );
+
+  await recordEvent(pool, onboardingRequestId, 'layout_configuration_completed', {
+    actorUserId: userId,
+    newStatus: 'active',
+    metadata: { selections: draft.selections },
+  });
+  await recordEvent(pool, onboardingRequestId, 'onboarding_activated', {
+    actorUserId: userId,
+    newStatus: 'active',
+  });
+
+  await syncEnrollmentExecution(pool, onboardingRequestId, null);
+  return getByPublicId(onboardingRequestId);
+}
+
+async function markFirstLoginComplete(userId) {
+  const ctx = await getForUser(userId);
+  if (!ctx) return null;
+  const pool = getAppPool();
+  if (ctx.request.status === 'awaiting_first_login') {
+    await pool.query(
+      `UPDATE onboarding_requests SET first_login_completed = 1, status = 'record_tables_review', updated_at = NOW()
+       WHERE onboarding_request_id = ?`,
+      [ctx.request.onboarding_request_id]
+    );
+    await recordEvent(pool, ctx.request.onboarding_request_id, 'first_login_completed', {
+      actorUserId: userId,
+      newStatus: 'record_tables_review',
+    });
+    await syncEnrollmentExecution(pool, ctx.request.onboarding_request_id, null);
+  }
+  return getByPublicId(ctx.request.onboarding_request_id);
+}
+
+async function updateAdminNotes(onboardingRequestId, notes, req) {
+  const pool = getAppPool();
+  const { actorUserId, actorRole } = getActor(req);
+  await pool.query(
+    'UPDATE onboarding_requests SET admin_notes = ?, updated_at = NOW() WHERE onboarding_request_id = ?',
+    [notes, onboardingRequestId]
+  );
+  await recordEvent(pool, onboardingRequestId, 'admin_notes_updated', { actorUserId, actorRole, notes });
+  return getByPublicId(onboardingRequestId);
+}
+
+async function linkCrm(onboardingRequestId, crmRecordId, req) {
+  const row = await getByPublicId(onboardingRequestId);
+  if (!row) throw new Error('Onboarding request not found');
+  await onboardingCrm.linkCrmRecord(onboardingRequestId, crmRecordId);
+  const { actorUserId, actorRole } = getActor(req);
+  const pool = getAppPool();
+  await recordEvent(pool, onboardingRequestId, 'crm_linked', {
+    actorUserId,
+    actorRole,
+    metadata: { crmRecordId, crmExternalRef: onboardingRequestId },
+  });
+  return getByPublicId(onboardingRequestId);
+}
+
+function getProgressSteps(request, events) {
+  try {
+    const workflowGoals = require('./workflowGoalsService');
+    const legacy = workflowGoals.getEnrollmentLegacyProgress(request);
+    if (legacy?.length) {
+      const eventTimes = {};
+      for (const ev of events || []) {
+        if (ev.event_type === 'status_changed' && ev.new_status) {
+          eventTimes[ev.new_status] = ev.created_at;
+        }
+      }
+      return legacy.map((step) => ({
+        key: step.key,
+        label: step.label,
+        completed: step.done,
+        current: step.current,
+        timestamp: eventTimes[step.key] || null,
+      }));
+    }
+  } catch {
+    // fall through to minimal fallback
+  }
+  return [];
+}
+
+const PROVISIONING_CHECKLIST_STEPS = [
+  { step_key: 'church_profile', step_name: 'Preparing Church Profile', step_order: 1 },
+  { step_key: 'database_storage', step_name: 'Provisioning Database & Storage', step_order: 2 },
+  { step_key: 'users_roles', step_name: 'Configuring Users, Roles & Permissions', step_order: 3 },
+  { step_key: 'branding_portal', step_name: 'Applying Branding & Portal Template', step_order: 4 },
+  { step_key: 'records_certificates', step_name: 'Importing Records & Enabling Certificates', step_order: 5 },
+  { step_key: 'final_validation', step_name: 'Running Final Validation', step_order: 6 },
+];
+
+const CHECKLIST_STATUSES = new Set(['not_started', 'in_progress', 'blocked', 'failed', 'passed', 'skipped']);
+
+async function ensureChecklistRows(pool, onboardingRequestId) {
+  for (const step of PROVISIONING_CHECKLIST_STEPS) {
+    await pool.query(
+      `INSERT IGNORE INTO onboarding_provisioning_steps
+         (onboarding_request_id, step_key, step_name, step_order, status)
+       VALUES (?, ?, ?, ?, 'not_started')`,
+      [onboardingRequestId, step.step_key, step.step_name, step.step_order]
+    );
+  }
+}
+
+async function getProvisioningChecklist(onboardingRequestId) {
+  const pool = getAppPool();
+  await ensureChecklistRows(pool, onboardingRequestId);
+  const [rows] = await pool.query(
+    `SELECT step_key, step_name, step_order, status, details_json, error_message,
+            started_at, completed_at, actor_type, actor_id, retry_count
+     FROM onboarding_provisioning_steps
+     WHERE onboarding_request_id = ?
+     ORDER BY step_order`,
+    [onboardingRequestId]
+  );
+  const checklist = rows.map((r) => ({
+    ...r,
+    details_json: r.details_json && typeof r.details_json === 'string'
+      ? JSON.parse(r.details_json)
+      : r.details_json,
+  }));
+  const summary = checklist.reduce((acc, s) => {
+    acc[s.status] = (acc[s.status] || 0) + 1;
+    return acc;
+  }, {});
+  return { checklist, summary };
+}
+
+async function updateChecklistStep(onboardingRequestId, stepKey, payload, req) {
+  const pool = getAppPool();
+  const step = PROVISIONING_CHECKLIST_STEPS.find((s) => s.step_key === stepKey);
+  if (!step) throw new Error(`Unknown checklist step: ${stepKey}`);
+  const status = payload.status;
+  if (!CHECKLIST_STATUSES.has(status)) throw new Error(`Invalid checklist status: ${status}`);
+
+  await ensureChecklistRows(pool, onboardingRequestId);
+  const actorId = req?.session?.userId || req?.session?.user?.id || null;
+  const nowFields = [];
+  if (status === 'in_progress') nowFields.push('started_at = COALESCE(started_at, NOW())');
+  if (['passed', 'skipped', 'failed', 'blocked'].includes(status)) nowFields.push('completed_at = NOW()');
+  if (status === 'failed' && payload.retry) {
+    await pool.query(
+      `UPDATE onboarding_provisioning_steps SET retry_count = retry_count + 1
+       WHERE onboarding_request_id = ? AND step_key = ?`,
+      [onboardingRequestId, stepKey]
+    );
+  }
+
+  await pool.query(
+    `UPDATE onboarding_provisioning_steps
+     SET status = ?,
+         error_message = ?,
+         details_json = ?,
+         actor_type = 'admin',
+         actor_id = ?
+         ${nowFields.length ? `, ${nowFields.join(', ')}` : ''}
+     WHERE onboarding_request_id = ? AND step_key = ?`,
+    [
+      status,
+      payload.error_message || null,
+      payload.details_json ? JSON.stringify(payload.details_json) : null,
+      actorId,
+      onboardingRequestId,
+      stepKey,
+    ]
+  );
+  return getProvisioningChecklist(onboardingRequestId);
+}
+
+module.exports = {
+  VALID_RECORD_TYPES,
+  DEFAULT_COLUMNS,
+  STATUS_TRANSITIONS,
+  PAYMENT_TRANSITIONS,
+  PROVISIONING_TRANSITIONS,
+  TERMINAL_RETENTION_DAYS,
+  parseModules,
+  createFromEnrollment,
+  getByPublicId,
+  getEvents,
+  listRequests,
+  updateStatus,
+  softDeleteRequests,
+  bulkSetTerminalStatus,
+  purgeStaleTerminalRequests,
+  updatePayment,
+  updateProvisioning,
+  createTemporaryAdmin,
+  resetTemporaryAdminCredentials,
+  provisionAdminIdentity,
+  getForUser,
+  getRecordTableDraft,
+  saveRecordTables,
+  completeRecordTables,
+  getRecordLayoutDraft,
+  saveRecordLayouts,
+  completeRecordLayouts,
+  markFirstLoginComplete,
+  updateAdminNotes,
+  linkCrm,
+  getProgressSteps,
+  recordEvent,
+  PROVISIONING_CHECKLIST_STEPS,
+  getProvisioningChecklist,
+  updateChecklistStep,
+};
