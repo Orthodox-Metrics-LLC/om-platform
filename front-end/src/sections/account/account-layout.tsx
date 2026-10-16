@@ -14,9 +14,20 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
+import { useAuthContext } from 'src/auth/hooks';
+
 // ----------------------------------------------------------------------
 
-const NAV_ITEMS = [
+/** Parish clergy and church admins configure their own parish. Platform admins too. */
+export const PARISH_ACCOUNT_ROLES = [
+  'super_admin',
+  'admin',
+  'church_admin',
+  'manager',
+  'priest',
+] as const;
+
+const ACCOUNT_NAV_ITEMS = [
   {
     label: 'General',
     icon: <Iconify width={24} icon="solar:user-id-bold" />,
@@ -49,10 +60,54 @@ const NAV_ITEMS = [
   },
 ];
 
+const PARISH_NAV_ITEMS = [
+  {
+    label: 'Parish',
+    icon: <Iconify width={24} icon="solar:users-group-rounded-bold" />,
+    href: paths.dashboard.accountParish.root,
+  },
+  {
+    label: 'Database mapping',
+    icon: <Iconify width={24} icon="solar:box-minimalistic-bold" />,
+    href: paths.dashboard.accountParish.databaseMapping,
+  },
+  {
+    label: 'Record headers',
+    icon: <Iconify width={24} icon="solar:file-text-bold" />,
+    href: paths.dashboard.accountParish.recordSettings,
+  },
+  {
+    label: 'Search',
+    icon: <Iconify width={24} icon="eva:search-fill" />,
+    href: paths.dashboard.accountParish.searchConfiguration,
+  },
+  {
+    label: 'OCR',
+    icon: <Iconify width={24} icon="solar:settings-bold" />,
+    href: paths.dashboard.accountParish.ocrPreferences,
+  },
+];
+
+function activeTabHref(pathname: string, items: Array<{ href: string }>) {
+  const current = removeLastSlash(pathname);
+  return (
+    items
+      .filter((tab) => current === tab.href || current.startsWith(`${tab.href}/`))
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? false
+  );
+}
+
 // ----------------------------------------------------------------------
 
 export function AccountLayout({ children, ...other }: DashboardContentProps) {
   const pathname = usePathname();
+  const { user } = useAuthContext();
+
+  const canManageParish =
+    !!user?.role && (PARISH_ACCOUNT_ROLES as readonly string[]).includes(user.role);
+  const navItems = canManageParish
+    ? [...ACCOUNT_NAV_ITEMS, ...PARISH_NAV_ITEMS]
+    : ACCOUNT_NAV_ITEMS;
 
   return (
     <DashboardContent {...other}>
@@ -66,8 +121,14 @@ export function AccountLayout({ children, ...other }: DashboardContentProps) {
         sx={{ mb: 3 }}
       />
 
-      <Tabs value={removeLastSlash(pathname)} sx={{ mb: { xs: 3, md: 5 } }}>
-        {NAV_ITEMS.map((tab) => (
+      <Tabs
+        value={activeTabHref(pathname, navItems)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ mb: { xs: 3, md: 5 } }}
+      >
+        {navItems.map((tab) => (
           <Tab
             component={RouterLink}
             key={tab.href}

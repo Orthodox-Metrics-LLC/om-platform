@@ -8,7 +8,7 @@ import { DashboardLayout } from 'src/layouts/dashboard';
 
 import { LoadingScreen } from 'src/components/loading-screen';
 
-import { AccountLayout } from 'src/sections/account/account-layout';
+import { AccountLayout, PARISH_ACCOUNT_ROLES } from 'src/sections/account/account-layout';
 
 import { AuthGuard, RoleRouteGuard } from 'src/auth/guard';
 
@@ -77,13 +77,12 @@ const PageBuilderListPage = lazy(() => import('src/pages/dashboard/admin/page-bu
 const PageBuilderNewPage = lazy(() => import('src/pages/dashboard/admin/page-builder/new'));
 const PageBuilderEditPage = lazy(() => import('src/pages/dashboard/admin/page-builder/edit'));
 const ParishSettingsPage = lazy(() => import('src/pages/dashboard/admin/parish-settings'));
-/** Parish clergy and church admins configure their own parish. Platform admins too. */
-const PARISH_ACCOUNT_ROLES = ['super_admin', 'admin', 'church_admin', 'manager', 'priest'];
-
 const ParishManagementPage = lazy(() => import('src/pages/dashboard/account/parish-management'));
 const DatabaseMappingPage = lazy(() => import('src/pages/dashboard/account/database-mapping'));
 const RecordSettingsPage = lazy(() => import('src/pages/dashboard/account/record-settings'));
-const SearchConfigurationPage = lazy(() => import('src/pages/dashboard/account/search-configuration'));
+const SearchConfigurationPage = lazy(
+  () => import('src/pages/dashboard/account/search-configuration')
+);
 const OcrPreferencesPage = lazy(() => import('src/pages/dashboard/account/ocr-preferences'));
 // App
 const ChatPage = lazy(() => import('src/pages/dashboard/chat'));
@@ -104,7 +103,9 @@ const RecordNewPage = lazy(() => import('src/pages/portal/records/new'));
 const RecordDetailsPage = lazy(() => import('src/pages/portal/records/details'));
 const RecordEditPage = lazy(() => import('src/pages/portal/records/edit'));
 const RecordsCertificatesPage = lazy(() => import('src/pages/portal/records/certificates'));
-const CertificateTemplatesPage = lazy(() => import('src/pages/portal/records/certificate-templates'));
+const CertificateTemplatesPage = lazy(
+  () => import('src/pages/portal/records/certificate-templates')
+);
 const CertificateDesignerPage = lazy(() => import('src/pages/portal/records/certificate-designer'));
 // Portal: OCR
 const OcrListPage = lazy(() => import('src/pages/portal/ocr'));
@@ -280,48 +281,27 @@ export const dashboardRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'account/parish-management',
         element: (
-          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
-            <ParishManagementPage />
-          </RoleRouteGuard>
-        ),
-      },
-      {
-        path: 'account/parish-management/database-mapping',
-        element: (
-          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
-            <Outlet />
+          <RoleRouteGuard allowedRoles={[...PARISH_ACCOUNT_ROLES]}>
+            {accountLayout()}
           </RoleRouteGuard>
         ),
         children: [
-          { index: true, element: <DatabaseMappingPage /> },
-          { path: ':step', element: <DatabaseMappingPage /> },
+          { path: 'account/parish-management', element: <ParishManagementPage /> },
+          {
+            path: 'account/parish-management/database-mapping',
+            children: [
+              { index: true, element: <DatabaseMappingPage /> },
+              { path: ':step', element: <DatabaseMappingPage /> },
+            ],
+          },
+          { path: 'account/parish/record-settings', element: <RecordSettingsPage /> },
+          {
+            path: 'account/parish-management/search-configuration',
+            element: <SearchConfigurationPage />,
+          },
+          { path: 'account/ocr-preferences', element: <OcrPreferencesPage /> },
         ],
-      },
-      {
-        path: 'account/parish/record-settings',
-        element: (
-          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
-            <RecordSettingsPage />
-          </RoleRouteGuard>
-        ),
-      },
-      {
-        path: 'account/parish-management/search-configuration',
-        element: (
-          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
-            <SearchConfigurationPage />
-          </RoleRouteGuard>
-        ),
-      },
-      {
-        path: 'account/ocr-preferences',
-        element: (
-          <RoleRouteGuard allowedRoles={PARISH_ACCOUNT_ROLES}>
-            <OcrPreferencesPage />
-          </RoleRouteGuard>
-        ),
       },
       { path: 'mail', element: <MailPage /> },
       { path: 'chat', element: <ChatPage /> },
@@ -368,7 +348,10 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'certificates', element: <RecordsCertificatesPage /> },
           { path: 'certificates/templates', element: <CertificateTemplatesPage /> },
           { path: 'certificates/designer/:id', element: <CertificateDesignerPage /> },
-          { path: 'sacramental-calendar', element: <Navigate to="/dashboard/calendar?tab=sacramental" replace /> },
+          {
+            path: 'sacramental-calendar',
+            element: <Navigate to="/dashboard/calendar?tab=sacramental" replace />,
+          },
           { path: ':type', element: <RecordsListPage /> },
           { path: ':type/new', element: <RecordNewPage /> },
           { path: ':type/:id', element: <RecordDetailsPage /> },
