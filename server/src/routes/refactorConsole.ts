@@ -123,9 +123,9 @@ interface RefactorScan {
 // Dynamic Path Configuration
 // ============================================================================
 // Default paths - can be overridden via API parameters
-const DEFAULT_PROJECT_ROOT = '/var/www/orthodoxmetrics/prod';
-const DEFAULT_SOURCE_PATH = '/var/www/orthodoxmetrics/prod/refactor-src/';
-const DEFAULT_DESTINATION_PATH = '/var/www/orthodoxmetrics/prod/front-end/src/';
+const DEFAULT_PROJECT_ROOT = '/var/www/om-platform';
+const DEFAULT_SOURCE_PATH = '/var/www/om-platform/refactor-src/';
+const DEFAULT_DESTINATION_PATH = '/var/www/om-platform/church-front-end/src/';
 // September 2025 backup location
 const DEFAULT_BACKUP_ROOT = '/var/www/orthodoxmetrics/backup';
 
@@ -725,8 +725,8 @@ async function performScan(
   } else {
     // Fallback to original patterns for backward compatibility
     includePatterns.push(
-      '/var/www/orthodoxmetrics/prod/front-end/src/**',
-      '/var/www/orthodoxmetrics/prod/server/**'
+      '/var/www/om-platform/church-front-end/src/**',
+      '/var/www/om-platform/server/**'
     );
   }
 

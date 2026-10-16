@@ -2,9 +2,9 @@
  * Canonical OCR file path utilities.
  *
  * Single source of truth:
- *   Filesystem dir : /var/www/orthodoxmetrics/prod/uploads/om_church_<id>/uploaded/
+ *   Filesystem dir : /var/www/om-platform/uploads/om_church_<id>/uploaded/
  *   DB file_path   : /uploads/om_church_<id>/uploaded/<filename>
- *   Temp dir       : /var/www/orthodoxmetrics/prod/uploads/temp/
+ *   Temp dir       : /var/www/om-platform/uploads/temp/
  *
  * server/uploads NO LONGER EXISTS — no legacy fallbacks.
  */
@@ -13,7 +13,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Canonical uploads root — outside server/, shared by all services
-const UPLOADS_ROOT = '/var/www/orthodoxmetrics/prod/uploads';
+const UPLOADS_ROOT = '/var/www/om-platform/uploads';
 
 // Temp dir for multer — canonical, absolute
 const UPLOADS_TEMP = path.join(UPLOADS_ROOT, 'temp');
@@ -52,7 +52,7 @@ export function getOcrDbPath(churchId: number, filename: string): string {
 
 /**
  * Canonical resolveUploadDir — single helper for both uploader + worker.
- * Returns /var/www/orthodoxmetrics/prod/uploads/om_church_<id>/uploaded/
+ * Returns /var/www/om-platform/uploads/om_church_<id>/uploaded/
  * Creates the directory tree if it doesn't exist.
  */
 export function resolveUploadDir(churchId: number): string {

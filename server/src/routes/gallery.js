@@ -567,7 +567,7 @@ router.post('/check-usage', async (req, res) => {
     // IMPORTANT: Never create directories in front-end - only read existing ones
     const getFrontEndDir = () => {
       if (process.env.NODE_ENV === 'production') {
-        return '/var/www/orthodoxmetrics/prod/front-end';
+        return '/var/www/om-platform/church-front-end';
       }
       
       // When running from dist/, __dirname is dist/routes
@@ -579,7 +579,7 @@ router.post('/check-usage', async (req, res) => {
       const possiblePaths = [
         path.join(projectRoot, 'front-end'), // Most common: project-root/front-end
         path.join(serverRoot, '../front-end'), // Fallback: server/../front-end
-        '/var/www/orthodoxmetrics/prod/front-end', // Production fallback
+        '/var/www/om-platform/church-front-end', // Production fallback
       ];
       
       // Only return paths that actually exist - never create directories
@@ -746,7 +746,7 @@ router.get('/used-images', (req, res) => {
     // IMPORTANT: Never create directories in front-end - only read existing ones
     const getFrontEndDir = () => {
       if (process.env.NODE_ENV === 'production') {
-        return '/var/www/orthodoxmetrics/prod/front-end';
+        return '/var/www/om-platform/church-front-end';
       }
       
       // When running from dist/, __dirname is dist/routes
@@ -758,7 +758,7 @@ router.get('/used-images', (req, res) => {
       const possiblePaths = [
         path.join(projectRoot, 'front-end'), // Most common: project-root/front-end
         path.join(serverRoot, '../front-end'), // Fallback: server/../front-end
-        '/var/www/orthodoxmetrics/prod/front-end', // Production fallback
+        '/var/www/om-platform/church-front-end', // Production fallback
       ];
       
       // Only return paths that actually exist - never create directories
@@ -2957,7 +2957,7 @@ router.get('/churches/:id/paths', requireAuth, requireAdmin, async (req, res) =>
     }
     
     const church = rows[0];
-    const defaultUploadBase = process.env.UPLOAD_BASE_PATH || '/var/www/orthodoxmetrics/prod/uploads';
+    const defaultUploadBase = process.env.UPLOAD_BASE_PATH || '/var/www/om-platform/uploads';
     const defaultOcrBase = path.join(defaultUploadBase, `om_church_${churchId}`);
     
     const ocrBaseDirEffective = church.ocr_base_dir || defaultOcrBase;

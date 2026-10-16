@@ -49,13 +49,13 @@ function resolveJobImageFilePath(churchId: number, jobFilename: string): string 
     if (fs.existsSync(jobFilename)) foundPath = jobFilename;
   }
   if (!foundPath && (jobFilename.startsWith('/uploads/') || jobFilename.startsWith('/server/uploads/'))) {
-    const abs = path.join('/var/www/orthodoxmetrics/prod', jobFilename);
+    const abs = path.join('/var/www/om-platform', jobFilename);
     if (fs.existsSync(abs)) foundPath = abs;
   }
   if (!foundPath) {
     const baseDirs = [
-      path.join('/var/www/orthodoxmetrics/prod/uploads', `om_church_${churchId}`),
-      path.join('/var/www/orthodoxmetrics/prod/server/uploads', `om_church_${churchId}`),
+      path.join('/var/www/om-platform/uploads', `om_church_${churchId}`),
+      path.join('/var/www/om-platform/server/uploads', `om_church_${churchId}`),
     ];
     const subdirs = ['uploaded', 'processed'];
     const candidatePaths: string[] = [];
@@ -65,7 +65,7 @@ function resolveJobImageFilePath(churchId: number, jobFilename: string): string 
       }
     }
     candidatePaths.push(
-      path.join('/var/www/orthodoxmetrics/prod/server/uploads', 'ocr', `church_${churchId}`, jobFilename)
+      path.join('/var/www/om-platform/server/uploads', 'ocr', `church_${churchId}`, jobFilename)
     );
     foundPath = candidatePaths.find(p => fs.existsSync(p));
   }
@@ -811,13 +811,13 @@ function createRouters(upload: any) {
         if (fs.existsSync(jobFilename)) foundPath = jobFilename;
       }
       if (!foundPath && (jobFilename.startsWith('/uploads/') || jobFilename.startsWith('/server/uploads/'))) {
-        const abs = path.join('/var/www/orthodoxmetrics/prod', jobFilename);
+        const abs = path.join('/var/www/om-platform', jobFilename);
         if (fs.existsSync(abs)) foundPath = abs;
       }
       if (!foundPath) {
         const baseDirs = [
-          path.join('/var/www/orthodoxmetrics/prod/uploads', `om_church_${churchId}`),
-          path.join('/var/www/orthodoxmetrics/prod/server/uploads', `om_church_${churchId}`),
+          path.join('/var/www/om-platform/uploads', `om_church_${churchId}`),
+          path.join('/var/www/om-platform/server/uploads', `om_church_${churchId}`),
         ];
         const subdirs = ['uploaded', 'processed'];
         const candidatePaths: string[] = [];
@@ -827,7 +827,7 @@ function createRouters(upload: any) {
           }
         }
         candidatePaths.push(
-          path.join('/var/www/orthodoxmetrics/prod/server/uploads', 'ocr', `church_${churchId}`, jobFilename)
+          path.join('/var/www/om-platform/server/uploads', 'ocr', `church_${churchId}`, jobFilename)
         );
         foundPath = candidatePaths.find(p => fs.existsSync(p));
       }
@@ -1432,7 +1432,7 @@ function createRouters(upload: any) {
       }
 
       // Try to resolve file path from stored artifact first, fall back to filename
-      const UPLOADS_ROOT = '/var/www/orthodoxmetrics/prod/uploads';
+      const UPLOADS_ROOT = '/var/www/om-platform/uploads';
       let resolvedFilePath: string | null = null;
 
       // Check for stored source_image artifact (re-run without re-upload)
@@ -1455,7 +1455,7 @@ function createRouters(upload: any) {
       // Fall back to resolving from filename
       if (!resolvedFilePath) {
         if (job.filename.startsWith('/uploads/')) {
-          resolvedFilePath = path.join('/var/www/orthodoxmetrics/prod', job.filename);
+          resolvedFilePath = path.join('/var/www/om-platform', job.filename);
         } else {
           resolvedFilePath = path.join(UPLOADS_ROOT, `om_church_${churchId}`, 'uploaded', job.filename);
         }
@@ -1755,14 +1755,14 @@ function createRouters(upload: any) {
       );
 
       // Delete uploaded files from disk
-      const UPLOADS_ROOT = '/var/www/orthodoxmetrics/prod/uploads';
+      const UPLOADS_ROOT = '/var/www/om-platform/uploads';
       for (const job of (jobs as any[])) {
         if (job.filename) {
           try {
             let absPath: string;
             const jChurchId = job.church_id || churchId;
             if (job.filename.startsWith('/uploads/')) {
-              absPath = path.join('/var/www/orthodoxmetrics/prod', job.filename);
+              absPath = path.join('/var/www/om-platform', job.filename);
             } else {
               absPath = path.join(UPLOADS_ROOT, `om_church_${jChurchId}`, 'uploaded', job.filename);
             }
@@ -2804,7 +2804,7 @@ function createRouters(upload: any) {
       // Fallback to disk
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -2949,7 +2949,7 @@ function createRouters(upload: any) {
       // Fallback to disk
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -3120,7 +3120,7 @@ function createRouters(upload: any) {
       // Fallback to disk
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -3263,7 +3263,7 @@ function createRouters(upload: any) {
 
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -3290,7 +3290,7 @@ function createRouters(upload: any) {
 
       // Try loading saved table extraction artifact from disk
       if (!initialExtraction) {
-        const storageDir = path.join('/var/www/orthodoxmetrics/prod/server/storage/feeder', `job_${jobId}`, 'page_0');
+        const storageDir = path.join('/var/www/om-platform/server/storage/feeder', `job_${jobId}`, 'page_0');
         if (fs.existsSync(storageDir)) {
           // Find the most recent table_extraction JSON
           const files = fs.readdirSync(storageDir).filter((f: string) => f.startsWith('table_extraction') && f.endsWith('.json'));
@@ -3462,7 +3462,7 @@ function createRouters(upload: any) {
 
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -3715,13 +3715,13 @@ function createRouters(upload: any) {
           if (fs.existsSync(jobFilename)) imagePath = jobFilename;
         }
         if (!imagePath && (jobFilename.startsWith('/uploads/') || jobFilename.startsWith('/server/uploads/'))) {
-          const abs = path.join('/var/www/orthodoxmetrics/prod', jobFilename);
+          const abs = path.join('/var/www/om-platform', jobFilename);
           if (fs.existsSync(abs)) imagePath = abs;
         }
         if (!imagePath) {
           const baseDirs = [
-            path.join('/var/www/orthodoxmetrics/prod/uploads', `om_church_${churchId}`),
-            path.join('/var/www/orthodoxmetrics/prod/server/uploads', `om_church_${churchId}`),
+            path.join('/var/www/om-platform/uploads', `om_church_${churchId}`),
+            path.join('/var/www/om-platform/server/uploads', `om_church_${churchId}`),
           ];
           for (const base of baseDirs) {
             for (const sub of ['uploaded', 'processed']) {
@@ -3731,7 +3731,7 @@ function createRouters(upload: any) {
             if (imagePath) break;
           }
           if (!imagePath) {
-            const ocrCandidate = path.join('/var/www/orthodoxmetrics/prod/server/uploads', 'ocr', `church_${churchId}`, jobFilename);
+            const ocrCandidate = path.join('/var/www/om-platform/server/uploads', 'ocr', `church_${churchId}`, jobFilename);
             if (fs.existsSync(ocrCandidate)) imagePath = ocrCandidate;
           }
         }
@@ -3811,7 +3811,7 @@ function createRouters(upload: any) {
 
       // Load table_extraction.json for column bands
       const tePath = path.join(
-        '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+        '/var/www/om-platform/server/storage/feeder',
         `job_${jobId}`, 'page_0', 'table_extraction.json'
       );
       let columnBands: Record<string, number[]> = {};
@@ -3840,7 +3840,7 @@ function createRouters(upload: any) {
       // 6. Save result to storage
       const timestamp = Date.now();
       const storageDir = path.join(
-        '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+        '/var/www/om-platform/server/storage/feeder',
         `job_${jobId}`, 'page_0'
       );
       fs.mkdirSync(storageDir, { recursive: true });
@@ -3895,7 +3895,7 @@ function createRouters(upload: any) {
 
       if (!visionJsonStr) {
         const feederPath = path.join(
-          '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+          '/var/www/om-platform/server/storage/feeder',
           `job_${jobId}`, 'page_0', 'vision_result.json'
         );
         if (fs.existsSync(feederPath)) {
@@ -4162,7 +4162,7 @@ function createRouters(upload: any) {
       `, [churchId]);
 
       const jobs = (rows as any[]).map((r: any) => {
-        const extractionPath = path.join('/var/www/orthodoxmetrics/prod/server/var/ocr_artifacts', String(r.id), 'table_extraction.json');
+        const extractionPath = path.join('/var/www/om-platform/server/var/ocr_artifacts', String(r.id), 'table_extraction.json');
         let parsedLayout = null;
         if (r.layout_classification_json) {
           try {
@@ -4231,7 +4231,7 @@ function createRouters(upload: any) {
       }
 
       // Check for table extraction artifact
-      const artifactDir = path.join('/var/www/orthodoxmetrics/prod/server/var/ocr_artifacts', String(jobId));
+      const artifactDir = path.join('/var/www/om-platform/server/var/ocr_artifacts', String(jobId));
       const extractionPath = path.join(artifactDir, 'table_extraction.json');
       let tableExtraction = null;
       let hasTableExtraction = false;
@@ -5096,7 +5096,7 @@ function createRouters(upload: any) {
       );
 
       // Clean up old feeder artifacts for each job
-      const FEEDER_ROOT = path.join('/var/www/orthodoxmetrics/prod/server/storage/feeder');
+      const FEEDER_ROOT = path.join('/var/www/om-platform/server/storage/feeder');
       let cleanedCount = 0;
       for (const jobId of ids) {
         const jobDir = path.join(FEEDER_ROOT, `job_${jobId}`);
@@ -5151,7 +5151,7 @@ function createRouters(upload: any) {
 
       for (const job of jobs) {
         // Try feeder artifact path
-        const feederDir = path.join('/var/www/orthodoxmetrics/prod/server/storage/feeder', `job_${job.id}`, 'page_0');
+        const feederDir = path.join('/var/www/om-platform/server/storage/feeder', `job_${job.id}`, 'page_0');
         const jsonFiles = fs.existsSync(feederDir)
           ? fs.readdirSync(feederDir).filter((f: string) => f.includes('table_extraction') && f.endsWith('.json'))
           : [];

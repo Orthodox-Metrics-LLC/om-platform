@@ -1,0 +1,21 @@
+[Unit]
+Description=OM external DNS/HTTPS health checker for orthodoxmetrics.com
+Documentation=https://orthodoxmetrics.com/docs/internal/infrastructure/dns-reliability-guard/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=OM_DNS_ENV_FILE=/etc/orthodoxmetrics/om-dns-guard.env
+ExecStart=/var/www/om-platform/scripts/dns-guard/om-dns-healthcheck.sh
+# SuccessExitStatus not set: a non-zero exit (failed checks) marks the unit
+# failed so `systemctl --failed` and any OnFailure hook surface the problem.
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=120
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

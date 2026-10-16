@@ -351,7 +351,7 @@ try {
             error: 'Service temporarily unavailable',
             message: 'JIT Terminal module failed to load. Native dependencies may need rebuilding.',
             details: e.message,
-            fix: 'Run: cd /var/www/orthodoxmetrics/prod/server && npm rebuild node-pty'
+            fix: 'Run: cd /var/www/om-platform/server && npm rebuild node-pty'
         });
     });
     // Stub WebSocket setup function
@@ -445,7 +445,7 @@ console.log('🔑 cookieParser secret check:', {
 app.use(cookieParser(serverConfig.session.secret));
 
 // Uploads stay at the prod tree. ../../uploads breaks once server/ lives under om-platform.
-const uploadsRoot = process.env.UPLOADS_ROOT || process.env.UPLOAD_BASE_PATH || '/var/www/orthodoxmetrics/prod/uploads';
+const uploadsRoot = process.env.UPLOADS_ROOT || process.env.UPLOAD_BASE_PATH || '/var/www/om-platform/uploads';
 
 // Multer setup for file uploads (must be after body parsers)
 const multer = require('multer');

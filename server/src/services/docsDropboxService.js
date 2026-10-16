@@ -111,7 +111,7 @@ const FRONTMATTER_RE = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/;
 
 function getStorageRoot() {
   if (process.env.DOCS_DROPBOX_ROOT) return process.env.DOCS_DROPBOX_ROOT;
-  return path.join('/var/www/orthodoxmetrics/prod', 'storage', 'docs-dropbox');
+  return path.join('/var/www/om-platform', 'storage', 'docs-dropbox');
 }
 
 function getOmDocsRoot() {

@@ -8,7 +8,7 @@ class BackupEngine {
   constructor(db, config = {}) {
     this.db = db;
     this.backupRoot = config.backupRoot || '/var/backups/orthodoxmetrics';
-    this.prodRoot = config.prodRoot || '/var/www/orthodoxmetrics/prod';
+    this.prodRoot = config.prodRoot || '/var/www/om-platform';
     this.dbConfig = config.database || {
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'orthodoxmetrics_user',
@@ -333,7 +333,7 @@ class BackupEngine {
   async restoreFiles(artifact, restoreId, timestamp, options) {
     const targetDir = options.overwriteTarget 
       ? this.prodRoot 
-      : `/var/www/orthodoxmetrics/prod.restore-${timestamp}`;
+      : `/var/www/om-platform.restore-${timestamp}`;
 
     if (!options.overwriteTarget) {
       await fs.mkdir(targetDir, { recursive: true });

@@ -9,7 +9,7 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import { execSync } from 'child_process';
 
-const PROJECT_ROOT = '/var/www/orthodoxmetrics/prod';
+const PROJECT_ROOT = '/var/www/om-platform';
 const BACKUP_SOURCE = path.join(PROJECT_ROOT, 'refactor-src');
 const LIVE_TARGET = path.join(PROJECT_ROOT, 'front-end/src');
 const ROUTER_PATH = path.join(LIVE_TARGET, 'routes/Router.tsx');

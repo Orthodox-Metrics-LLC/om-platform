@@ -28,7 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DEFAULT_ROOT = path.join('/var/www/orthodoxmetrics/prod', 'storage', 'docs-pickup');
+const DEFAULT_ROOT = path.join('/var/www/om-platform', 'storage', 'docs-pickup');
 
 function usage(exitCode = 0) {
   const msg = `Usage: node drop-task-completion-pickup.js --title TITLE [content options] [metadata options]

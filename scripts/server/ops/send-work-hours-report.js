@@ -5,13 +5,13 @@
  * Usage:
  *   node send-work-hours-report.js [--months 3|6] [--to email] [--dry-run] [--end YYYY-MM-DD]
  */
-process.chdir('/var/www/orthodoxmetrics/prod/server');
+process.chdir('/var/www/om-platform/server');
 require('dotenv').config();
 
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-const { buildWorkAnalytics, formatDuration } = require('/var/www/orthodoxmetrics/prod/server/src/services/workSessionAnalyticsService');
-const { getActiveEmailConfig } = require('/var/www/orthodoxmetrics/prod/server/src/api/settings');
+const { buildWorkAnalytics, formatDuration } = require('/var/www/om-platform/server/src/services/workSessionAnalyticsService');
+const { getActiveEmailConfig } = require('/var/www/om-platform/server/src/api/settings');
 
 const USER_ID = 1;
 const DEFAULT_RECIPIENT = 'info@orthodoxmetrics.com';

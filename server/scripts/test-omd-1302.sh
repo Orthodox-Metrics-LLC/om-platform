@@ -12,7 +12,7 @@
 # Options:
 #   -r  Git ref to test (branch, tag, or SHA). Default: PR #826 branch.
 #   -e  Path to a real front-end/.env for var-name parity comparison.
-#       Default: /var/www/orthodoxmetrics/prod/front-end/.env
+#       Default: /var/www/om-platform/church-front-end/.env
 #   -o  Output directory for results. Default: /tmp/omd-1302-test-<ts>
 #   -u  Repo URL to clone. Default: current repo's origin remote.
 #   -s  Skip the npm ci + npm run build steps (fast mode).
@@ -30,7 +30,7 @@ set -o pipefail
 # Defaults
 # ------------------------------------------------------------------------
 DEFAULT_REF="chore/1302-phase-4-un-ignore-server-scripts-commit-front-end"
-DEFAULT_ENV="/var/www/orthodoxmetrics/prod/front-end/.env"
+DEFAULT_ENV="/var/www/om-platform/church-front-end/.env"
 EXPECTED_SCRIPT_COUNT=16
 
 REF="$DEFAULT_REF"

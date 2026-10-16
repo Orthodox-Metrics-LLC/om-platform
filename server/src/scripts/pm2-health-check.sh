@@ -5,7 +5,7 @@
 ###############################################################################
 
 STATE_FILE="/tmp/pm2-health-state.txt"
-LOG_FILE="/var/www/orthodoxmetrics/prod/server/logs/pm2-health-check.log"
+LOG_FILE="/var/www/om-platform/server/logs/pm2-health-check.log"
 
 # Critical processes to monitor
 CRITICAL_PROCESSES=("orthodox-backend" "om-librarian")

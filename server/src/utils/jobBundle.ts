@@ -70,7 +70,7 @@ export function getJobBundleDir(churchId: number, jobId: string | number): strin
       path.resolve(__dirname, '..', 'uploads'), // server/utils -> server/uploads
       path.resolve(process.cwd(), 'server', 'uploads'), // From project root
       path.resolve(process.cwd(), 'uploads'), // From server directory
-      '/var/www/orthodoxmetrics/prod/server/uploads', // Production Linux path
+      '/var/www/om-platform/server/uploads', // Production Linux path
     ];
     
     // Use first path that exists, or default to relative path

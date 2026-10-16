@@ -16,7 +16,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const ROOT_DIR = '/var/www/orthodoxmetrics/prod';
+const ROOT_DIR = '/var/www/om-platform';
 const LOCK_FILE = '/tmp/om-update.lock';
 const LOGS_DIR = path.join(ROOT_DIR, 'server', 'logs', 'updates');
 

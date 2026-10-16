@@ -719,7 +719,7 @@ router.post('/email', requireAuth, async (req, res) => {
 
 const { execSync } = require('child_process');
 
-const REPO_DIR = '/var/www/orthodoxmetrics/prod';
+const REPO_DIR = '/var/www/om-platform';
 
 /**
  * Generate a changelog for a given date by reading git commits
@@ -1725,7 +1725,7 @@ router.get('/github/status', requireAuth, async (req, res) => {
 // BUILD INFO & PUSH TO ORIGIN
 // ═══════════════════════════════════════════════════════════════
 
-const ROOT_PATH = '/var/www/orthodoxmetrics/prod';
+const ROOT_PATH = '/var/www/om-platform';
 const BUILD_INFO_FILE = path.join(ROOT_PATH, '.build-info');
 
 /**

@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const { dbLogger } = require('../utils/dbLogger');
 
-const ARTIFACTS_BASE = '/var/www/orthodoxmetrics/prod/server/var/ocr_artifacts';
+const ARTIFACTS_BASE = '/var/www/om-platform/server/var/ocr_artifacts';
 
 function getPool() {
   const { promisePool } = require('../config/db');
@@ -180,7 +180,7 @@ async function runExtraction(req, res) {
     // Fallback: if DB column is empty, try feeder pipeline's disk file
     if (!visionJsonStr) {
       const feederPath = path.join(
-        '/var/www/orthodoxmetrics/prod/server/storage/feeder',
+        '/var/www/om-platform/server/storage/feeder',
         `job_${jobId}`, 'page_0', 'vision_result.json'
       );
       if (fs.existsSync(feederPath)) {

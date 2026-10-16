@@ -3,7 +3,7 @@
  * prune-snapshots.js — Retention cleanup for platform_status_snapshots
  *
  * Deletes rows older than RETENTION_DAYS (default 30).
- * Designed to run via cron: node /var/www/orthodoxmetrics/prod/server/src/maintenance/prune-snapshots.js
+ * Designed to run via cron: node /var/www/om-platform/server/src/maintenance/prune-snapshots.js
  *
  * Safe: read-only table, append-only writes — this only removes old rows.
  * Logs deleted count to stdout for cron mail / journalctl.

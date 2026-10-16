@@ -6,5 +6,5 @@
   "skipInstall": false,
   "dryRun": true,
   "buildTarget": "frontend",
-  "buildPath": "/var/www/orthodoxmetrics/prod"
+  "buildPath": "/var/www/om-platform"
 }

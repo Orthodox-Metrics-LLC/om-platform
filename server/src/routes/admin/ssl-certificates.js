@@ -31,7 +31,7 @@ const CERT_PATHS = {
         fullCert: '/etc/ssl/certs/orthodoxmetrics-full-cert.pem',
         privateKey: '/etc/ssl/private/orthodoxmetrics.key',
     },
-    staging: '/var/www/orthodoxmetrics/prod/server/storage/ssl-staging',
+    staging: '/var/www/om-platform/server/storage/ssl-staging',
 };
 
 /**
@@ -124,7 +124,7 @@ router.get('/', async (req, res) => {
  */
 router.post('/extract', async (req, res) => {
     try {
-        const zipPath = path.resolve('/var/www/orthodoxmetrics/prod/docs/orthodoxmetrics.com-certificates.zip');
+        const zipPath = path.resolve('/var/www/om-platform/docs/orthodoxmetrics.com-certificates.zip');
         const stagingDir = CERT_PATHS.staging;
 
         // Verify zip exists

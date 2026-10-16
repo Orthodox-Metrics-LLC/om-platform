@@ -3,7 +3,7 @@
   "churchId": 46,
   "pickupId": "OMPKT-20260711-0001",
   "generatedAt": "2026-07-12T01:04:00.045Z",
-  "source": "/var/www/orthodoxmetrics/prod/tmp/ssppoc_all_grave_mappings_with_locations.xlsx",
+  "source": "/var/www/om-platform/tmp/ssppoc_all_grave_mappings_with_locations.xlsx",
   "sourceType": "xlsx",
   "sourceSheet": "All Grave Mappings",
   "excelStats": {

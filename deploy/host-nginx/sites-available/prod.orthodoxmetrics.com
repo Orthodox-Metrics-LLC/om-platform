@@ -1,7 +1,7 @@
 # Additive vhost on om-prod01 for prod.orthodoxmetrics.com.
 # Purpose: keep the legacy prod-current SPA reachable after orthodoxmetrics.com
 # moves to om-platform. Does not replace the apex / www / api vhosts.
-# SPA root: /var/www/orthodoxmetrics/prod/front-end/dist (NOT dist-platform, NOT om-platform).
+# SPA root: /var/www/om-platform/church-front-end/dist (NOT dist-platform, NOT om-platform).
 
 server {
     listen 80;

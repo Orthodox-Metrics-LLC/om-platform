@@ -13,7 +13,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const repoRoot = path.resolve(__dirname, '../../..');
-const PROD = process.env.OM_PROD_ROOT || '/var/www/orthodoxmetrics/prod';
+const PROD = process.env.OM_PROD_ROOT || '/var/www/om-platform';
 const DROPBOX_ROOT = process.env.DOCS_DROPBOX_ROOT || path.join(PROD, 'storage', 'docs-dropbox');
 const PICKUP_ROOT = process.env.DOCS_PICKUP_ROOT || path.join(PROD, 'storage', 'docs-pickup');
 

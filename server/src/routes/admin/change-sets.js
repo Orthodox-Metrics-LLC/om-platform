@@ -187,7 +187,7 @@ router.post('/:id/fast-forward', requireAuth, requireSuperAdmin, async (req, res
     // Push to origin if branch is set
     if (cs.git_branch) {
       const { execSync } = require('child_process');
-      const REPO_DIR = '/var/www/orthodoxmetrics/prod';
+      const REPO_DIR = '/var/www/om-platform';
       try {
         execSync(`git push origin ${cs.git_branch}`, {
           cwd: REPO_DIR,
@@ -224,7 +224,7 @@ router.post('/:id/promote-and-push', requireAuth, requireSuperAdmin, async (req,
 
     // Push to origin
     const { execSync } = require('child_process');
-    const REPO_DIR = '/var/www/orthodoxmetrics/prod';
+    const REPO_DIR = '/var/www/om-platform';
     let pushResult = '';
 
     if (cs.git_branch) {

@@ -14,7 +14,7 @@ const jobs = [
   { id: 275, expected: 'form', name: 'Marriage Printed Forms' }
 ];
 
-const FEEDER_ROOT = '/var/www/orthodoxmetrics/prod/server/storage/feeder';
+const FEEDER_ROOT = '/var/www/om-platform/server/storage/feeder';
 
 /**
  * Layout classifier v3 — refined scoring with overlapping-keyword resolution.

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run OM external DNS/HTTPS health check every 10 minutes
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=10min
+RandomizedDelaySec=60
+Persistent=true
+
+[Install]
+WantedBy=timers.target

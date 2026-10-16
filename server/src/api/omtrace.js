@@ -15,7 +15,7 @@ const { requireAuth } = require('../middleware/auth');
 
 // Security: Allowed base directories for filesystem scans
 const ALLOWED_BASE_DIRS = [
-  '/var/www/orthodoxmetrics/prod',
+  '/var/www/om-platform',
   '/var/www/orthodoxmetrics',
   '/var/www/omai',
 ];
@@ -123,7 +123,7 @@ async function buildDependencyIndex(scanRoot, baseDir) {
   const startMs = Date.now();
 
   // Scan both front-end and server trees
-  const projectRoot = baseDir; // e.g. /var/www/orthodoxmetrics/prod
+  const projectRoot = baseDir; // e.g. /var/www/om-platform
   const serverSrc = path.join(projectRoot, 'server', 'src');
 
   const [feFiles, srvFiles] = await Promise.all([

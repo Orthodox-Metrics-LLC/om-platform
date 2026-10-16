@@ -81,3 +81,11 @@ Thumbs.db
 
 # Agent session worklogs (workspace artifacts, not app code)
 .om-worklog/
+
+# Runtime trees relocated from /var/www/orthodoxmetrics/prod (not platform source)
+/uploads/
+/public/
+/church-front-end/
+/bigbook/
+/storage/
+/logs/

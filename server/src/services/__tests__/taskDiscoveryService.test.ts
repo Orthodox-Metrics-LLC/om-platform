@@ -9,7 +9,7 @@
  * Strategy:
  *   - Monkey-patch fs.promises with a virtual filesystem (vfs Map)
  *   - Stub logger via require.cache to silence output
- *   - Hardcoded paths `/var/www/orthodoxmetrics/prod` and
+ *   - Hardcoded paths `/var/www/om-platform` and
  *     `/mnt/bigbook_secure` are used as vfs keys
  *
  * Run from server/: npx tsx src/services/__tests__/taskDiscoveryService.test.ts
@@ -234,7 +234,7 @@ fsRaw.promises.writeFile = async (p: string, content: string): Promise<void> => 
 // ── Require SUT ───────────────────────────────────────────────────────
 const TaskDiscoveryService = require('../taskDiscoveryService');
 
-const PROJECT_ROOT = '/var/www/orthodoxmetrics/prod';
+const PROJECT_ROOT = '/var/www/om-platform';
 const BIG_BOOK = '/mnt/bigbook_secure';
 
 async function main() {
@@ -266,11 +266,11 @@ assertEq(svc.mapStatusToColumn('Finished'), 'Done', 'Finished → Done');
 assertEq(svc.mapStatusToColumn('Unknown'), 'To Do', 'unknown → To Do');
 
 // generateTaskId
-const id1 = svc.generateTaskId('/var/www/orthodoxmetrics/prod/tasks/task_foo.md');
+const id1 = svc.generateTaskId('/var/www/om-platform/tasks/task_foo.md');
 assert(typeof id1 === 'string', 'generateTaskId returns string');
 assert(id1.length <= 16, 'generateTaskId length ≤ 16');
 assert(/^[a-zA-Z0-9]+$/.test(id1), 'generateTaskId alphanumeric only');
-const id2 = svc.generateTaskId('/var/www/orthodoxmetrics/prod/tasks/task_bar.md');
+const id2 = svc.generateTaskId('/var/www/om-platform/tasks/task_bar.md');
 assert(id1 !== id2, 'different paths → different ids');
 
 // getNestedValue
@@ -470,8 +470,8 @@ console.log('\n── deduplicateTasks ─────────────�
 
 {
   const tasks = [
-    { filename: 'task_a.md', filepath: '/var/www/orthodoxmetrics/prod/task_a.md' },
-    { filename: 'task_b.md', filepath: '/var/www/orthodoxmetrics/prod/task_b.md' },
+    { filename: 'task_a.md', filepath: '/var/www/om-platform/task_a.md' },
+    { filename: 'task_b.md', filepath: '/var/www/om-platform/task_b.md' },
     { filename: 'task_a.md', filepath: '/mnt/bigbook_secure/task_a.md' },
   ];
   const result = svc.deduplicateTasks(tasks);
@@ -483,7 +483,7 @@ console.log('\n── deduplicateTasks ─────────────�
 {
   const tasks = [
     { filename: 'task_x.md', filepath: '/mnt/bigbook_secure/task_x.md' },
-    { filename: 'task_x.md', filepath: '/var/www/orthodoxmetrics/prod/task_x.md' },
+    { filename: 'task_x.md', filepath: '/var/www/om-platform/task_x.md' },
   ];
   const result = svc.deduplicateTasks(tasks);
   assertEq(result.length, 1, 'dedup');

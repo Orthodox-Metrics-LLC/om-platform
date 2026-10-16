@@ -5,15 +5,15 @@ const path = require('path');
 
 // All directories to scan for conversation files
 const DEFAULT_CONVERSATION_SOURCES = [
-  { dir: '/var/www/orthodoxmetrics/prod/c0', label: 'c0' },
-  { dir: '/var/www/orthodoxmetrics/prod/c1', label: 'c1' },
-  { dir: '/var/www/orthodoxmetrics/prod/c2', label: 'c2' },
-  { dir: '/var/www/orthodoxmetrics/prod/c3', label: 'c3' },
-  { dir: '/var/www/orthodoxmetrics/prod/ws', label: 'ws' },
+  { dir: '/var/www/om-platform/c0', label: 'c0' },
+  { dir: '/var/www/om-platform/c1', label: 'c1' },
+  { dir: '/var/www/om-platform/c2', label: 'c2' },
+  { dir: '/var/www/om-platform/c3', label: 'c3' },
+  { dir: '/var/www/om-platform/ws', label: 'ws' },
 ];
 
 // Custom directory config file
-const DIRS_CONFIG_FILE = path.join('/var/www/orthodoxmetrics/prod', 'conversation-dirs.json');
+const DIRS_CONFIG_FILE = path.join('/var/www/om-platform', 'conversation-dirs.json');
 
 function loadCustomDirs() {
   try {
@@ -454,7 +454,7 @@ router.get('/stats', (req, res) => {
 });
 
 // ===== TASK CHECKLIST =====
-const TASKS_FILE = path.join('/var/www/orthodoxmetrics/prod', 'conversation-tasks.json');
+const TASKS_FILE = path.join('/var/www/om-platform', 'conversation-tasks.json');
 
 function loadTasks() {
   try {

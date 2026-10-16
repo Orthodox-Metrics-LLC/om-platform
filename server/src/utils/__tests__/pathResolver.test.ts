@@ -106,7 +106,7 @@ assertEq(
 );
 assertEq(
   getBaseSourcePath('local'),
-  '/var/www/orthodoxmetrics/prod/refactor-src',
+  '/var/www/om-platform/refactor-src',
   'local → prod refactor-src'
 );
 
