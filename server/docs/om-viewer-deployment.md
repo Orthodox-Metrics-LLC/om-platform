@@ -47,3 +47,41 @@ The middleware must be mounted immediately after `app.use(sessionMiddleware)` an
 The frontend sends `client: om-viewer` only for the viewer login URL, disables logo and non-auth navigation, and returns to `/auth/viewer-complete` instead of a portal/dashboard. Build and deploy the changed frontend through its normal pipeline as well as the backend. The package deliberately contains source only; do not serve it as compiled assets. Frontend TS/TSX syntax/transpile checks passed locally, but a full platform build was not run (its dependency trees are not installed here).
 
 Additional checks: `node --test tests/om-viewer-scope.test.js tests/om-viewer-policy.test.js` on the backend, and `npm run test:hosted`, `npm run test:navigation`, `npm run test:desktop` in desktop. The native navigation regression uses a loopback-only fixture and verifies both homepage links and SPA history navigation are contained even with an undeployed API. Confirm ordinary browser logins still reach their normal portal, while a viewer login cannot follow the OM logo or access unrelated website APIs.
+
+## Desktop update feeds
+
+Downloads are public. Uploads are not. Only the `next` release account may publish, and only packaged build output belongs in the feed.
+
+| Platform | URL | Directory |
+| --- | --- | --- |
+| Windows x64 | `https://orthodoxmetrics.com/updates/om-viewer/windows/x64/` | `/var/www/orthodoxmetrics-updates/om-viewer/windows/x64/` |
+| Linux x64 | `https://orthodoxmetrics.com/updates/om-viewer/linux/x64/` | `/var/www/orthodoxmetrics-updates/om-viewer/linux/x64/` |
+
+Nginx serves those directories with `alias`. A missing file is a real 404. It is not the website login page and not the React app. `POST` and `PUT` are denied.
+
+Electron Builder writes the metadata. Do not hand-write `latest.yml` or `latest-linux.yml`. Publish with:
+
+```sh
+scripts/server/ops/publish-om-viewer-update.sh windows /path/to/dist
+scripts/server/ops/publish-om-viewer-update.sh linux /path/to/dist
+```
+
+The script copies the installer or AppImage first and the metadata last. Older versioned files stay in the directory.
+
+Each Windows release needs `OM Viewer Setup <version>.exe`, `OM Viewer Setup <version>.exe.blockmap`, and `latest.yml`. Each Linux release needs `OM-Viewer-<version>.AppImage` and `latest-linux.yml`.
+
+Point electron-builder at the feeds:
+
+```yaml
+win:
+  publish:
+    provider: generic
+    url: https://orthodoxmetrics.com/updates/om-viewer/windows/x64
+linux:
+  target: AppImage
+  publish:
+    provider: generic
+    url: https://orthodoxmetrics.com/updates/om-viewer/linux/x64
+```
+
+The desktop app should check at startup and on a timer, offer Check for updates, show download progress, and ask before Restart and install. It must not restart while a record save is in progress. Windows code signing is still required for a Program Files install; that update may prompt for administrator approval. On Linux, keep the AppImage somewhere the user can write, such as `~/Applications`, and `chmod +x` it so the updater can replace it without root.
