@@ -355,8 +355,8 @@ router.post('/login', async (req, res) => {
 
     // Find user in orthodoxmetrics_db
     const [users] = await pool.execute(
-      'SELECT * FROM users WHERE email = ? AND is_active = 1',
-      [loginEmail]
+      'SELECT * FROM users WHERE LOWER(email) = LOWER(?) AND is_active = 1',
+      [String(loginEmail).trim()]
     );
 
     const user = users[0];
@@ -636,12 +636,27 @@ router.get('/check', async (req, res) => {
       }
     }
     
-    // Check session as fallback
+    // Check session as fallback. Refresh the stored address so an email change
+    // is visible without asking the user to sign in again.
     if (req.session && req.session.user) {
+      const sessionUser = { ...req.session.user };
+      if (sessionUser.id) {
+        const [fresh] = await pool.execute(
+          'SELECT email, display_name, role, church_id FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
+          [sessionUser.id]
+        );
+        if (fresh[0]) {
+          sessionUser.email = fresh[0].email;
+          sessionUser.display_name = fresh[0].display_name || sessionUser.display_name || null;
+          sessionUser.role = fresh[0].role;
+          sessionUser.church_id = fresh[0].church_id;
+          req.session.user.email = fresh[0].email;
+        }
+      }
       return res.json({
         success: true,
         authenticated: true,
-        user: req.session.user
+        user: sessionUser
       });
     }
     

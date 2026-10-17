@@ -3,7 +3,8 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth');
-const { sendVerificationEmail } = require('../utils/emailService');
+const { sendVerificationEmail, sendEmailChangeConfirmation } = require('../utils/emailService');
+const emailChange = require('../services/emailChange');
 
 const KEYCLOAK_BOOTSTRAP_PATH =
   process.env.KEYCLOAK_BOOTSTRAP_SCRIPT || '/var/www/omai/_runtime/server/scripts/keycloak-bootstrap.js';
@@ -168,8 +169,15 @@ router.get('/', requireAuth, async (req, res) => {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                pending_email: null,
             };
+            try {
+                const pending = await emailChange.pendingFor(getAppPool(), user.id);
+                profileData.pending_email = pending?.pending_email || null;
+            } catch (pendingError) {
+                console.warn('[profile] pending email lookup failed:', pendingError.message);
+            }
         }
 
         res.json({
@@ -219,22 +227,15 @@ router.put('/', requireAuth, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid profile_visibility' });
         }
 
-        // Only super_admin may change their own email; everyone else needs a super_admin to do it.
+        // A new address is not the sign-in address until the user confirms the email we send.
         const { email: newEmail } = req.body;
+        let requestedEmail = null;
         if (newEmail !== undefined) {
             const actorRole = req.session?.user?.role || req.user?.role;
             if (actorRole !== 'super_admin') {
                 return res.status(403).json({ success: false, message: 'Contact a super administrator to change your email address' });
             }
-            const normalized = String(newEmail).trim().toLowerCase();
-            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalized)) {
-                return res.status(400).json({ success: false, message: 'Enter a valid email address' });
-            }
-            const [taken] = await getAppPool().query(
-                'SELECT id FROM orthodoxmetrics_db.users WHERE LOWER(email) = ? AND id != ?',
-                [normalized, userId]
-            );
-            if (taken.length) return res.status(400).json({ success: false, message: 'Email is already in use' });
+            requestedEmail = String(newEmail).trim().toLowerCase();
         }
 
         // Build SET clause from provided fields, mapping to actual column names
@@ -269,11 +270,6 @@ router.put('/', requireAuth, async (req, res) => {
             church_affiliation, job_title, company, phone, currency,
             profile_visibility, preferred_language, timezone
         };
-        if (newEmail !== undefined) {
-            columnMap.email = 'email';
-            fieldValues.email = String(newEmail).trim().toLowerCase();
-        }
-
         for (const [field, value] of Object.entries(fieldValues)) {
             if (value !== undefined) {
                 setClauses.push(`${columnMap[field]} = ?`);
@@ -308,16 +304,38 @@ router.put('/', requireAuth, async (req, res) => {
             await syncKeycloakProfile(updatedUsers[0]);
         }
 
+        let pendingEmail = null;
+        if (requestedEmail && updatedUsers[0] && requestedEmail !== String(updatedUsers[0].email || '').trim().toLowerCase()) {
+            const requested = await emailChange.requestChange(getAppPool(), {
+                userId,
+                currentEmail: updatedUsers[0].email,
+                newEmail: requestedEmail,
+                firstName: updatedUsers[0].first_name,
+            }, async ({ to, token, firstName, previousEmail }) => {
+                const baseUrl = process.env.FRONTEND_URL || 'https://orthodoxmetrics.com';
+                await sendEmailChangeConfirmation(
+                    to,
+                    `${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`,
+                    firstName,
+                    previousEmail
+                );
+            });
+            pendingEmail = requested.pending ? requested.pending_email : null;
+        }
+
         console.log(`📸 User profile updated for user ${userId}`);
 
         res.json({
             success: true,
-            message: 'Profile updated successfully'
+            message: pendingEmail
+                ? `Confirmation sent to ${pendingEmail}. Sign in with your current address until you confirm it.`
+                : 'Profile updated successfully',
+            pending_email: pendingEmail,
         });
 
     } catch (error) {
         console.error('Error updating user profile:', error);
-        res.status(500).json({ success: false, message: 'Failed to update user profile' });
+        res.status(error.status || 500).json({ success: false, message: error.message || 'Failed to update user profile' });
     }
 });
 
@@ -655,6 +673,19 @@ router.post('/verify-email', async (req, res) => {
         }
 
         const pool = getAppPool();
+        const confirmed = await emailChange.confirmToken(pool, token);
+        if (confirmed) {
+            const [confirmedUsers] = await pool.query(
+                'SELECT email, first_name, last_name, role FROM orthodoxmetrics_db.users WHERE id=? LIMIT 1',
+                [confirmed.user_id]
+            );
+            if (confirmedUsers[0]) await syncKeycloakProfile(confirmedUsers[0]);
+            return res.json({
+                success: true,
+                message: `Email confirmed. Sign in with ${confirmed.email}.`,
+                email: confirmed.email,
+            });
+        }
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
         // Find valid token
@@ -692,7 +723,7 @@ router.post('/verify-email', async (req, res) => {
         res.json({ success: true, message: 'Email verified successfully.' });
     } catch (error) {
         console.error('Error verifying email:', error);
-        res.status(500).json({ success: false, message: 'Verification failed. Please try again.' });
+        res.status(error.status || 500).json({ success: false, message: error.message || 'Verification failed. Please try again.' });
     }
 });
 

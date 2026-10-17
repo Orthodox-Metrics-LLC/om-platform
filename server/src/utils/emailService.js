@@ -1217,6 +1217,37 @@ const sendVerificationEmail = async (toEmail, verificationUrl, firstName) => {
   }
 };
 
+const sendEmailChangeConfirmation = async (toEmail, verificationUrl, firstName, previousEmail) => {
+  try {
+    const transporter = await createTransporter();
+    const dbConfig = await getActiveEmailConfig();
+    const senderName = dbConfig?.sender_name || 'Orthodox Metrics';
+    const senderEmail = dbConfig?.sender_email || process.env.SMTP_USER || process.env.EMAIL_USER;
+    const displayName = firstName || 'there';
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <p>Hello ${displayName},</p>
+  <p>Confirm that <strong>${toEmail}</strong> should replace <strong>${previousEmail}</strong> as your Orthodox Metrics sign-in address.</p>
+  <p><a href="${verificationUrl}">Confirm this email address</a></p>
+  <p>Until you confirm, sign in with ${previousEmail}. This link expires in 24 hours. If you did not ask for this change, ignore this message.</p>
+</body>
+</html>`;
+    const info = await transporter.sendMail({
+      from: `"${senderName}" <${senderEmail}>`,
+      to: toEmail,
+      subject: 'Confirm your new Orthodox Metrics email',
+      html: htmlContent,
+      text: `Hello ${displayName},\n\nConfirm ${toEmail} as your Orthodox Metrics sign-in address:\n${verificationUrl}\n\nUntil you confirm, sign in with ${previousEmail}. This link expires in 24 hours.\n`,
+    });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`Failed to send email-change confirmation to ${toEmail}:`, error.message);
+    throw error;
+  }
+};
+
 // Send interactive report invite to a recipient
 const sendRecipientInvite = async ({ to, reportTitle, link, expiresAt, churchName }) => {
   try {
@@ -1955,6 +1986,7 @@ module.exports = {
   sendPasswordResetCodeEmail,
   sendInviteEmail,
   sendVerificationEmail,
+  sendEmailChangeConfirmation,
   sendRecipientInvite,
   sendPriestSummary
 };

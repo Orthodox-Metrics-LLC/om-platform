@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -47,6 +48,7 @@ type OmProfile = {
   profile_visibility: 'public' | 'friends' | 'private';
   created_at: string | null;
   last_login: string | null;
+  pending_email?: string | null;
 };
 
 export type UpdateUserSchemaType = z.infer<typeof UpdateUserSchema>;
@@ -106,6 +108,7 @@ export function AccountGeneral() {
   const canEditEmail = sessionUser?.role === 'super_admin';
 
   const [profile, setProfile] = useState<OmProfile | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [extraAvatars, setExtraAvatars] = useState<OmAvatarPreset[]>([]);
   const avatarOptions = [...OM_AVATARS, ...extraAvatars];
@@ -129,7 +132,11 @@ export function AccountGeneral() {
         const res = await omApiFetch('/api/user/profile');
         const json = await res.json().catch(() => null);
         if (!res.ok || !json?.success) throw new Error(json?.message || `Failed (${res.status})`);
-        if (!cancelled) setProfile(json.profile as OmProfile);
+        if (!cancelled) {
+          const loaded = json.profile as OmProfile;
+          setProfile(loaded);
+          setPendingEmail(loaded.pending_email || null);
+        }
       } catch (error) {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load profile');
       }
@@ -177,7 +184,13 @@ export function AccountGeneral() {
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) throw new Error(json?.message || `Failed (${res.status})`);
 
-      toast.success('Profile updated');
+      if (json.pending_email) {
+        setPendingEmail(json.pending_email);
+        methods.setValue('email', profile?.email || '');
+        toast.success(json.message || `Confirmation sent to ${json.pending_email}.`);
+      } else {
+        toast.success('Profile updated');
+      }
       // Refresh the session user so the header avatar/name pick up the change.
       await checkSession();
     } catch (error) {
@@ -252,6 +265,11 @@ export function AccountGeneral() {
             <Typography variant="subtitle1" sx={{ mb: 3 }}>
               Personal information
             </Typography>
+            {pendingEmail && (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Confirmation is waiting at {pendingEmail}. Sign in with {profile?.email} until you open that email and confirm the change.
+              </Alert>
+            )}
 
             <Box
               sx={{
@@ -274,7 +292,7 @@ export function AccountGeneral() {
                 disabled={!canEditEmail}
                 helperText={
                   canEditEmail
-                    ? 'Super admins may change their own email'
+                    ? 'A new address is confirmed from the email we send. Sign-in stays on this address until then.'
                     : 'Contact a super administrator to change your email'
                 }
               />

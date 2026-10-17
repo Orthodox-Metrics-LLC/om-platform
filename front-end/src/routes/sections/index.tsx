@@ -26,6 +26,7 @@ import { componentsRoutes } from './components';
 const HomePage = lazy(() => import('src/pages/home'));
 const ViewerCompletePage = lazy(() => import('src/pages/auth/viewer-complete'));
 const OmSignInPage = lazy(() => import('src/pages/auth/sign-in'));
+const VerifyEmailPage = lazy(() => import('src/pages/auth/verify-email'));
 
 const homeElement = (
   <Suspense fallback={<SplashScreen />}>
@@ -59,6 +60,16 @@ const baseRoutes: RouteObject[] = [
   },
 
   {path:'/auth/viewer-complete',element:<Suspense fallback={<SplashScreen />}><ViewerCompletePage /></Suspense>},
+  {
+    path: '/auth/verify-email',
+    element: (
+      <Suspense fallback={<SplashScreen />}>
+        <AuthSplitLayout>
+          <VerifyEmailPage />
+        </AuthSplitLayout>
+      </Suspense>
+    ),
+  },
 
   // Auth
   ...authRoutes,
@@ -86,7 +97,7 @@ const baseRoutes: RouteObject[] = [
 // Resolve public SPA links before mounting their pages, including menu/profile links.
 function ViewerPortalBoundary({children}:{children:ReactNode}){
  const {pathname}=useLocation();
- if(isViewerPortal()&&!(/^\/(portal|dashboard)(\/|$)/.test(pathname)||['/auth/login','/auth-demo/centered/reset-password','/error/403','/error/404','/error/500'].includes(pathname)))return <Navigate to="/portal" replace />;
+ if(isViewerPortal()&&!(/^\/(portal|dashboard)(\/|$)/.test(pathname)||['/auth/login','/auth/verify-email','/auth-demo/centered/reset-password','/error/403','/error/404','/error/500'].includes(pathname)))return <Navigate to="/portal" replace />;
  return <>{children}</>;
 }
 export const routesSection: RouteObject[] = [{element:<ViewerPortalBoundary><Outlet /></ViewerPortalBoundary>,children:baseRoutes}];
