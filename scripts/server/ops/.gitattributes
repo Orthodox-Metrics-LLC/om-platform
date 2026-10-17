@@ -1,0 +1,2 @@
+scripts/server/ops/*.py text eol=lf
+scripts/server/ops/*.sh text eol=lf
