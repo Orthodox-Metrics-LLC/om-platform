@@ -71,17 +71,21 @@ async function syncKeycloakPassword(email, password) {
     }
 }
 
-async function syncKeycloakProfile(user) {
+async function syncKeycloakProfile(user, options = {}) {
     if (!user?.email) return;
     try {
         const kc = loadKeycloakModule();
-        const realms = kc.PARISH_ONBOARD_KC_REALMS || ['orthodoxmetrics'];
+        const previousEmail = options.previousEmail || null;
+        const realms = previousEmail && typeof kc.realmsForOmRole === 'function'
+            ? kc.realmsForOmRole(user.role)
+            : (kc.PARISH_ONBOARD_KC_REALMS || ['orthodoxmetrics']);
         await kc.provisionOmUserInKeycloak({
             email: user.email,
             first_name: user.first_name,
             last_name: user.last_name,
             role: user.role,
             enabled: true,
+            previous_email: previousEmail,
             realms,
         });
     } catch (err) {
@@ -679,7 +683,9 @@ router.post('/verify-email', async (req, res) => {
                 'SELECT email, first_name, last_name, role FROM orthodoxmetrics_db.users WHERE id=? LIMIT 1',
                 [confirmed.user_id]
             );
-            if (confirmedUsers[0]) await syncKeycloakProfile(confirmedUsers[0]);
+            if (confirmedUsers[0]) {
+                await syncKeycloakProfile(confirmedUsers[0], { previousEmail: confirmed.previous_email });
+            }
             return res.json({
                 success: true,
                 message: `Email confirmed. Sign in with ${confirmed.email}.`,
