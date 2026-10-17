@@ -26,13 +26,15 @@ import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
 import { FileManagerChurchPicker } from 'src/sections/file-manager/file-manager-church-picker';
 
+import { cemeteryRecordsApi } from './cemetery-records-api';
 import { useRecordsChurch } from '../records/use-records-church';
-import { formatFieldValue, cemeteryRecordsApi } from './cemetery-records-api';
+import { sameValue, editString, parseFieldInput } from './cemetery-cell-edit';
 
 // ----------------------------------------------------------------------
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+type GridRow = CemeteryRow & { id: number; __edit?: { field: string; text: string } };
 type DateDraft = { year: string; month: string; day: string };
 type DraftValue = string | DateDraft;
 type EditorState = {
@@ -183,6 +185,29 @@ export function CemeteryRecordsView() {
     });
   };
 
+  const commitCell = useCallback(async (newRow: GridRow, oldRow: GridRow) => {
+    if (!resource || !churchId || !newRow.__edit) return oldRow;
+    const field = resource.fields.find((item) => item.name === newRow.__edit?.field);
+    if (!field) return oldRow;
+    const nextValue = parseFieldInput(field, newRow.__edit.text);
+    if (sameValue(nextValue, oldRow.values?.[field.name] ?? null)) return oldRow;
+    const values: Record<string, unknown> = {};
+    for (const item of resource.fields) {
+      values[item.name] = item.name === field.name ? nextValue : oldRow.values?.[item.name] ?? null;
+    }
+    const saved = await cemeteryRecordsApi.save(churchId, {
+      table: resource.table,
+      row_id: oldRow.row_id,
+      values,
+      note: `Updated ${field.label} in the grid.`,
+      request_id: crypto.randomUUID(),
+      fingerprint: oldRow.fingerprint,
+    });
+    setRows((current) => current.map((row) => (row.row_id === saved.row.row_id ? saved.row : row)));
+    toast.success(`Saved ${field.label}`);
+    return { ...saved.row, id: saved.row.row_id };
+  }, [churchId, resource]);
+
   const save = async () => {
     if (!editor || !resource || !churchId) return;
     const note = editor.note.trim();
@@ -212,12 +237,16 @@ export function CemeteryRecordsView() {
 
   const columns = useMemo<GridColDef[]>(() => {
     if (!resource) return [];
-    const dataColumns: GridColDef[] = resource.fields.map((field) => ({
+    const dataColumns: GridColDef<GridRow>[] = resource.fields.map((field) => ({
       field: field.name,
       headerName: field.label,
+      description: canManage ? 'Double-click to edit this cell' : undefined,
       flex: 1,
-      minWidth: field.type === 'partial_date' ? 150 : 120,
-      valueGetter: (_value, row: CemeteryRow & { id: number }) => formatFieldValue(field, row.values?.[field.name]) || '—',
+      minWidth: field.type === 'partial_date' ? 160 : 120,
+      editable: canManage,
+      valueGetter: (_value, row) => editString(field, row.values?.[field.name]),
+      valueSetter: (value, row) => ({ ...row, __edit: { field: field.name, text: String(value ?? '') } }),
+      renderCell: (params) => params.value || '—',
     }));
     return [
       ...dataColumns,
@@ -295,12 +324,20 @@ export function CemeteryRecordsView() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search name, plot, grave, date…"
                 slotProps={{ input: { startAdornment: <Iconify icon="eva:search-fill" sx={{ mr: 1, color: 'text.disabled' }} /> } }}
-                sx={{ minWidth: 260 }}
+                sx={{ minWidth: 260, flexGrow: 1 }}
               />
+              {canManage && (
+                <Box sx={{ alignSelf: 'center', color: 'text.secondary', typography: 'caption' }}>
+                  Double-click a cell to change it. Press Enter to save.
+                </Box>
+              )}
             </Box>
             <DataGrid
               rows={gridRows}
               columns={columns}
+              editMode="cell"
+              processRowUpdate={commitCell}
+              onProcessRowUpdateError={(error) => toast.error(error instanceof Error ? error.message : 'Could not save this cell')}
               loading={loading}
               rowCount={total}
               paginationMode="server"
