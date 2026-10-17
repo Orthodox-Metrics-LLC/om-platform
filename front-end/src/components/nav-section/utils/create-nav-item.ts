@@ -26,6 +26,7 @@ export function createNavItem({
   hasChild,
   externalLink,
   enabledRootRedirect,
+  actionItem,
 }: CreateNavItemProps): CreateNavItemReturn {
   const rootItem = depth === 1;
   const subItem = !rootItem;
@@ -35,7 +36,11 @@ export function createNavItem({
     ? { href: path, target: '_blank', rel: 'noopener noreferrer' }
     : { component: RouterLink, href: path };
 
-  const baseProps = hasChild && !enabledRootRedirect ? { component: 'div' } : linkProps;
+  const baseProps = actionItem
+    ? { component: 'button', type: 'button' }
+    : hasChild && !enabledRootRedirect
+      ? { component: 'div' }
+      : linkProps;
 
   /**
    * Render @icon

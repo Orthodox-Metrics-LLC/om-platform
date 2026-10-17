@@ -8,6 +8,8 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { SvgColor } from 'src/components/svg-color';
 
+import { openOmAppChurchPicker } from './components/om-apps-church-dialog';
+
 // ----------------------------------------------------------------------
 
 const icon = (name: string) => (
@@ -250,6 +252,22 @@ export const navData: NavSectionProps['data'] = [
         icon: <Iconify icon="solar:settings-bold-duotone" />,
         allowedRoles: ['super_admin', 'admin'],
         caption: 'Manage parishes and tenant settings',
+      },
+      {
+        title: 'OM Book App',
+        path: '#om-book-app',
+        icon: <Iconify icon="solar:notebook-bold-duotone" />,
+        allowedRoles: ['super_admin'],
+        caption: 'Choose a church',
+        onClick: () => openOmAppChurchPicker('books'),
+      },
+      {
+        title: 'OM Importer App',
+        path: '#om-importer-app',
+        icon: <Iconify icon="solar:import-bold" />,
+        allowedRoles: ['super_admin'],
+        caption: 'Choose a church',
+        onClick: () => openOmAppChurchPicker('importer'),
       },
       { title: 'File manager', path: paths.portal.fileManager, icon: NAV_ICONS.folder },
       { title: 'Asset Manager', path: paths.dashboard.assetManager, icon: NAV_ICONS.file, allowedRoles: ['super_admin', 'admin'], caption: 'Platform administrators' },

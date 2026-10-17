@@ -31,6 +31,7 @@ export function NavItem({
   className,
   externalLink,
   enabledRootRedirect,
+  actionItem,
   ...other
 }: NavItemProps) {
   const navItem = createNavItem({
@@ -42,6 +43,7 @@ export function NavItem({
     hasChild,
     externalLink,
     enabledRootRedirect,
+    actionItem,
   });
 
   const ownerState: StyledState = {

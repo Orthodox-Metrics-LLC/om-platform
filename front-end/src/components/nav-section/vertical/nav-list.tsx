@@ -60,6 +60,18 @@ export function NavList({
     }
   }, [data.children, onToggle]);
 
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      if (data.onClick) {
+        event.preventDefault();
+        data.onClick(event);
+        return;
+      }
+      handleToggleMenu();
+    },
+    [data, handleToggleMenu]
+  );
+
   const renderNavItem = () => (
     <NavItem
       ref={navItemRef}
@@ -79,10 +91,11 @@ export function NavList({
       hasChild={!!data.children}
       externalLink={isExternalLink(data.path)}
       enabledRootRedirect={enabledRootRedirect}
+      actionItem={!!data.onClick}
       // styles
       slotProps={depth === 1 ? slotProps?.rootItem : slotProps?.subItem}
       // actions
-      onClick={handleToggleMenu}
+      onClick={handleClick}
     />
   );
 

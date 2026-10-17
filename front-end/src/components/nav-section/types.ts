@@ -41,6 +41,8 @@ export type NavItemOptionsProps = {
   hasChild?: boolean;
   externalLink?: boolean;
   enabledRootRedirect?: boolean;
+  /** Renders a button instead of a route link. Used by items that open a dialog. */
+  actionItem?: boolean;
   render?: NavItemRenderProps;
   slotProps?: NavItemSlotProps;
 };
@@ -54,6 +56,8 @@ export type NavItemDataProps = Pick<NavItemStateProps, 'disabled'> & {
   deepMatch?: boolean;
   allowedRoles?: string | string[];
   children?: NavItemDataProps[];
+  /** Opens UI in place instead of following `path`. */
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 export type NavItemProps = ButtonBaseProps &

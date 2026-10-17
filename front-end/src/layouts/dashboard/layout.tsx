@@ -34,6 +34,7 @@ import { ContactsPopover } from '../components/contacts-popover';
 import { WorkspacesPopover } from '../components/workspaces-popover';
 import { dashboardLayoutVars, dashboardNavColorVars } from './css-vars';
 import { NotificationsDrawer } from '../components/notifications-drawer';
+import { OmAppsChurchDialog } from '../components/om-apps-church-dialog';
 import { MainSection, layoutClasses, HeaderSection, LayoutSection } from '../core';
 import { churchNavData, navData as dashboardNavData } from '../nav-config-dashboard';
 
@@ -224,6 +225,8 @@ export function DashboardLayout({
   const renderMain = () => <MainSection {...slotProps?.main}>{children}</MainSection>;
 
   return (
+    <>
+    <OmAppsChurchDialog />
     <LayoutSection
       /** **************************************
        * @Header
@@ -258,5 +261,6 @@ export function DashboardLayout({
     >
       {renderMain()}
     </LayoutSection>
+    </>
   );
 }
