@@ -139,6 +139,7 @@ export const paths = {
       certificateDesigner: (id: string) => `${ROOTS.PORTAL}/records/certificates/designer/${id}`,
       sacramentalCalendar: `${ROOTS.PORTAL}/records/sacramental-calendar`,
     },
+    cemetery: `${ROOTS.PORTAL}/cemetery`,
     fileManager: `${ROOTS.PORTAL}/file-manager`,
   },
   // DASHBOARD

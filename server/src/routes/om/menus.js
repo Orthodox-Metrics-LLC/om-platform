@@ -71,7 +71,39 @@ async function ensureSchema() {
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_audience (audience, is_active)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  await ensureChurchCemeteryMenu();
   ensured = true;
+}
+
+const CEMETERY_MENU_ITEM = {
+  title: 'Cemetery Records',
+  path: '/portal/cemetery',
+  icon: 'solar:notes-bold-duotone',
+  deepMatch: true,
+};
+
+async function ensureChurchCemeteryMenu() {
+  const [[item]] = await promisePool.query('SELECT id FROM om_menu_items WHERE item_key=?', ['cemetery-records']);
+  if (!item) {
+    await promisePool.query(
+      `INSERT INTO om_menu_items (item_key, section, title, path, icon, audiences, sort_order)
+       VALUES (?,?,?,?,?,?,?)`,
+      ['cemetery-records', 'Applications', 'Cemetery Records', CEMETERY_MENU_ITEM.path, CEMETERY_MENU_ITEM.icon, JSON.stringify(['admin', 'church']), 50]
+    );
+  }
+  const [templates] = await promisePool.query("SELECT id, nav_json FROM om_menu_templates WHERE audience='church'");
+  for (const template of templates) {
+    const nav = parseJson(template.nav_json, []);
+    if (!Array.isArray(nav) || JSON.stringify(nav).includes(CEMETERY_MENU_ITEM.path)) continue;
+    const apps = nav.find((section) => section && section.subheader === 'Applications');
+    if (apps && Array.isArray(apps.items)) {
+      const recordsAt = apps.items.findIndex((entry) => entry && (entry.path === '/portal/records' || entry.title === 'Records'));
+      apps.items.splice(recordsAt >= 0 ? recordsAt + 1 : apps.items.length, 0, { ...CEMETERY_MENU_ITEM });
+    } else {
+      nav.push({ subheader: 'Applications', items: [{ ...CEMETERY_MENU_ITEM }] });
+    }
+    await promisePool.query('UPDATE om_menu_templates SET nav_json=? WHERE id=?', [JSON.stringify(nav), template.id]);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +133,7 @@ const MASTER_ITEMS = [
   ['mail', 'Applications', 'Mail', '/dashboard/mail', 'mail', ['admin', 'church', 'limited']],
   ['chat', 'Applications', 'Chat', '/dashboard/chat', 'chat', ['admin', 'church', 'limited']],
   ['calendar', 'Applications', 'Calendar', '/dashboard/calendar', 'calendar', ['admin', 'church', 'limited']],
+  ['cemetery-records', 'Applications', 'Cemetery Records', '/portal/cemetery', 'solar:notes-bold-duotone', ['admin', 'church']],
   ['profile', 'Applications', 'My profile', '/dashboard/user', 'user', ['admin', 'church', 'limited']],
   ['social-feed', 'Applications', 'Social feed', '/dashboard/social', 'blog', ['admin', 'church', 'limited']],
   ['notifications', 'Applications', 'Notifications', '/dashboard/notifications', 'label', ['admin', 'church', 'limited']],
@@ -122,6 +155,7 @@ const DEFAULT_NAV = {
         { title: 'Certificates', path: '/portal/records/certificates', deepMatch: true },
         { title: 'Metrics', path: '/portal/records', deepMatch: true },
       ] },
+      { title: 'Cemetery Records', path: '/portal/cemetery', icon: 'solar:notes-bold-duotone', deepMatch: true },
       { title: 'Invoices', path: '/dashboard/invoice', icon: 'invoice', deepMatch: true },
       { title: 'File manager', path: '/portal/file-manager', icon: 'folder' },
       { title: 'Mail', path: '/dashboard/mail', icon: 'mail' },

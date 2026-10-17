@@ -108,6 +108,7 @@ const CertificateTemplatesPage = lazy(
   () => import('src/pages/portal/records/certificate-templates')
 );
 const CertificateDesignerPage = lazy(() => import('src/pages/portal/records/certificate-designer'));
+const CemeteryRecordsPage = lazy(() => import('src/pages/portal/cemetery'));
 // Portal: OCR
 const OcrListPage = lazy(() => import('src/pages/portal/ocr'));
 const OcrUploadPage = lazy(() => import('src/pages/portal/ocr/upload'));
@@ -366,6 +367,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: ':type/:id/edit', element: <RecordEditPage /> },
         ],
       },
+      { path: 'cemetery', element: <CemeteryRecordsPage /> },
       { path: 'file-manager', element: <PortalFileManagerPage /> },
     ],
   },

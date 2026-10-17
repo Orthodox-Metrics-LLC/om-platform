@@ -645,6 +645,7 @@ console.log('✅ [Server] Mounted /api/churches/:churchId/records-landing route 
 app.use('/api/auth', authRoutes);
 
 app.use('/api/om-viewer', require('./routes/om-viewer'));
+app.use('/api/portal/cemetery-records', require('./routes/portalCemeteryRecords'));
 app.use(require('./routes/om-apps'));
 
 // Email intake webhook (webhook-secret protected, no auth middleware)

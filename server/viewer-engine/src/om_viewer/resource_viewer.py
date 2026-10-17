@@ -159,8 +159,9 @@ def list_resources(c):
 def browse(c,r,query):
     search=query.get('search','')
     if not isinstance(search,str) or len(search)>250:raise ValueError('Search must be 250 characters or fewer.')
-    page=query.get('page',0);limit=50
+    page=query.get('page',0);limit=query.get('limit',50)
     if type(page) is not int or not 0<=page<=20000:raise ValueError('Invalid resource page.')
+    if type(limit) is not int or not 1<=limit<=200:raise ValueError('Choose a page size from 1 to 200.')
     fields={f['name']:f for f in r['fields']}
     sorting=query.get('sort',[])
     if not isinstance(sorting,list) or len(sorting)>3:raise ValueError('Choose up to three sort fields.')
@@ -172,8 +173,12 @@ def browse(c,r,query):
         order.append(col+' IS NULL ASC')
         if name in (r['sort_roles'].get('plot'),r['sort_roles'].get('grave')) and fields[name]['type']=='string':
             numeric="NULLIF(REGEXP_SUBSTR("+col+",'^[0-9]+'),'')"
-            order += [numeric+' IS NULL ASC','CAST('+numeric+' AS DECIMAL(65,0)) '+d]
-        order.append(col+' '+d)
+            order += [numeric+' IS NULL ASC','CAST('+numeric+' AS DECIMAL(65,0)) '+d, col+' '+d]
+        elif fields[name]['type']=='partial_date':
+            for part in ('year','month','day'):
+                order.append("CAST(JSON_UNQUOTE(JSON_EXTRACT("+col+",'$."+part+"')) AS UNSIGNED) "+d)
+        else:
+            order.append(col+' '+d)
     order.append(identifier('_om_row_id')+' ASC')
     where='';params=[]
     if search:

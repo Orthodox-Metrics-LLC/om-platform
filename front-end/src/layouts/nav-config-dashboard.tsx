@@ -114,6 +114,12 @@ export const churchNavData: NavSectionProps['data'] = [
           { title: 'Metrics', path: paths.portal.records.root, deepMatch: true },
         ],
       },
+      {
+        title: 'Cemetery Records',
+        path: paths.portal.cemetery,
+        icon: <Iconify icon="solar:notes-bold-duotone" />,
+        deepMatch: true,
+      },
       { title: 'Invoices', path: paths.dashboard.invoice.root, icon: NAV_ICONS.invoice, deepMatch: true, allowedRoles: ['church_admin', 'manager', 'priest', 'deacon'] },
       { title: 'File manager', path: paths.portal.fileManager, icon: NAV_ICONS.folder },
       { title: 'Mail', path: paths.dashboard.mail, icon: NAV_ICONS.mail },
