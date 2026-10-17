@@ -9,6 +9,8 @@ import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/global-config';
 
+import { isViewerPortal } from 'src/auth/utils/viewer-client';
+
 import { logoClasses } from './classes';
 
 // ----------------------------------------------------------------------
@@ -40,7 +42,7 @@ export function Logo({
   return (
     <LogoRoot
       component={RouterLink}
-      href={href}
+      href={isViewerPortal()?'/portal':href}
       aria-label="Orthodox Metrics"
       underline="none"
       className={mergeClasses([logoClasses.root, className])}

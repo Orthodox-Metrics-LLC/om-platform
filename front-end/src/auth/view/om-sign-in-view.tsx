@@ -24,7 +24,7 @@ import { RHFTextField } from 'src/components/hook-form/rhf-text-field';
 
 import { FormHead } from '../components/form-head';
 import { useOmAuth, isChurchRole } from '../context/om-auth';
-import { isViewerClient, VIEWER_COMPLETE } from '../utils/viewer-client';
+import { isViewerClient, isViewerPortal, VIEWER_COMPLETE } from '../utils/viewer-client';
 
 // ----------------------------------------------------------------------
 
@@ -69,8 +69,8 @@ export function OmSignInView() {
        * returns the user where they were headed. AuthGuard sets that param.
        */
       const returnTo = new URLSearchParams(window.location.search).get('returnTo');
-      if(isViewerClient()){window.location.replace(VIEWER_COMPLETE);return;}
-      router.push(landingPath(signedIn.role, returnTo));
+      if(isViewerClient()&&!isViewerPortal()){window.location.replace(VIEWER_COMPLETE);return;}
+      router.push(landingPath(signedIn.role, isViewerPortal()?null:returnTo));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Sign in failed.');
     }
@@ -250,8 +250,8 @@ function SignedInPanel() {
   useEffect(() => {
     if (!user) return;
     const returnTo = new URLSearchParams(window.location.search).get('returnTo');
-    if(isViewerClient()){window.location.replace(VIEWER_COMPLETE);return;}
-    router.replace(landingPath(user.role, returnTo));
+    if(isViewerClient()&&!isViewerPortal()){window.location.replace(VIEWER_COMPLETE);return;}
+    router.replace(landingPath(user.role, isViewerPortal()?null:returnTo));
   }, [user, router]);
 
   const name =

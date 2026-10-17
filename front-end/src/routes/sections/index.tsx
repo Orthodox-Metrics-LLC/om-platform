@@ -1,7 +1,8 @@
+import type { ReactNode } from 'react';
 import type { RouteObject } from 'react-router';
 
 import { lazy, Suspense } from 'react';
-import { Navigate } from 'react-router';
+import { Outlet, Navigate, useLocation } from 'react-router';
 
 import { paths } from 'src/routes/paths';
 
@@ -11,6 +12,8 @@ import { AuthSplitLayout } from 'src/layouts/auth-split';
 import { SplashScreen } from 'src/components/loading-screen';
 
 import { LANDING_PATHS } from 'src/sections/home/landing-sections';
+
+import { isViewerPortal } from 'src/auth/utils/viewer-client';
 
 import { authRoutes } from './auth';
 import { mainRoutes } from './main';
@@ -32,7 +35,7 @@ const homeElement = (
   </Suspense>
 );
 
-export const routesSection: RouteObject[] = [
+const baseRoutes: RouteObject[] = [
   /**
    * `/`, `/product`, `/products`, `/records`, `/ocr`, `/capabilities` and `/analytics`
    * all render the home page — matching OM, where these are not separate pages but deep
@@ -79,3 +82,11 @@ export const routesSection: RouteObject[] = [
   // Unknown paths → real 404 page
   { path: '*', element: <Navigate to={paths.page404} replace /> },
 ];
+
+// Resolve public SPA links before mounting their pages, including menu/profile links.
+function ViewerPortalBoundary({children}:{children:ReactNode}){
+ const {pathname}=useLocation();
+ if(isViewerPortal()&&!(/^\/(portal|dashboard)(\/|$)/.test(pathname)||['/auth/login','/auth-demo/centered/reset-password','/error/403','/error/404','/error/500'].includes(pathname)))return <Navigate to="/portal" replace />;
+ return <>{children}</>;
+}
+export const routesSection: RouteObject[] = [{element:<ViewerPortalBoundary><Outlet /></ViewerPortalBoundary>,children:baseRoutes}];
