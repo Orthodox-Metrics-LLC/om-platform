@@ -2,7 +2,6 @@ const { getAppPool } = require('../config/db-compat');
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { promisePool } = require('../config/db-compat');
 const { requireAuth } = require('../middleware/auth');
 const { sendVerificationEmail } = require('../utils/emailService');
 
@@ -929,7 +928,7 @@ router.get('/security', requireAuth, async (req, res) => {
     try {
         const smsLogin = require('../services/loginSmsOtp');
         const userId = req.session?.user?.id || req.user?.id;
-        const status = await smsLogin.statusFor(promisePool, { id: userId });
+        const status = await smsLogin.statusFor(getAppPool(), { id: userId });
         res.json({ success: true, ...status });
     } catch (error) {
         res.status(error.status || 500).json({ success: false, message: error.message || 'Could not load security settings.' });
@@ -941,7 +940,7 @@ router.post('/security/sms', requireAuth, async (req, res) => {
     try {
         const smsLogin = require('../services/loginSmsOtp');
         const userId = req.session?.user?.id || req.user?.id;
-        const issued = await smsLogin.sendCode(promisePool, { id: userId }, 'enable');
+        const issued = await smsLogin.sendCode(getAppPool(), { id: userId }, 'enable');
         res.json({ success: true, message: 'A confirmation code was texted to your phone.', ...issued });
     } catch (error) {
         res.status(error.status || 500).json({ success: false, message: error.message || 'Could not send the text.' });
@@ -953,12 +952,12 @@ router.post('/security/sms/confirm', requireAuth, async (req, res) => {
     try {
         const smsLogin = require('../services/loginSmsOtp');
         const userId = req.session?.user?.id || req.user?.id;
-        const confirmedFor = await smsLogin.verifyCode(promisePool, req.body?.challenge_id, req.body?.code, 'enable');
+        const confirmedFor = await smsLogin.verifyCode(getAppPool(), req.body?.challenge_id, req.body?.code, 'enable');
         if (Number(confirmedFor) !== Number(userId)) {
             return res.status(403).json({ success: false, message: 'That code belongs to a different sign-in.' });
         }
-        await promisePool.query('UPDATE users SET sms_login_otp=1 WHERE id=?', [userId]);
-        const status = await smsLogin.statusFor(promisePool, { id: userId });
+        await getAppPool().query('UPDATE users SET sms_login_otp=1 WHERE id=?', [userId]);
+        const status = await smsLogin.statusFor(getAppPool(), { id: userId });
         res.json({ success: true, message: 'Text sign-in is on. The next sign-in will text you a code.', ...status });
     } catch (error) {
         res.status(error.status || 500).json({ success: false, message: error.message || 'Could not confirm the code.' });
@@ -974,14 +973,14 @@ router.post('/security/sms/disable', requireAuth, async (req, res) => {
         if (!currentPassword) {
             return res.status(400).json({ success: false, message: 'Enter your current password to turn text sign-in off.' });
         }
-        const [users] = await promisePool.query('SELECT password_hash, email FROM users WHERE id=? LIMIT 1', [userId]);
+        const [users] = await getAppPool().query('SELECT password_hash, email FROM users WHERE id=? LIMIT 1', [userId]);
         const user = users[0];
         let valid = false;
         if (user?.password_hash) valid = await require('bcryptjs').compare(currentPassword, user.password_hash);
         if (!valid && user?.email) valid = await verifyKeycloakPassword(user.email, currentPassword);
         if (!valid) return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
-        await promisePool.query('UPDATE users SET sms_login_otp=0 WHERE id=?', [userId]);
-        const status = await smsLogin.statusFor(promisePool, { id: userId });
+        await getAppPool().query('UPDATE users SET sms_login_otp=0 WHERE id=?', [userId]);
+        const status = await smsLogin.statusFor(getAppPool(), { id: userId });
         res.json({ success: true, message: 'Text sign-in is off.', ...status });
     } catch (error) {
         res.status(error.status || 500).json({ success: false, message: error.message || 'Could not turn text sign-in off.' });
