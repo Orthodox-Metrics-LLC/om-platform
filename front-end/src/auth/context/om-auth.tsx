@@ -44,12 +44,20 @@ export type OmImpersonation = {
   originalAdmin: { email: string } | null;
 };
 
+export type LoginOtpChallenge = {
+  otpRequired: true;
+  challengeId: string;
+  phoneHint: string;
+};
+
 type OmAuthState = {
   user: OmUser | null;
   loading: boolean;
   authenticated: boolean;
   impersonation: OmImpersonation;
-  signIn: (email: string, password: string, client?: 'om-viewer') => Promise<OmUser>;
+  signIn: (email: string, password: string, client?: 'om-viewer') => Promise<OmUser | LoginOtpChallenge>;
+  verifyLoginOtp: (challengeId: string, code: string, client?: 'om-viewer') => Promise<OmUser>;
+  resendLoginOtp: (challengeId: string) => Promise<LoginOtpChallenge>;
   signOut: () => Promise<void>;
   checkSession: () => Promise<void>;
   /** super_admin only — swap the session to another account (server enforces the role). */
@@ -277,6 +285,17 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
     checkSession();
   }, [checkSession]);
 
+  const acceptSession = useCallback((data: { access_token?: string; user: OmUser }) => {
+    if (data.access_token) writeToken(data.access_token);
+    try {
+      sessionStorage.removeItem(REAUTH_AT_KEY);
+    } catch {
+      // Storage unavailable.
+    }
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   const signIn = useCallback(async (email: string, password: string, client?: 'om-viewer') => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
@@ -293,14 +312,45 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data?.message || `Sign in failed (${res.status})`);
     }
 
-    if (data.access_token) writeToken(data.access_token);
-    try {
-      sessionStorage.removeItem(REAUTH_AT_KEY);
-    } catch {
-      // Storage unavailable.
+    if (data.otp_required) {
+      return {
+        otpRequired: true as const,
+        challengeId: String(data.challenge_id),
+        phoneHint: String(data.phone_hint || 'your phone'),
+      };
     }
-    setUser(data.user);
-    return data.user as OmUser;
+
+    return acceptSession(data);
+  }, [acceptSession]);
+
+  const verifyLoginOtp = useCallback(async (challengeId: string, code: string, client?: 'om-viewer') => {
+    const res = await fetch('/api/auth/login/otp', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challenge_id: challengeId, code, ...(client ? { client } : {}) }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success || !data.user) {
+      throw new Error(data?.message || 'That code could not be checked.');
+    }
+    return acceptSession(data);
+  }, [acceptSession]);
+
+  const resendLoginOtp = useCallback(async (challengeId: string) => {
+    const res = await fetch('/api/auth/login/otp/resend', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challenge_id: challengeId }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) throw new Error(data?.message || 'Could not send a new text.');
+    return {
+      otpRequired: true as const,
+      challengeId: String(data.challenge_id),
+      phoneHint: String(data.phone_hint || 'your phone'),
+    };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -332,12 +382,14 @@ export function OmAuthProvider({ children }: { children: ReactNode }) {
       authenticated: !!user,
       impersonation,
       signIn,
+      verifyLoginOtp,
+      resendLoginOtp,
       signOut,
       checkSession,
       switchToUser,
       returnToSelf,
     }),
-    [user, loading, impersonation, signIn, signOut, checkSession, switchToUser, returnToSelf]
+    [user, loading, impersonation, signIn, verifyLoginOtp, resendLoginOtp, signOut, checkSession, switchToUser, returnToSelf]
   );
 
   /**

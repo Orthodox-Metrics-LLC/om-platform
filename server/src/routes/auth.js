@@ -71,6 +71,259 @@ const verifyRecaptchaToken = async (token, ip) => {
   }
 };
 
+async function completeAuthenticatedLogin(req, res, user, viewerLogin, loginEmail) {
+  const { establishViewerSession } = require('../services/omViewerLogin');
+  // Viewer credentials create a restricted cookie session, never website access/refresh tokens.
+  if(viewerLogin){
+    try{
+      const viewerUser=await establishViewerSession(req,user);
+      try{
+        const {reactivateUserSessionsAfterLogin}=require('../middleware/sessionTracker');
+        await reactivateUserSessionsAfterLogin(user.id,req);
+      }catch{console.error('[AUTH] Viewer device session reactivation failed.');}
+      pool.execute("INSERT INTO activity_log (user_id,action,details,ip_address,user_agent,created_at) VALUES (?, 'login', ?, ?, ?, NOW())",[user.id,JSON.stringify({client:'om-viewer',role:user.role}),req.ip||'unknown',(req.get('User-Agent')||'unknown').substring(0,255)]).catch(()=>console.error('[AUTH] Viewer login activity could not be recorded.'));
+      return res.json({success:true,client:'om-viewer',user:viewerUser});
+    }catch(error){return res.status(403).json({success:false,message:error.message});}
+  }
+
+  // Admin "revoke all sessions" marks device rows terminated — remove so re-login is not blocked
+  await pool.execute(
+    'DELETE FROM user_sessions WHERE user_id = ? AND terminated_at IS NOT NULL',
+    [user.id]
+  ).catch((err) => console.error('[AUTH] Terminated session cleanup failed:', err.message));
+
+  // Generate tokens
+  const tokenPayload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+    churchId: user.church_id
+  };
+
+  const accessToken = jwt.sign(tokenPayload, JWT_ACCESS_SECRET, {
+    expiresIn: ACCESS_TOKEN_TTL
+  });
+
+  const refreshToken = generateRefreshToken();
+  const refreshTokenHash = hashToken(refreshToken);
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL * 1000);
+
+  // Housekeeping: purge revoked and expired tokens for this user
+  await pool.execute(
+    `DELETE FROM refresh_tokens WHERE user_id = ? AND (revoked_at IS NOT NULL OR expires_at <= NOW())`,
+    [user.id]
+  ).catch(err => console.error('[AUTH] Token cleanup failed:', err.message));
+
+  // Enforce session limits: super_admin = 5 sessions, others = 3 sessions
+  const maxSessions = user.role === 'super_admin' ? 5 : 3;
+
+  // Get current active sessions for this user
+  const [activeSessions] = await pool.execute(
+    `SELECT id FROM refresh_tokens
+     WHERE user_id = ? AND expires_at > NOW() AND revoked_at IS NULL
+     ORDER BY expires_at ASC`,
+    [user.id]
+  );
+
+  // Delete oldest sessions if limit exceeded
+  if (activeSessions.length >= maxSessions) {
+    const sessionsToDelete = activeSessions.length - maxSessions + 1;
+    const idsToDelete = activeSessions.slice(0, sessionsToDelete).map(s => s.id);
+
+    if (idsToDelete.length > 0) {
+      await pool.execute(
+        `DELETE FROM refresh_tokens WHERE id IN (${idsToDelete.map(() => '?').join(',')})`,
+        idsToDelete
+      );
+      console.log(`[AUTH] Evicted ${idsToDelete.length} oldest session(s) for user ${user.email} (limit: ${maxSessions})`);
+    }
+  }
+
+  // Save refresh token
+  await pool.execute(
+    `INSERT INTO refresh_tokens 
+     (user_id, token_hash, expires_at, ip_address, user_agent) 
+     VALUES (?, ?, ?, ?, ?)`,
+    [user.id, refreshTokenHash, expiresAt, req.ip || null, req.headers['user-agent'] || null]
+  );
+
+  // Update last login
+  await pool.execute(
+    'UPDATE users SET last_login = NOW() WHERE id = ?',
+    [user.id]
+  );
+
+  // Set refresh token as httpOnly cookie
+  res.cookie('refresh_token', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  });
+
+  // Set session data for backward compatibility
+  if (!req.session) {
+    console.error('[AUTH] CRITICAL: req.session is not available - session middleware may not be configured correctly');
+    return res.status(500).json({
+      success: false,
+      message: 'Session middleware not configured'
+    });
+  }
+
+  // Regenerate session to get a fresh session ID and Set-Cookie header
+  // This ensures stale cookies from previous sessions are replaced
+  // CRITICAL: Save user data before regenerate, restore after
+  const userData = {
+    id: user.id,
+    email: user.email,
+    username: user.username || null,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    display_name: user.display_name || null,
+    role: user.role,
+    church_id: user.church_id,
+    account_expires_at: user.account_expires_at || null,
+    last_login: user.last_login || null
+  };
+
+  await new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('[AUTH] CRITICAL: Session regenerate failed:', err.message);
+        // Don't reject - continue with existing session
+        // But log the issue for debugging
+        console.warn('[AUTH] Continuing with existing session (regenerate failed)');
+      } else {
+        console.log('[AUTH] ✅ Session regenerated successfully');
+      }
+      resolve();
+    });
+  });
+
+  // Explicitly set session data (restore after regenerate)
+  req.session.user = userData;
+  req.session.userId = user.id; // Explicit userId for session lookups
+  req.session.loginTime = new Date();
+  req.session.lastActivity = new Date();
+  
+  // Mark session as modified to ensure it's saved
+  req.session.touch();
+  
+  // CRITICAL: Explicitly save session before responding
+  // This ensures session is persisted to store before response is sent
+  console.log('[AUTH] Saving session with user data:', {
+    sessionID: req.sessionID,
+    userId: req.session.user.id,
+    email: req.session.user.email,
+    role: req.session.user.role
+  });
+  
+  await new Promise((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) {
+        console.error('[AUTH] CRITICAL: Failed to save session:', err);
+        console.error('[AUTH] Session save error details:', {
+          error: err.message,
+          stack: err.stack,
+          sessionID: req.sessionID,
+          userId: user.id
+        });
+        reject(err);
+      } else {
+        console.log(`✅ Session saved for user ${user.id} (${user.email}), sessionID: ${req.sessionID}`);
+        // Verify session was saved by checking store
+        if (req.sessionStore && req.sessionStore.get) {
+          req.sessionStore.get(req.sessionID, (storeErr, storedSession) => {
+            if (storeErr) {
+              console.error('[AUTH] CRITICAL: Could not verify session in store:', storeErr.message);
+            } else if (storedSession && storedSession.user) {
+              console.log(`✅ Session verified in store for user ${storedSession.user.email}`);
+              console.log(`✅ Stored session data:`, {
+                userId: storedSession.user.id,
+                email: storedSession.user.email,
+                role: storedSession.user.role
+              });
+            } else {
+              console.error('[AUTH] CRITICAL: Session saved but user data NOT found in store');
+              console.error('[AUTH] Stored session keys:', storedSession ? Object.keys(storedSession) : 'NULL');
+            }
+            resolve();
+          });
+        } else {
+          console.warn('[AUTH] Session store not available for verification');
+          resolve();
+        }
+      }
+    });
+  });
+
+  // Log login activity (non-blocking)
+  pool.execute(
+    `INSERT INTO activity_log (user_id, action, details, ip_address, user_agent, created_at)
+     VALUES (?, 'login', ?, ?, ?, NOW())`,
+    [
+      user.id,
+      JSON.stringify({ email: user.email, role: user.role }),
+      req.ip || 'unknown',
+      (req.get('User-Agent') || 'unknown').substring(0, 255)
+    ]
+  ).catch(err => console.error('Failed to log login activity:', err.message));
+
+  // Allow new login after admin session revoke (device keys persist terminated_at)
+  try {
+    const { reactivateUserSessionsAfterLogin } = require('../middleware/sessionTracker');
+    await reactivateUserSessionsAfterLogin(user.id, req);
+  } catch (reactivateErr) {
+    console.error('[AUTH] Session reactivate after login failed:', reactivateErr.message);
+  }
+
+  console.log(`✅ JWT Authentication successful for: ${loginEmail} Role: ${user.role}`);
+  console.log(`✅ Session ID: ${req.sessionID}, User ID: ${user.id}`);
+  console.log(`✅ Session cookie will be sent with name: orthodoxmetrics.sid`);
+
+  return res.json({
+    success: true,
+    message: 'Login successful',
+    access_token: accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username || null,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      display_name: user.display_name || null,
+      role: user.role,
+      church_id: user.church_id,
+      avatar_url: user.avatar_url || null,
+      profile_visibility: user.profile_visibility || 'private',
+      nick: user.Nick || user.nick || user.display_name || null,
+      last_login: user.last_login,
+      must_change_password: !!user.must_change_password,
+      onboarding_request_id: user.onboarding_request_id || null,
+    },
+    onboarding_redirect: user.must_change_password
+      ? '/onboarding/change-password'
+      : (user.onboarding_request_id ? await (async () => {
+          try {
+            const onboardingService = require('../services/onboardingService');
+            const ob = await onboardingService.getByPublicId(user.onboarding_request_id);
+            if (ob && ob.status !== 'active') {
+              if (!ob.first_login_completed || ob.status === 'awaiting_first_login') {
+                return '/onboarding/change-password';
+              }
+              if (!ob.table_configuration_completed) {
+                return '/onboarding/record-tables';
+              }
+              if (!ob.layout_configuration_completed) {
+                return '/onboarding/record-layouts';
+              }
+            }
+          } catch (_) { /* ignore */ }
+          return null;
+        })() : null),
+  });
+}
+
 // POST /api/auth/login - User login with JWT
 router.post('/login', async (req, res) => {
   try {
@@ -155,255 +408,25 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Viewer credentials create a restricted cookie session, never website access/refresh tokens.
-    if(viewerLogin){
-      try{
-        const viewerUser=await establishViewerSession(req,user);
-        try{
-          const {reactivateUserSessionsAfterLogin}=require('../middleware/sessionTracker');
-          await reactivateUserSessionsAfterLogin(user.id,req);
-        }catch{console.error('[AUTH] Viewer device session reactivation failed.');}
-        pool.execute("INSERT INTO activity_log (user_id,action,details,ip_address,user_agent,created_at) VALUES (?, 'login', ?, ?, ?, NOW())",[user.id,JSON.stringify({client:'om-viewer',role:user.role}),req.ip||'unknown',(req.get('User-Agent')||'unknown').substring(0,255)]).catch(()=>console.error('[AUTH] Viewer login activity could not be recorded.'));
-        return res.json({success:true,client:'om-viewer',user:viewerUser});
-      }catch(error){return res.status(403).json({success:false,message:error.message});}
-    }
-
-    // Admin "revoke all sessions" marks device rows terminated — remove so re-login is not blocked
-    await pool.execute(
-      'DELETE FROM user_sessions WHERE user_id = ? AND terminated_at IS NOT NULL',
-      [user.id]
-    ).catch((err) => console.error('[AUTH] Terminated session cleanup failed:', err.message));
-
-    // Generate tokens
-    const tokenPayload = {
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-      churchId: user.church_id
-    };
-
-    const accessToken = jwt.sign(tokenPayload, JWT_ACCESS_SECRET, {
-      expiresIn: ACCESS_TOKEN_TTL
-    });
-
-    const refreshToken = generateRefreshToken();
-    const refreshTokenHash = hashToken(refreshToken);
-    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL * 1000);
-
-    // Housekeeping: purge revoked and expired tokens for this user
-    await pool.execute(
-      `DELETE FROM refresh_tokens WHERE user_id = ? AND (revoked_at IS NOT NULL OR expires_at <= NOW())`,
-      [user.id]
-    ).catch(err => console.error('[AUTH] Token cleanup failed:', err.message));
-
-    // Enforce session limits: super_admin = 5 sessions, others = 3 sessions
-    const maxSessions = user.role === 'super_admin' ? 5 : 3;
-
-    // Get current active sessions for this user
-    const [activeSessions] = await pool.execute(
-      `SELECT id FROM refresh_tokens
-       WHERE user_id = ? AND expires_at > NOW() AND revoked_at IS NULL
-       ORDER BY expires_at ASC`,
-      [user.id]
-    );
-
-    // Delete oldest sessions if limit exceeded
-    if (activeSessions.length >= maxSessions) {
-      const sessionsToDelete = activeSessions.length - maxSessions + 1;
-      const idsToDelete = activeSessions.slice(0, sessionsToDelete).map(s => s.id);
-
-      if (idsToDelete.length > 0) {
-        await pool.execute(
-          `DELETE FROM refresh_tokens WHERE id IN (${idsToDelete.map(() => '?').join(',')})`,
-          idsToDelete
-        );
-        console.log(`[AUTH] Evicted ${idsToDelete.length} oldest session(s) for user ${user.email} (limit: ${maxSessions})`);
+    const smsLogin = require('../services/loginSmsOtp');
+    if (await smsLogin.isEnabled(pool, user)) {
+      try {
+        const issued = await smsLogin.sendLoginCode(pool, user);
+        return res.json({
+          success: true,
+          otp_required: true,
+          message: 'A sign-in code was texted to your phone.',
+          ...issued,
+        });
+      } catch (err) {
+        return res.status(err.status || 503).json({
+          success: false,
+          message: err.message || 'Could not send the sign-in text.',
+        });
       }
     }
 
-    // Save refresh token
-    await pool.execute(
-      `INSERT INTO refresh_tokens 
-       (user_id, token_hash, expires_at, ip_address, user_agent) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [user.id, refreshTokenHash, expiresAt, req.ip || null, req.headers['user-agent'] || null]
-    );
-
-    // Update last login
-    await pool.execute(
-      'UPDATE users SET last_login = NOW() WHERE id = ?',
-      [user.id]
-    );
-
-    // Set refresh token as httpOnly cookie
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    });
-
-    // Set session data for backward compatibility
-    if (!req.session) {
-      console.error('[AUTH] CRITICAL: req.session is not available - session middleware may not be configured correctly');
-      return res.status(500).json({
-        success: false,
-        message: 'Session middleware not configured'
-      });
-    }
-
-    // Regenerate session to get a fresh session ID and Set-Cookie header
-    // This ensures stale cookies from previous sessions are replaced
-    // CRITICAL: Save user data before regenerate, restore after
-    const userData = {
-      id: user.id,
-      email: user.email,
-      username: user.username || null,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      display_name: user.display_name || null,
-      role: user.role,
-      church_id: user.church_id,
-      account_expires_at: user.account_expires_at || null,
-      last_login: user.last_login || null
-    };
-
-    await new Promise((resolve, reject) => {
-      req.session.regenerate((err) => {
-        if (err) {
-          console.error('[AUTH] CRITICAL: Session regenerate failed:', err.message);
-          // Don't reject - continue with existing session
-          // But log the issue for debugging
-          console.warn('[AUTH] Continuing with existing session (regenerate failed)');
-        } else {
-          console.log('[AUTH] ✅ Session regenerated successfully');
-        }
-        resolve();
-      });
-    });
-
-    // Explicitly set session data (restore after regenerate)
-    req.session.user = userData;
-    req.session.userId = user.id; // Explicit userId for session lookups
-    req.session.loginTime = new Date();
-    req.session.lastActivity = new Date();
-    
-    // Mark session as modified to ensure it's saved
-    req.session.touch();
-    
-    // CRITICAL: Explicitly save session before responding
-    // This ensures session is persisted to store before response is sent
-    console.log('[AUTH] Saving session with user data:', {
-      sessionID: req.sessionID,
-      userId: req.session.user.id,
-      email: req.session.user.email,
-      role: req.session.user.role
-    });
-    
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error('[AUTH] CRITICAL: Failed to save session:', err);
-          console.error('[AUTH] Session save error details:', {
-            error: err.message,
-            stack: err.stack,
-            sessionID: req.sessionID,
-            userId: user.id
-          });
-          reject(err);
-        } else {
-          console.log(`✅ Session saved for user ${user.id} (${user.email}), sessionID: ${req.sessionID}`);
-          // Verify session was saved by checking store
-          if (req.sessionStore && req.sessionStore.get) {
-            req.sessionStore.get(req.sessionID, (storeErr, storedSession) => {
-              if (storeErr) {
-                console.error('[AUTH] CRITICAL: Could not verify session in store:', storeErr.message);
-              } else if (storedSession && storedSession.user) {
-                console.log(`✅ Session verified in store for user ${storedSession.user.email}`);
-                console.log(`✅ Stored session data:`, {
-                  userId: storedSession.user.id,
-                  email: storedSession.user.email,
-                  role: storedSession.user.role
-                });
-              } else {
-                console.error('[AUTH] CRITICAL: Session saved but user data NOT found in store');
-                console.error('[AUTH] Stored session keys:', storedSession ? Object.keys(storedSession) : 'NULL');
-              }
-              resolve();
-            });
-          } else {
-            console.warn('[AUTH] Session store not available for verification');
-            resolve();
-          }
-        }
-      });
-    });
-
-    // Log login activity (non-blocking)
-    pool.execute(
-      `INSERT INTO activity_log (user_id, action, details, ip_address, user_agent, created_at)
-       VALUES (?, 'login', ?, ?, ?, NOW())`,
-      [
-        user.id,
-        JSON.stringify({ email: user.email, role: user.role }),
-        req.ip || 'unknown',
-        (req.get('User-Agent') || 'unknown').substring(0, 255)
-      ]
-    ).catch(err => console.error('Failed to log login activity:', err.message));
-
-    // Allow new login after admin session revoke (device keys persist terminated_at)
-    try {
-      const { reactivateUserSessionsAfterLogin } = require('../middleware/sessionTracker');
-      await reactivateUserSessionsAfterLogin(user.id, req);
-    } catch (reactivateErr) {
-      console.error('[AUTH] Session reactivate after login failed:', reactivateErr.message);
-    }
-
-    console.log(`✅ JWT Authentication successful for: ${loginEmail} Role: ${user.role}`);
-    console.log(`✅ Session ID: ${req.sessionID}, User ID: ${user.id}`);
-    console.log(`✅ Session cookie will be sent with name: orthodoxmetrics.sid`);
-
-    return res.json({
-      success: true,
-      message: 'Login successful',
-      access_token: accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username || null,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        display_name: user.display_name || null,
-        role: user.role,
-        church_id: user.church_id,
-        avatar_url: user.avatar_url || null,
-        profile_visibility: user.profile_visibility || 'private',
-        nick: user.Nick || user.nick || user.display_name || null,
-        last_login: user.last_login,
-        must_change_password: !!user.must_change_password,
-        onboarding_request_id: user.onboarding_request_id || null,
-      },
-      onboarding_redirect: user.must_change_password
-        ? '/onboarding/change-password'
-        : (user.onboarding_request_id ? await (async () => {
-            try {
-              const onboardingService = require('../services/onboardingService');
-              const ob = await onboardingService.getByPublicId(user.onboarding_request_id);
-              if (ob && ob.status !== 'active') {
-                if (!ob.first_login_completed || ob.status === 'awaiting_first_login') {
-                  return '/onboarding/change-password';
-                }
-                if (!ob.table_configuration_completed) {
-                  return '/onboarding/record-tables';
-                }
-                if (!ob.layout_configuration_completed) {
-                  return '/onboarding/record-layouts';
-                }
-              }
-            } catch (_) { /* ignore */ }
-            return null;
-          })() : null),
-    });
+    return completeAuthenticatedLogin(req, res, user, viewerLogin, loginEmail);
   } catch (error) {
     console.error('[AUTH] Login error:', error);
     console.error('[AUTH] Error stack:', error.stack);
@@ -414,6 +437,34 @@ router.post('/login', async (req, res) => {
       message: 'Internal server error during login',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
+
+// POST /api/auth/login/otp — finish a password login that requires a text code
+router.post('/login/otp', async (req, res) => {
+  try {
+    const smsLogin = require('../services/loginSmsOtp');
+    const { isViewerLogin } = require('../services/omViewerLogin');
+    const userId = await smsLogin.verifyCode(pool, req.body?.challenge_id, req.body?.code, 'login');
+    const [users] = await pool.execute('SELECT * FROM users WHERE id = ? AND is_active = 1', [userId]);
+    const user = users[0];
+    if (!user || user.is_locked) {
+      return res.status(401).json({ success: false, message: 'This account cannot sign in.' });
+    }
+    return completeAuthenticatedLogin(req, res, user, isViewerLogin(req), user.email);
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message || 'The sign-in code could not be checked.' });
+  }
+});
+
+router.post('/login/otp/resend', async (req, res) => {
+  try {
+    const smsLogin = require('../services/loginSmsOtp');
+    const issued = await smsLogin.resendLoginCode(pool, req.body?.challenge_id);
+    return res.json({ success: true, message: 'A new sign-in code was texted to your phone.', ...issued });
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message || 'Could not send a new text.' });
   }
 });
 

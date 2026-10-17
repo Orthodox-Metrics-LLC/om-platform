@@ -1,3 +1,5 @@
+import type { LoginOtpChallenge } from '../context/om-auth';
+
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { useState, useEffect } from 'react';
@@ -10,6 +12,7 @@ import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
+import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -39,9 +42,12 @@ const SignInSchema = z.object({
 export function OmSignInView() {
   const router = useRouter();
   const showPassword = useBoolean();
-  const { signIn, user } = useOmAuth();
+  const { signIn, verifyLoginOtp, resendLoginOtp, user } = useOmAuth();
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [otp, setOtp] = useState<LoginOtpChallenge | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpBusy, setOtpBusy] = useState(false);
 
   const methods = useForm({
     resolver: zodResolver(SignInSchema),
@@ -57,6 +63,11 @@ export function OmSignInView() {
     setErrorMessage(null);
     try {
       const signedIn = await signIn(data.email, data.password, isViewerClient()?'om-viewer':undefined);
+      if ('otpRequired' in signedIn) {
+        setOtp(signedIn);
+        setOtpCode('');
+        return;
+      }
       // The backend tells us when a password change or onboarding step is owed.
       if (signedIn.must_change_password) {
         setErrorMessage(
@@ -80,8 +91,72 @@ export function OmSignInView() {
     return <SignedInPanel />;
   }
 
+  const submitOtp = async () => {
+    if (!otp) return;
+    setErrorMessage(null);
+    setOtpBusy(true);
+    try {
+      const signedIn = await verifyLoginOtp(otp.challengeId, otpCode.trim(), isViewerClient() ? 'om-viewer' : undefined);
+      if (signedIn.must_change_password) {
+        setErrorMessage('This account must change its password before continuing. Please sign in at orthodoxmetrics.com to complete that step.');
+        return;
+      }
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      if (isViewerClient() && !isViewerPortal()) { window.location.replace(VIEWER_COMPLETE); return; }
+      router.push(landingPath(signedIn.role, isViewerPortal() ? null : returnTo));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'That code could not be checked.');
+    } finally {
+      setOtpBusy(false);
+    }
+  };
+
   if (window.location.hostname === 'omdev.orthodoxmetrics.com') {
     return <OrganizationSignIn />;
+  }
+
+  if (otp) {
+    return (
+      <>
+        <FormHead
+          title="Enter your text code"
+          description={`We sent a 6-digit code to ${otp.phoneHint}. Sign-in finishes after the code matches.`}
+          sx={{ textAlign: { xs: 'center', md: 'left' } }}
+        />
+        {errorMessage && <Alert severity="error" sx={{ mb: 3 }}>{errorMessage}</Alert>}
+        <Stack spacing={3}>
+          <TextField
+            label="Sign-in code"
+            value={otpCode}
+            onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="6-digit code"
+            autoComplete="one-time-code"
+            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6 } }}
+          />
+          <Button fullWidth size="large" color="inherit" variant="contained" loading={otpBusy} disabled={otpCode.length !== 6} onClick={submitOtp}>
+            Continue
+          </Button>
+          <Button
+            color="inherit"
+            disabled={otpBusy}
+            onClick={async () => {
+              setErrorMessage(null);
+              setOtpBusy(true);
+              try {
+                setOtp(await resendLoginOtp(otp.challengeId));
+                setOtpCode('');
+              } catch (error) {
+                setErrorMessage(error instanceof Error ? error.message : 'Could not send a new text.');
+              } finally {
+                setOtpBusy(false);
+              }
+            }}
+          >
+            Text a new code
+          </Button>
+        </Stack>
+      </>
+    );
   }
 
   return (
