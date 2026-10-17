@@ -66,7 +66,7 @@ scripts/server/ops/publish-om-viewer-update.sh windows /path/to/dist
 scripts/server/ops/publish-om-viewer-update.sh linux /path/to/dist
 ```
 
-The script copies the installer or AppImage first and the metadata last. Older versioned files stay in the directory.
+The 0.2.2 publisher is `scripts/server/ops/publish-om-viewer-release.py`. It checks the generated `release.json` checksums, copies the installer first, and replaces `latest.yml` or `latest-linux.yml` last. It refuses a downgrade or a different file for an existing version. Workshop Fleet Companion stores each build and calls that publisher on OM production.
 
 Each Windows release needs `OM Viewer Setup <version>.exe`, `OM Viewer Setup <version>.exe.blockmap`, and `latest.yml`. Each Linux release needs `OM-Viewer-<version>.AppImage` and `latest-linux.yml`.
 
