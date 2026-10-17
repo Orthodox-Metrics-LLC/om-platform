@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 viewer-engine/.venv/
+apps/importer/.venv/
+apps/importer/**/__pycache__/
+apps/importer/**/*.egg-info/
+om-apps-backups/
 viewer-engine/**/__pycache__/
 viewer-engine/**/*.egg-info/
 

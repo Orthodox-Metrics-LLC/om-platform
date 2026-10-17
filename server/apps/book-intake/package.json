@@ -1,0 +1,70 @@
+{
+  "name": "om-book-reader",
+  "version": "0.4.3",
+  "private": true,
+  "type": "module",
+  "description": "OM Daily Reading \u00e2\u20ac\u201d local book preparation and library with evidence-based date repair, structured reading and application-wide themes.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build && node scripts/build-backend.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "setup:ocr": "node scripts/setup-ocr.mjs",
+    "book:install": "node scripts/install-book.mjs",
+    "test": "node scripts/test.mjs",
+    "serve:preview": "node scripts/serve-preview.mjs",
+    "test:review": "node scripts/test-review.mjs",
+    "test:archives": "node scripts/test-archives.mjs",
+    "test:publication": "node scripts/test-publication.mjs",
+    "test:reading": "node scripts/test-reading.mjs",
+    "test:narration": "node scripts/test-narration-server.mjs",
+    "build:preview": "node scripts/build-preview.mjs",
+    "test:dates": "node scripts/test-dates.mjs",
+    "test:storage": "node scripts/test-storage-node.mjs",
+    "test:collection": "node scripts/test-collection.mjs",
+    "build:backend": "node scripts/build-backend.mjs",
+    "start": "node build-server/start.mjs",
+    "desktop": "npm run build && npm run prepare:desktop && electron .",
+    "package:windows": "npm run build && npm run prepare:desktop && electron-builder --win nsis --x64",
+    "package:ubuntu": "npm run build && npm run prepare:desktop && electron-builder --linux deb --x64",
+    "test:backend": "node scripts/test-backend.mjs",
+    "prepare:desktop": "node node_modules/electron/install.js",
+    "test:remote": "node scripts/test-remote-storage.mjs",
+    "test:ocr": "node scripts/test-ocr-providers.mjs && node scripts/test-ocr-cancellation.mjs",
+    "build:admin": "npm run build && vite build --config vite.admin.config.ts",
+    "desktop:admin": "npm run build:admin && npm run prepare:desktop && node scripts/start-admin.mjs",
+    "package:admin:windows": "npm run build:admin && npm run prepare:desktop && electron-builder --config electron-builder.admin.yml --win nsis --x64",
+    "package:admin:ubuntu": "npm run build:admin && npm run prepare:desktop && electron-builder --config electron-builder.admin.yml --linux deb --x64",
+    "test:publisher": "node scripts/test-release-publisher.mjs",
+    "test:host": "node scripts/test-library-host.mjs"
+  },
+  "dependencies": {
+    "jszip": "3.10.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tesseract.js": "6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  },
+  "main": "electron/main.mjs",
+  "author": "Orthodox Metrics",
+  "homepage": "https://orthodoxmetrics.com",
+  "overrides": {
+    "@electron/get": "5.1.0"
+  },
+  "desktopName": "om-daily-reading.desktop"
+}

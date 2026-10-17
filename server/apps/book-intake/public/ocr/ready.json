@@ -1,0 +1,5 @@
+{
+  "engine": "tesseract.js 6.0.1",
+  "language": "eng",
+  "modelSha256": "ed350f3752f81ee8f38769edc14d92d997dababe23b565c59879372cc46a2468"
+}

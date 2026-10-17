@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { mkdtemp,rm,readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join,resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
+import { startServer } from '../build-server/start.mjs';
+const temp=await mkdtemp(join(tmpdir(),'om-remote-')),instance=await startServer({dataDir:join(temp,'data'),port:0});const nativeFetch=globalThis.fetch;let cookie='',checks=0;
+globalThis.window=new EventTarget();globalThis.BroadcastChannel=undefined;
+globalThis.fetch=async(path,init={})=>{const r=await nativeFetch(new URL(path,instance.url),{...init,headers:{Origin:instance.url,Cookie:cookie,...init.headers}});if(r.headers.get('set-cookie'))cookie=r.headers.get('set-cookie').split(';')[0];return r;};
+const check=(condition,label)=>{assert.ok(condition,label);checks++;};
+try{
+    const output=join(temp,'storage.mjs');await build({stdin:{contents:"export * from './src/lib/db';export * from './src/lib/backend';export * from './src/lib/catalog';export * from './src/lib/publication';export * from './src/lib/archive';export * from './src/lib/reviewStore';",resolveDir:resolve('.'),loader:'ts'},outfile:output,bundle:true,platform:'node',format:'esm'});
+    const lib=await import(pathToFileURL(output));const setup=await lib.api('/api/auth/setup',{method:'POST',body:JSON.stringify({loginName:'adapter-test',password:'adapter-password-123'})});lib.setAccount(setup.user);
+    const book=await lib.createBook('Adapter book');lib.selectDatabase(book.database);lib.setStorageMode('preparation');
+    const fixture=JSON.parse(await readFile('tests/fixtures/sample-book.json','utf8'));const p={...fixture.pages[0],textSource:'manual',reviewed:false,review:undefined},s=fixture.sources.find(s=>s.id===p.sourceId);
+    const bytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf1sAAAAASUVORK5CYII=','base64');
+    await lib.commit(['sources','pages'],tx=>{tx.objectStore('sources').put({...s,blob:new Blob([bytes],{type:s.mime})});tx.objectStore('pages').put(p);});
+    check((await lib.readLibrary()).pages.length===1,'Existing import transaction uses SQLite');
+    await lib.setPageRead(p.id,true);check((await lib.readLibrary()).pages[0].read,'Read request callback saves per-account flag');
+    await lib.patchPreferences({fontSize:23});check((await lib.readLibrary()).prefs.fontSize===23,'Preference request callback persists');
+    check((await lib.getSource(s.id)).blob.size===bytes.length,'Original bytes can be loaded');
+    await lib.approveAvailableText([p]);check((await lib.readLibrary()).pages[0].reviewed,'Bulk review callback persists');
+    await lib.abandonBook(book.id,true);check((await lib.listBooks())[0].abandoned,'Catalog abandon goes to backend');
+    await lib.abandonBook(book.id,false);const state=await lib.readLibrary();await lib.publishBook(state,{orderVerified:true,approveAvailable:true,acceptExceptions:true});
+    lib.setStorageMode('read');check((await lib.readLibrary()).publication.status==='published','Atomic publication transaction');
+    const sources=await lib.getAll('sources');const archive=await lib.createBookArchive(await lib.readLibrary(),await Promise.all(sources.map(s=>lib.getSource(s.id))));check(archive.size>bytes.length,'Book backup loads remote assets');
+    lib.setStorageMode('preparation');await lib.reopenBook();check((await lib.readLibrary()).publication.status==='draft','Reopen clones published edition');
+    await lib.updatePageText((await lib.readLibrary()).pages[0],'Changed draft',[]);lib.setStorageMode('read');check((await lib.readLibrary()).pages[0].text===p.text,'Reader still uses published snapshot');
+    console.log(`${checks} React storage adapter checks passed.`);
+}finally{globalThis.fetch=nativeFetch;await instance.close();await rm(temp,{recursive:true,force:true});}

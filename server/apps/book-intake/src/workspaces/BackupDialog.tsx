@@ -1,0 +1,16 @@
+import { useRef, useState } from 'react';
+import type { LibraryState } from '../types';
+import { exportBook, restoreBook, exportNotebook } from '../lib/archive';
+import { Modal } from '../components/Modal';
+import { Icon } from '../components/Icon';
+export function BackupDialog({state,onClose,notify}:{state:LibraryState;onClose:()=>void;notify:(s:string)=>void}) {
+    const [busy,setBusy]=useState(false),[status,setStatus]=useState(''),[error,setError]=useState('');const file=useRef<HTMLInputElement>(null);
+    const task=async(fn:()=>Promise<unknown>,message:string)=>{setBusy(true);setError('');try{await fn();setStatus(message);notify(message);}catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}};
+    return <Modal title="Book backup & restore" description="These actions affect only the current book, not the other books in your collection." onClose={onClose} locked={busy}>
+        <p className="field-help">Full backups include original images, page order, text, approval records, bookmarks, highlights, notes and reading preferences. Up to 1 GiB of source images per book; originals are not recompressed.</p>
+        <div className="manage-actions"><button disabled={busy} onClick={()=>void task(()=>exportBook(state,false,p=>setStatus(`Creating backup · ${Math.round(p)}%`)),'Full backup prepared. Save the downloaded ZIP safely.')}><Icon name="download"/><span><strong>Export full book backup</strong><small>Includes your personal reading data</small></span></button><button disabled={busy} onClick={()=>void task(()=>exportBook(state,true,p=>setStatus(`Creating book copy · ${Math.round(p)}%`)),'Book-only copy prepared. Personal reading data excluded.')}><Icon name="book"/><span><strong>Export book-only copy</strong><small>No private notebook, bookmarks or progress</small></span></button><button disabled={busy} onClick={()=>exportNotebook(state)}><Icon name="note"/><span><strong>Export notebook</strong><small>All saved passages and notes in Markdown</small></span></button><button disabled={busy} onClick={()=>file.current?.click()}><Icon name="upload"/><span><strong>Restore into this book</strong><small>Replaces this book only; other books are untouched</small></span></button></div>
+        <input ref={file} type="file" accept=".zip" hidden onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f&&confirm(`Replace “${state.book.title}” with this backup? Its current pages and personal notes will be replaced. Other books will not change. Export this book first if you need to keep it.`))void task(async()=>{await restoreBook(f,p=>setStatus(`Validating and restoring · ${Math.round(p)}%`));onClose();},'Book restored into preparation.');}}/>
+        <div className="notice subtle"><Icon name="folder" size={18}/><p>To import an archive as an additional book, create a new book in Book Preparation first and restore into that empty book. Restored books require one publication action.</p></div>
+        {status&&<p className="notice" role="status">{status}</p>}{error&&<p className="error-list" role="alert">{error}</p>}<div className="modal-footer"><span>Other devices do not sync automatically.</span><button className="button secondary" disabled={busy} onClick={onClose}>Done</button></div>
+    </Modal>;
+}

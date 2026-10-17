@@ -1,0 +1,2 @@
+import type { IncomingMessage,ServerResponse } from 'node:http';
+export function createBackend(options?:{dataDir?:string;secureCookies?:boolean;settings?:Record<string,string|undefined>;onSettingsChange?:(config:Record<string,string>)=>void; validateManifest?:(input:unknown)=>any}):{middleware:(req:IncomingMessage,res:ServerResponse,next:()=>void)=>Promise<void>;close:()=>void;dataDir:string;db:any;requireUser:(req:IncomingMessage)=>any};

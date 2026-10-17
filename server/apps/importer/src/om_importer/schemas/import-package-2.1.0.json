@@ -1,0 +1,1318 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "2.1.0"
+    },
+    "import_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "file_type": {
+          "enum": [
+            "xlsx",
+            "docx"
+          ]
+        }
+      },
+      "required": [
+        "filename",
+        "sha256",
+        "file_type"
+      ],
+      "additionalProperties": false
+    },
+    "extraction": {
+      "type": "object",
+      "properties": {
+        "engine_version": {
+          "type": "string"
+        },
+        "profile": {
+          "enum": [
+            "cemetery_v1",
+            "parish_announcements_v1",
+            "xlsx",
+            "docx_table",
+            "docx_paragraphs"
+          ]
+        },
+        "extracted_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "engine_version",
+        "profile",
+        "extracted_at",
+        "metadata"
+      ],
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "proposed_table": {
+          "type": "string",
+          "pattern": "^dr_[a-z0-9_]{1,61}$"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$"
+              },
+              "sql_type": {
+                "enum": [
+                  "VARCHAR(16)",
+                  "VARCHAR(24)",
+                  "VARCHAR(32)",
+                  "VARCHAR(64)",
+                  "VARCHAR(128)",
+                  "TEXT",
+                  "JSON",
+                  "TINYINT UNSIGNED",
+                  "SMALLINT UNSIGNED",
+                  "BIGINT",
+                  "DOUBLE",
+                  "BOOLEAN",
+                  "DATE"
+                ]
+              },
+              "nullable": {
+                "type": "boolean"
+              },
+              "label": {
+                "type": "string"
+              },
+              "type": {
+                "enum": [
+                  "string",
+                  "integer",
+                  "number",
+                  "boolean",
+                  "date",
+                  "partial_date",
+                  "json"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "sql_type",
+              "nullable",
+              "label",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "name",
+        "proposed_table",
+        "columns"
+      ],
+      "additionalProperties": false
+    },
+    "source_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/$defs/location"
+          },
+          "raw": {}
+        },
+        "required": [
+          "id",
+          "kind",
+          "location",
+          "raw"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "warning",
+              "error"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "block_id": {
+            "type": "string"
+          },
+          "record_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "open",
+              "resolved",
+              "accepted"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "severity",
+          "message",
+          "block_id",
+          "record_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "review_status": {
+      "enum": [
+        "needs_review",
+        "approved",
+        "rejected"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "audit": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "record_id": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "before": {
+            "type": "object"
+          },
+          "after": {
+            "type": "object"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "record_id",
+          "actor",
+          "at",
+          "before",
+          "after",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "enum": [
+            "xlsx",
+            "docx_paragraphs",
+            "docx_table",
+            "cemetery_v1",
+            "parish_announcements_v1"
+          ]
+        },
+        "resource_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "selection": {
+          "type": "object"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "enum": [
+                  "string",
+                  "integer",
+                  "number",
+                  "boolean",
+                  "date",
+                  "partial_date",
+                  "json"
+                ]
+              },
+              "source": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "header"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "column": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,3}$"
+                      }
+                    },
+                    "required": [
+                      "column"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "capture": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+                      }
+                    },
+                    "required": [
+                      "capture"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "nullable": {
+                "type": "boolean"
+              },
+              "format": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "profile",
+        "fields"
+      ],
+      "additionalProperties": false,
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "xlsx"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "object",
+                "properties": {
+                  "sheet": {
+                    "type": "string"
+                  },
+                  "header_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "start_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "end_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "sheet",
+                  "header_row",
+                  "start_row",
+                  "end_row"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "docx_table"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "object",
+                "properties": {
+                  "table_index": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "header_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "start_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "end_row": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "table_index",
+                  "header_row",
+                  "start_row",
+                  "end_row"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "docx_paragraphs"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "object",
+                "properties": {
+                  "start_paragraph": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "end_paragraph": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "pattern": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "start_paragraph",
+                  "end_paragraph"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "cemetery_v1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "profile": {
+                "const": "parish_announcements_v1"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "selection": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "revision",
+            "actor",
+            "note",
+            "at",
+            "sha256"
+          ],
+          "properties": {
+            "revision": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "actor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            },
+            "at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "review_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "action",
+          "revision",
+          "actor",
+          "note",
+          "at",
+          "issue_ids",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "action": {
+            "enum": [
+              "accept_flags",
+              "resolve_flags",
+              "reopen_flags",
+              "approve_package",
+              "invalidate_approval"
+            ]
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "actor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "issue_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "before": {
+            "type": "object"
+          },
+          "after": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "import_id",
+    "source",
+    "extraction",
+    "resource",
+    "source_blocks",
+    "records",
+    "issues",
+    "review_status",
+    "revision",
+    "audit",
+    "configuration",
+    "approval",
+    "review_history"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:om:import-package:2.1.0",
+  "$defs": {
+    "partial_date": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "month": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 12
+        },
+        "day": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 31
+        },
+        "precision": {
+          "enum": [
+            "year",
+            "month",
+            "day"
+          ]
+        }
+      },
+      "required": [
+        "year",
+        "month",
+        "day",
+        "precision"
+      ],
+      "additionalProperties": false
+    },
+    "recurrence": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "fixed",
+            "weekday_in_range",
+            "weekday_after",
+            "pascha_relative",
+            "unresolved"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "month": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 12
+        },
+        "day": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 31
+        },
+        "parameters": {
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "text",
+        "month",
+        "day",
+        "parameters"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "fixed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "month": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 12
+              },
+              "day": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 31
+              },
+              "parameters": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "weekday_in_range"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "month": {
+                "type": "null"
+              },
+              "day": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "weekday_after"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "month": {
+                "type": "null"
+              },
+              "day": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "pascha_relative"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "month": {
+                "type": "null"
+              },
+              "day": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "unresolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "month": {
+                "type": "null"
+              },
+              "day": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "weekday_in_range"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "weekday": {
+                    "const": "Sunday"
+                  },
+                  "start_day": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "end_day": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "source_month": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  }
+                },
+                "required": [
+                  "weekday",
+                  "start_day",
+                  "end_day",
+                  "source_month"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "weekday_after"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "weekday": {
+                    "const": "Sunday"
+                  },
+                  "after_day": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "source_month": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  }
+                },
+                "required": [
+                  "weekday",
+                  "after_day",
+                  "source_month"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "pascha_relative"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "weekday": {
+                    "const": "Sunday"
+                  },
+                  "ordinal": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 7
+                  },
+                  "reference": {
+                    "const": "Pascha"
+                  }
+                },
+                "required": [
+                  "weekday",
+                  "ordinal",
+                  "reference"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "unresolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "parameters": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "cemetery": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": [
+            "integer",
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "plot": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grave": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "first_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "last_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "birth": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/partial_date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "death": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/partial_date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "count",
+        "plot",
+        "grave",
+        "first_name",
+        "last_name",
+        "birth",
+        "death"
+      ],
+      "additionalProperties": false
+    },
+    "parish": {
+      "type": "object",
+      "properties": {
+        "event_type": {
+          "enum": [
+            "birthday",
+            "nameday",
+            "baptism_anniversary",
+            "chrismation_anniversary",
+            "wedding_anniversary",
+            "ordination_anniversary",
+            "departed",
+            "slava"
+          ]
+        },
+        "source_group": {
+          "enum": [
+            "current_parishioners",
+            "friends_former",
+            "archived",
+            "fallen_asleep",
+            null
+          ]
+        },
+        "source_month": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 12
+        },
+        "subject_type": {
+          "enum": [
+            "person",
+            "couple",
+            "group"
+          ]
+        },
+        "subject_display": {
+          "type": "string"
+        },
+        "recurrence": {
+          "$ref": "#/$defs/recurrence"
+        },
+        "saint_or_feast": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "event_year": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "year_role": {
+          "enum": [
+            "baptism",
+            "chrismation",
+            "wedding",
+            "ordination",
+            "death",
+            null
+          ]
+        },
+        "ordination_milestone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "event_type",
+        "source_group",
+        "source_month",
+        "subject_type",
+        "subject_display",
+        "recurrence",
+        "saint_or_feast",
+        "event_year",
+        "year_role",
+        "ordination_milestone"
+      ],
+      "additionalProperties": false
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "sheet": {
+          "type": "string"
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "paragraph": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "table": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "char_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "char_end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cell": {
+          "type": "string"
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "sheet",
+            "row"
+          ]
+        },
+        {
+          "required": [
+            "paragraph"
+          ]
+        },
+        {
+          "required": [
+            "table"
+          ]
+        }
+      ]
+    },
+    "record": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "block_id": {
+          "type": "string"
+        },
+        "source_location": {
+          "$ref": "#/$defs/location"
+        },
+        "original": {},
+        "normalized": {
+          "type": "object"
+        },
+        "review_status": {
+          "enum": [
+            "needs_review",
+            "approved",
+            "rejected"
+          ]
+        },
+        "extracted": {
+          "type": "object"
+        },
+        "field_sources": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "selector": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "header"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "column": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,3}$"
+                      }
+                    },
+                    "required": [
+                      "column"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "capture": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+                      }
+                    },
+                    "required": [
+                      "capture"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "value": {},
+              "location": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "selector",
+              "value",
+              "location"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "block_id",
+        "source_location",
+        "original",
+        "normalized",
+        "review_status",
+        "extracted",
+        "field_sources"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

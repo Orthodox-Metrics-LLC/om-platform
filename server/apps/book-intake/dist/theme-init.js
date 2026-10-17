@@ -1,0 +1,1 @@
+try{var t=localStorage.getItem('om-daily-reading-theme-v1');if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appTheme=t;document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.dataset.appTheme='light';}

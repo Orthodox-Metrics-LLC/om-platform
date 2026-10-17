@@ -1,0 +1,3 @@
+import {listPackage,extractFile} from '@electron/asar';import assert from 'node:assert/strict';
+const path='releases-admin/win-unpacked/resources/app.asar';const files=listPackage(path).map(p=>p.replaceAll('\\','/'));
+assert(files.includes('/electron/admin-main.mjs'));assert(files.includes('/dist-admin/admin.html'));assert(!files.some(f=>f.endsWith('/.env')||f.endsWith('/library.sqlite')));assert(files.includes('/electron/library-host.mjs'));assert(files.includes('/build-server/start.mjs'));assert(files.includes('/dist/index.html'));assert(!files.includes('/electron/main.mjs'));assert.equal(JSON.parse(extractFile(path,'package.json')).main,'electron/admin-main.mjs');console.log('9 admin packaging checks passed.');

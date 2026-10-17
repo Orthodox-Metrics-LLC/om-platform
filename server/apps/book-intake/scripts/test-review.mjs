@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url), ts = require('typescript');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'om-review-tests-'));
+let count = 0;
+try {
+  for (const name of ['backend','dates','text', 'db', 'review']) {
+    const result = ts.transpileModule(await fs.readFile(path.join(root, 'src/lib', name + '.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
+    await fs.writeFile(path.join(tmp, name + '.mjs'), result.outputText.replace(/from (['"])\.\/([^'"]+)\1/g,(_,q,n)=>`from ${q}./${n}.mjs${q}`));
+  }
+  const review = await import(pathToFileURL(path.join(tmp, 'review.mjs')));
+  const db = await import(pathToFileURL(path.join(tmp, 'db.mjs')));
+  const fixture = JSON.parse(await fs.readFile(path.join(root, 'tests/fixtures/sample-book.json'), 'utf8'));
+  const p = { ...fixture.pages[0], reviewed: false, review: undefined, ocrError: undefined };
+  const bulk = { ...p, reviewed: true, review: { method: 'bulk', batchId: 'batch-test', at: '2026-09-28T00:00:00.000Z', textVersion: p.textVersion, cropVersion: p.cropVersion } };
+  const test = (name, fn) => { fn(); count++; console.log('PASS', name); };
+  test('386 unreviewed transcriptions can be selected together', () => assert.equal(Array.from({ length: 386 }, (_, i) => ({ ...p, id: 'p' + i })).filter(review.canBulkApprove).length, 386));
+  test('unreviewed sample transcription is eligible', () => assert.equal(review.canBulkApprove(p), true));
+  test('manual transcription is eligible', () => assert.equal(review.canBulkApprove({ ...p, textSource: 'manual' }), true));
+  test('OCR confidence is advisory, not a mandatory review gate', () => assert.equal(review.canBulkApprove({ ...p, textSource: 'ocr', confidence: 30 }), true));
+  test('empty text is excluded', () => assert.equal(review.canBulkApprove({ ...p, text: '' }), false));
+  test('whitespace-only text is excluded', () => assert.equal(review.canBulkApprove({ ...p, text: ' \n\t' }), false));
+  test('recorded OCR failure with older text is excluded', () => assert.equal(review.canBulkApprove({ ...p, ocrError: 'failed retry' }), false));
+  test('original individual approval is preserved', () => assert.equal(review.canBulkApprove({ ...p, reviewed: true }), false));
+  test('existing bulk approval is preserved', () => assert.equal(review.canBulkApprove(bulk), false));
+  test('bulk acceptance is not labeled individual proofreading', () => assert.equal(review.reviewLabel(bulk), 'Bulk approved'));
+  test('original checked pages retain individual label', () => assert.equal(review.reviewLabel({ ...p, reviewed: true }), 'Individually reviewed'));
+  test('stale text version invalidates approval', () => assert.equal(review.isApproved({ ...bulk, textVersion: p.textVersion + 1 }), false));
+  test('stale crop version invalidates approval', () => assert.equal(review.isApproved({ ...bulk, cropVersion: p.cropVersion + 1 }), false));
+  test('failed OCR remains visible even with previous approval', () => assert.equal(review.reviewLabel({ ...bulk, ocrError: 'error' }), 'OCR needs attention'));
+  test('batch undo discovery survives serialization', () => assert.equal(review.lastBulkBatch(JSON.parse(JSON.stringify([bulk]))).id, 'batch-test'));
+  test('batch discovery excludes subsequently edited pages', () => assert.equal(review.lastBulkBatch([{ ...bulk, reviewed: false }]), null));
+  test('latest remaining batch is selected', () => assert.equal(review.lastBulkBatch([bulk, { ...bulk, id: 'later', review: { ...bulk.review, at: '2026-09-28T00:01:00Z', batchId: 'later-batch' } }]).id, 'later-batch'));
+  test('bulk batch count is not the whole book count', () => assert.equal(review.lastBulkBatch([bulk, { ...bulk, id: 'two' }, { ...p, id: 'three' }]).count, 2));
+  test('reading progress does not invalidate the snapshot', () => assert.equal(review.matchesReviewSnapshot({ ...p, read: !p.read, order: 100 }, p), true));
+  test('changed text cannot be approved from a stale view', () => assert.equal(review.matchesReviewSnapshot({ ...p, text: 'new' }, p), false));
+  test('changed crop cannot be approved from a stale view', () => assert.equal(review.matchesReviewSnapshot({ ...p, crop: { ...p.crop, x: .02 } }, p), false));
+  test('changed source cannot be approved from a stale view', () => assert.equal(review.matchesReviewSnapshot({ ...p, sourceId: 'new' }, p), false));
+  test('old backups with no review metadata are valid', () => assert.equal(db.validateManifest(fixture).version, 1));
+  test('new backup metadata passes validation', () => { const f = structuredClone(fixture); f.pages[0] = bulk; assert.equal(db.validateManifest(f).pages[0].review.method, 'bulk'); });
+  test('invalid bulk provenance is rejected', () => { const f = structuredClone(fixture); f.pages[0] = { ...bulk, review: { ...bulk.review, batchId: '../unsafe' } }; assert.throws(() => db.validateManifest(f)); });
+  test('invalid review timestamp is rejected', () => { const f = structuredClone(fixture); f.pages[0] = { ...bulk, review: { ...bulk.review, at: 'bad-date' } }; assert.throws(() => db.validateManifest(f)); });
+  test('oversized OCR failure is rejected', () => { const f = structuredClone(fixture); f.pages[0].ocrError = 'x'.repeat(2001); assert.throws(() => db.validateManifest(f)); });
+  console.log(`\n${count} review tests passed.`);
+} finally { await fs.rm(tmp, { recursive: true, force: true }); }

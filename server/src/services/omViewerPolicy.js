@@ -2,9 +2,10 @@ const {randomBytes,timingSafeEqual}=require('node:crypto');
 const roles=require('../utils/roles');
 class ViewerError extends Error {constructor(status,message){super(message);this.status=status;}}
 function positiveId(value){const n=Number(value);if(!Number.isSafeInteger(n)||n<=0)throw new ViewerError(400,'Choose a valid church.');return n;}
-function createViewerHandlers({pool,runResource}){
+function createViewerHandlers({pool,runResource,allowBrowser=false}){
  async function identity(req){
-  if(req.session?.client!=='om-viewer')throw new ViewerError(401,'Sign in through OM Viewer.');
+  if(!allowBrowser && req.session?.client!=='om-viewer')throw new ViewerError(401,'Sign in through OM Viewer.');
+  if(req.session?.expires && new Date(req.session.expires).getTime()<=Date.now())throw new ViewerError(401,'Session expired.');
   const id=req.session?.user?.id;
   if(!id)throw new ViewerError(401,'Sign in to Orthodox Metrics.');
   const [rows]=await pool.query('SELECT id,email,display_name,role,church_id,is_active,is_locked,account_status,must_change_password,account_expires_at FROM users WHERE id=? LIMIT 1',[id]);
@@ -29,6 +30,7 @@ function createViewerHandlers({pool,runResource}){
  }
  const wrap=handler=>async(req,res)=>{try{res.set('Cache-Control','no-store');res.json(await handler(req));}catch(error){const status=error instanceof ViewerError?error.status:503;res.status(status).json({ok:false,error:status===503?'OM Viewer service is unavailable. Ask your administrator to check its deployment.':error.message});}};
  return {
+  context,
   session:wrap(async req=>{
    const ctx=await context(req);
    if(!req.session.omViewerCsrf){req.session.omViewerCsrf=randomBytes(32).toString('hex');await new Promise((resolve,reject)=>req.session.save(error=>error?reject(error):resolve()));}
